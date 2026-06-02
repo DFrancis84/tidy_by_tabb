@@ -477,6 +477,69 @@ h3 {
 
 /* GALLERY */
 
+.gallery-open-btn {
+  width: fit-content;
+  margin: 24px auto 0;
+}
+
+.gallery-modal {
+  width: min(980px, calc(100% - 24px));
+  height: min(820px, calc(100dvh - 24px));
+  padding: 18px;
+
+  background:
+    radial-gradient(circle at top left, rgba(255, 115, 190, 0.22), transparent 28rem),
+    radial-gradient(circle at top right, rgba(98, 220, 229, 0.32), transparent 26rem),
+    linear-gradient(135deg, #eaf8ff 0%, #f8fbff 45%, #fff1f9 100%);
+
+  overflow: hidden;
+}
+
+.gallery-modal img {
+  width: 100%;
+  height: calc(100% - 70px);
+  object-fit: contain;
+
+  border-radius: 24px;
+
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: var(--shadow);
+}
+
+.gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 46px;
+  height: 46px;
+
+  border: 0;
+  border-radius: 999px;
+
+  color: white;
+  background: linear-gradient(135deg, var(--pink), var(--teal));
+
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.gallery-prev {
+  left: 22px;
+}
+
+.gallery-next {
+  right: 22px;
+}
+
+#galleryCaption {
+  margin: 12px 0 0;
+  text-align: center;
+  color: var(--deep);
+  font-weight: 900;
+}
+
+/*
 .gallery-grid figure {
   margin: 0;
   position: relative;
@@ -518,6 +581,7 @@ h3 {
   font-weight: 900;
   backdrop-filter: blur(14px);
 }
+*/
 
 /* DOCUMENTS */
 
