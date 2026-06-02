@@ -291,13 +291,13 @@
   </div>
 
   <div class="pdf-frame-wrap">
-    <iframe
-      id="pdfViewer"
-      src=""
-      title="Customer document PDF viewer"
-      loading="lazy">
-    </iframe>
-  </div>
+  <img
+    id="pdfViewer"
+    src=""
+    alt="Customer document"
+    loading="lazy"
+  />
+</div>
 
   <a
     id="pdfDownloadLink"
@@ -359,14 +359,11 @@
 
   documentButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      const pdfPath = button.dataset.pdf;
+      const imgagePath = button.dataset.pdf;
       const pdfTitle = button.dataset.title || "Customer Document";
 
-      if (!pdfModal || !pdfViewer || !pdfModalTitle || !pdfDownloadLink) return;
-
       pdfModalTitle.textContent = pdfTitle;
-      pdfViewer.src = pdfPath;
-      pdfDownloadLink.href = pdfPath;
+      pdfViewer.src = imagePath;
 
       pdfModal.showModal();
     });
