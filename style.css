@@ -65,39 +65,37 @@ img {
 }
 
 .topbar {
-  min-height: 110px;
-  position: fixed;
-  z-index: 50;
-  top: 18px;
-  left: 50%;
+  position: sticky;
+  top: 10px;
+  z-index: 1000;
   width: min(1180px, calc(100% - 28px));
-  transform: translateX(-50%);
+  margin: 10px auto 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.68);
-  box-shadow: 0 18px 55px rgba(31, 65, 92, 0.15);
-  backdrop-filter: blur(18px);
+  min-height: 74px;
+  padding: 8px 14px;
+  border-radius: 22px;
+  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, rgba(255,255,255,0.72), rgba(255,255,255,0.52));
+  border: 1px solid rgba(255,255,255,0.75);
+  box-shadow: 0 14px 34px rgba(20, 40, 70, 0.08);
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  min-width: 150px;
+  min-width: 120px;
 }
 
 .brand img {
-  height: clamp(64px, 9vw, 120px);
+  height: clamp(52px, 6vw, 88px);
   width: auto;
   object-fit: contain;
   display: block;
   filter:
-    drop-shadow(0 10px 24px rgba(231, 90, 168, 0.18));
-    drop-shadow(0 4px 14px rgba(98, 220, 229, 0.22));
+    drop-shadow(0 8px 18px rgba(231, 90, 168, 0.16))
+    drop-shadow(0 4px 10px rgba(98, 220, 229, 0.18));
 }
 
 .brand-fallback {
@@ -509,18 +507,24 @@ h3 {
   }
 
   .topbar {
-    top: 12px;
-    border-radius: 24px;
-    justify-content: center;
-  }
+  top: 8px;
+  width: calc(100% - 20px);
+  min-height: 58px;
+  margin: 8px auto 0;
+  padding: 6px 10px;
+  border-radius: 18px;
+  justify-content: center;
+}
 
-  .brand {
-    justify-content: center;
-  }
+.brand {
+  min-width: unset;
+  justify-content: center;
+}
 
-  .brand img {
-    width: 210px;
-  }
+.brand img {
+  height: 52px;
+  width: auto;
+}
 
   .hotbar,
   .desktop-only {
@@ -608,7 +612,8 @@ h3 {
   }
 
   .brand img {
-    width: 184px;
+    height: 46px
+    width: auto;
   }
 
   .copy-card,
