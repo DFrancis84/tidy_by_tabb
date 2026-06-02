@@ -12,10 +12,6 @@
     2. YOUR_SOCIAL_LINKS_HERE
     3. gallery image paths inside the Gallery panel
     4. review text inside the Reviews panel
-
-    Logo/Header Image:
-    Put your cropped transparent logo in:
-    /assets/tidy-by-tabb-header.png
   -->
 
   <div class="site-shell">
@@ -33,16 +29,16 @@
         <button type="button" data-modal="socialModal">Socials</button>
       </nav>
 
-      <a class="request-pill desktop-only" href="https://forms.gle/4JAFoNf8YZdjgmze8" target="_blank" rel="noopener">
+      <button class="request-pill desktop-only" type="button" data-modal="requestModal">
         Submit Cleaning Request
-      </a>
+      </button>
     </header>
 
     <main class="panel-stage">
       <section id="home" class="panel active-panel">
         <div class="panel-grid hero-grid">
           <div class="copy-card hero-card">
-            <p class="eyebrow">Residential Cleaning • Deep Cleans • Add-ons</p>
+            <p class="eyebrow">Residential Cleaning • Deep Cleans • Move-In & Move-Out Cleanings • Commercial Cleaning • Custom Cleanings • Add-ons</p>
             <h1>A cleaner home, without the calendar chaos.</h1>
             <p class="lead">
               Tidy by Tabb offers reliable, detail-focused house cleaning with simple request scheduling,
@@ -50,9 +46,9 @@
             </p>
 
             <div class="button-row">
-              <a class="primary-btn" href="YOUR_GOOGLE_FORM_LINK_HERE" target="_blank" rel="noopener">
+              <button class="primary-btn" type="button" data-modal="requestModal">
                 Submit Cleaning Request
-              </a>
+              </button>
               <a class="ghost-btn" href="#pricing">View Pricing</a>
             </div>
           </div>
@@ -83,20 +79,20 @@
         <div class="price-grid">
           <article class="price-card">
             <h3>Standard Cleaning</h3>
-            <p class="price">$___+</p>
+            <p class="price">$120+</p>
             <p>Routine refresh for kitchens, bathrooms, living areas, bedrooms, dusting, floors, and surfaces.</p>
           </article>
 
           <article class="price-card featured">
             <span class="tag">Popular</span>
             <h3>Deep Cleaning</h3>
-            <p class="price">$___+</p>
+            <p class="price">$200+</p>
             <p>Extra attention for buildup, baseboards, cabinets, heavier bathroom/kitchen cleaning, and detail work.</p>
           </article>
 
           <article class="price-card">
             <h3>Move-In / Move-Out</h3>
-            <p class="price">$___+</p>
+            <p class="price">$250+</p>
             <p>Empty-home reset for moving days, rental turnovers, and fresh-start cleaning.</p>
           </article>
         </div>
@@ -104,20 +100,24 @@
         <div class="addon-card">
           <h3>Add-ons</h3>
           <div class="addon-list">
-            <span>Inside Oven</span>
-            <span>Inside Fridge</span>
-            <span>Interior Windows</span>
-            <span>Laundry</span>
-            <span>Dishes</span>
+            <span>Oven Cleaning</span>
+            <span>Interior Fridge & Freezer</span>
+            <span>Inside Cabinets & Drawers</span>
             <span>Baseboards</span>
-            <span>Pet Hair Removal</span>
-            <span>Organization Help</span>
+            <span>Laundry</span>
+            <span>Organization Assistance</span>
+            <span>Interior Wall Cleaning</span>
+            <span>Blinds Cleaning</span>
+            <span>Grout Scrubbing</span>
+            <span>Interior Window Cleaning</span>
+            <span>Dishwasher Cleaning</span>
+            <span>Dishes</span>
           </div>
         </div>
 
-        <a class="floating-request" href="YOUR_GOOGLE_FORM_LINK_HERE" target="_blank" rel="noopener">
+        <button class="floating-request" type="button" data-modal="requestModal">
           Submit Cleaning Request
-        </a>
+        </button>
       </section>
 
       <section id="gallery" class="panel">
@@ -146,9 +146,9 @@
           </figure>
         </div>
 
-        <a class="floating-request" href="YOUR_GOOGLE_FORM_LINK_HERE" target="_blank" rel="noopener">
+        <button class="floating-request" type="button" data-modal="requestModal">
           Submit Cleaning Request
-        </a>
+        </button>
       </section>
 
       <section id="reviews" class="panel">
@@ -178,9 +178,9 @@
           </article>
         </div>
 
-        <a class="floating-request" href="YOUR_GOOGLE_FORM_LINK_HERE" target="_blank" rel="noopener">
+        <button class="floating-request" type="button" data-modal="requestModal">
           Submit Cleaning Request
-        </a>
+        </button>
       </section>
     </main>
 
@@ -191,6 +191,25 @@
       <a href="#reviews">Reviews</a>
     </footer>
   </div>
+
+
+  <dialog id="requestModal" class="modal request-modal">
+    <button class="modal-close" type="button" aria-label="Close cleaning request form">×</button>
+    <div class="modal-heading">
+      <p class="eyebrow">Request service</p>
+      <h2>Submit Cleaning Request</h2>
+      <p>Complete the form below and Tabb will follow up to confirm availability, pricing, and appointment details.</p>
+    </div>
+
+    <div class="form-frame-wrap">
+      <iframe
+        src="https://docs.google.com/forms/d/e/1FAIpQLSdYEHZUKHjEIHOd_Fd-Z9axIb0fwuSU4q8JZAggiaSMvaBLJA/viewform?embedded=true"
+        title="Tidy by Tabb Cleaning Request Form"
+        loading="lazy">
+        Loading…
+      </iframe>
+    </div>
+  </dialog>
 
   <dialog id="socialModal" class="modal">
     <button class="modal-close" type="button" aria-label="Close social links">×</button>
