@@ -619,3 +619,74 @@ h3 {
     text-align: center;
   }
 }
+
+
+/* Modal Google Form request popup */
+button.primary-btn,
+button.request-pill,
+button.floating-request {
+  font: inherit;
+  cursor: pointer;
+}
+
+.request-modal {
+  width: min(940px, calc(100% - 24px));
+  height: min(860px, calc(100dvh - 24px));
+  padding: 18px;
+  overflow: hidden;
+}
+
+.modal-heading {
+  padding: 12px 54px 10px 14px;
+}
+
+.modal-heading h2 {
+  margin-bottom: 8px;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+}
+
+.modal-heading p:last-child {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.form-frame-wrap {
+  height: calc(100% - 145px);
+  min-height: 520px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(40, 189, 210, 0.16);
+}
+
+.form-frame-wrap iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: white;
+}
+
+@media (max-width: 920px) {
+  .request-modal {
+    width: calc(100% - 16px);
+    height: calc(100dvh - 16px);
+    padding: 12px;
+    border-radius: 24px;
+  }
+
+  .modal-heading {
+    padding: 8px 46px 8px 8px;
+  }
+
+  .form-frame-wrap {
+    height: calc(100% - 132px);
+    min-height: 0;
+    border-radius: 18px;
+  }
+
+  button.primary-btn,
+  button.floating-request {
+    width: 100%;
+  }
+}
