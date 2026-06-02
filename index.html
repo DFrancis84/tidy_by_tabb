@@ -341,62 +341,68 @@
   </dialog>
 
   <script>
-    const modalButtons = document.querySelectorAll("[data-modal]");
-    const closeButtons = document.querySelectorAll(".modal-close");
-    const documentButtons = document.querySelectorAll("[data-pdf]");
-    const pdfModal = document.getElementById("pdfModal");
-    const pdfViewer = document.getElementById("pdfViewer");
-    const pdfModalTitle = document.getElementById("pdfModalTitle");
-    const pdfDownloadLink = document.getElementById("pdfDownloadLink");
+  const modalButtons = document.querySelectorAll("[data-modal]");
+  const closeButtons = document.querySelectorAll(".modal-close");
+  const documentButtons = document.querySelectorAll("[data-pdf]");
 
-    modalButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const modal = document.getElementById(button.dataset.modal);
-        if (modal) modal.showModal();
-      });
+  const pdfModal = document.getElementById("pdfModal");
+  const pdfViewer = document.getElementById("pdfViewer");
+  const pdfModalTitle = document.getElementById("pdfModalTitle");
+  const pdfDownloadLink = document.getElementById("pdfDownloadLink");
+
+  modalButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const modal = document.getElementById(button.dataset.modal);
+      if (modal) modal.showModal();
     });
+  });
 
-    documentButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const pdfPath = button.dataset.pdf;
-        const pdfTitle = button.dataset.title || "Customer Document";
-        
-        pdfModalTitle.textContent = pdfTitle;
-        pdfViewer.src = pdfPath;
-        pdfDownloadLink.href = pdfPath;
-        pdfModal.showModal();
-      });
+  documentButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const pdfPath = button.dataset.pdf;
+      const pdfTitle = button.dataset.title || "Customer Document";
+
+      if (!pdfModal || !pdfViewer || !pdfModalTitle || !pdfDownloadLink) return;
+
+      pdfModalTitle.textContent = pdfTitle;
+      pdfViewer.src = pdfPath;
+      pdfDownloadLink.href = pdfPath;
+
+      pdfModal.showModal();
     });
-    
-    closeButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const dialog = button.closest("dialog");
+  });
 
-        if (dialog?.id === "pdfModal") {
+  closeButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const dialog = button.closest("dialog");
+
+      if (dialog?.id === "pdfModal" && pdfViewer) {
+        pdfViewer.src = "";
+      }
+
+      if (dialog) dialog.close();
+    });
+  });
+
+  document.querySelectorAll("dialog").forEach((dialog) => {
+    dialog.addEventListener("click", (event) => {
+      const rect = dialog.getBoundingClientRect();
+
+      const clickedOutside =
+        event.clientX < rect.left ||
+        event.clientX > rect.right ||
+        event.clientY < rect.top ||
+        event.clientY > rect.bottom;
+
+      if (clickedOutside) {
+        if (dialog.id === "pdfModal" && pdfViewer) {
           pdfViewer.src = "";
         }
 
         dialog.close();
+      }
     });
-
-    document.querySelectorAll("dialog").forEach((dialog) => {
-      dialog.addEventListener("click", (event) => {
-        const rect = dialog.getBoundingClientRect();
-        const clickedOutside =
-          event.clientX < rect.left ||
-          event.clientX > rect.right ||
-          event.clientY < rect.top ||
-          event.clientY > rect.bottom;
-
-        if (clickedOutside) {
-          if (dialog.id === "pdfModal") {
-            pdfViewer.src = "";
-          }
-        }
-        
-        dialog.close();
-      });
-    });
-  </script>
+  });
+</script>
 </body>
 </html>
