@@ -22,7 +22,7 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: none;
 }
 
 body {
@@ -219,7 +219,7 @@ img {
   display: grid;
   align-content: center;
 
-  padding: 128px clamp(18px, 5vw, 72px) 88px;
+  padding: 80px clamp(18px, 5vw, 72px) 88px;
   position: relative;
 }
 
