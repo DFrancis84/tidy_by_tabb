@@ -634,6 +634,15 @@ button.floating-request {
   height: min(860px, calc(100dvh - 24px));
   padding: 18px;
   overflow: hidden;
+
+  background:
+    radial-gradient(circle at top left, rgba(255, 115, 190, 0.22), transparent 28rem),
+    radial-gradient(circle at top right, rgba(98, 220, 229, 0.32), transparent 26rem),
+    linear-gradient(135deg, #eaf8ff 0%, #f8fbff 45%, #fff1f9 100%);
+
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  box-shadow: 0 30px 90px rgba(21, 45, 75, 0.28);
+  backdrop-filter: blur(22px);
 }
 
 .modal-heading {
@@ -654,17 +663,29 @@ button.floating-request {
 .form-frame-wrap {
   height: calc(100% - 145px);
   min-height: 520px;
+
   border-radius: 24px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(40, 189, 210, 0.16);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.68),
+      rgba(255,255,255,0.42)
+    );
+
+  border: 1px solid rgba(40, 189, 210, 0.18);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.55),
+    0 14px 34px rgba(40, 189, 210, 0.12);
 }
 
 .form-frame-wrap iframe {
   width: 100%;
   height: 100%;
   border: 0;
-  background: white;
+  background: transparent;
 }
 
 @media (max-width: 920px) {
