@@ -879,7 +879,7 @@ button.floating-request {
     right: 12px;
     bottom: 12px;
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     align-items: center;
     gap: 6px;
     padding: 8px;
