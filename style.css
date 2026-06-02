@@ -526,8 +526,7 @@ h3 {
   width: auto;
 }
 
-  .hotbar,
-  .desktop-only {
+  .hotbar {
     display: none;
   }
 
@@ -927,8 +926,25 @@ button.floating-request {
     0 10px 24px rgba(231, 90, 168, 0.28);
   }
 
-  .panel .floating-request {
+  .panel > .floating-request {
     display: none;
+  }
+
+  .topbar .request-pill {
+    display: inline-flex;
+    padding: 10px 13px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .topbar {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .brand img{
+    height: 46px;
+    width: auto;
   }
   
   .pdf-modal {
