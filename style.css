@@ -541,18 +541,16 @@ h3 {
 
 .addon-card {
   width: min(1160px, 100%);
-  margin: 26px auto 0;
-  padding: 30px;
-
+  margin: 18px auto 0;
+  padding: 28px;
   border-radius: var(--radius-xl);
-
   position: relative;
   overflow: hidden;
 
   border: 1px solid rgba(255, 255, 255, 0.78);
 
   background:
-    radial-gradient(circle at top left, rgba(255, 115, 190, 0.18), transparent 18rem),
+    radial-gradient(circle at top left, rgba(255, 115, 190, 0.16), transparent 18rem),
     radial-gradient(circle at bottom right, rgba(98, 220, 229, 0.24), transparent 18rem),
     rgba(255, 255, 255, 0.72);
 
@@ -560,73 +558,129 @@ h3 {
   backdrop-filter: blur(20px);
 }
 
-.addon-card::before {
-  content: "✨";
-  position: absolute;
-  top: 18px;
-  right: 24px;
-
-  font-size: 3rem;
-  opacity: 0.26;
-}
-
-.addon-card h3 {
-  margin-bottom: 18px;
-
-  color: var(--deep);
-
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
-}
-
-.addon-list {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-
-.addon-list span {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  min-height: 52px;
-
-  padding: 12px 14px;
-
-  border-radius: 18px;
-
-  color: var(--deep);
-
-  font-weight: 900;
+.addon-head {
   text-align: center;
+  margin-bottom: 20px;
+}
+
+.addon-head h3 {
+  margin-bottom: 8px;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+}
+
+.addon-head p:last-child {
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+.addon-groups {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.addon-groups details {
+  border-radius: 22px;
+  padding: 14px;
 
   background:
     linear-gradient(
       135deg,
-      rgba(255,255,255,0.86),
-      rgba(255,255,255,0.58)
+      rgba(255,255,255,0.82),
+      rgba(255,255,255,0.52)
     );
 
   border: 1px solid rgba(40, 189, 210, 0.18);
 
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.62),
-    0 10px 22px rgba(21, 45, 75, 0.08);
-
-  transition: 180ms ease;
+    inset 0 1px 0 rgba(255,255,255,0.58),
+    0 10px 24px rgba(21, 45, 75, 0.08);
 }
 
-.addon-list span:hover {
-  transform: translateY(-3px);
+.addon-groups summary {
+  list-style: none;
+  cursor: pointer;
 
-  border-color: rgba(231, 90, 168, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255, 115, 190, 0.16),
-      rgba(98, 220, 229, 0.20)
-    );
+  color: var(--deep);
+  font-weight: 950;
+}
+
+.addon-groups summary::-webkit-details-marker {
+  display: none;
+}
+
+.addon-groups summary::after {
+  content: "+";
+  width: 26px;
+  height: 26px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 999px;
+
+  color: white;
+  background: linear-gradient(135deg, var(--pink), var(--teal));
+
+  font-weight: 950;
+}
+
+.addon-groups details[open] summary::after {
+  content: "–";
+}
+
+.addon-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  margin-top: 14px;
+}
+
+.addon-list span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+
+  padding: 8px 11px;
+
+  color: var(--deep);
+
+  font-size: 0.82rem;
+  font-weight: 850;
+  text-align: center;
+
+  background: rgba(255, 255, 255, 0.72);
+
+  border: 1px solid rgba(231, 90, 168, 0.12);
+}
+
+/* Mobile Add-ons */
+
+@media (max-width: 920px) {
+  .addon-card {
+    padding: 22px;
+  }
+
+  .addon-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .addon-groups details {
+    padding: 16px;
+  }
+
+  .addon-list span {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 /* ======================== */
