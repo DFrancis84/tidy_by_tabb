@@ -82,37 +82,37 @@
           <p>Replace these cards with her real pricing when you have the file ready.</p>
         </div>
 
-        <div class="pricing-carousel">
-          <button class="carousel-arrow price-prev" type="button"><</button>
+        <div class="pricing-coverflow">
+          <button class="coverflow-arrow price-prev" type="button">‹</button>
 
-          <div class="price-track">              
-            <article class="price-card">
+          <div class="coverflow-stage">
+            <article class="price-card coverflow-card active">
               <h3>Standard Cleaning</h3>
               <p class="price">$120+</p>
               <p>Routine refresh for kitchens, bathrooms, living areas, bedrooms, dusting, floors, and surfaces.</p>
             </article>
 
-            <article class="price-card featured">
+            <article class="price-card coverflow-card next">
               <span class="tag">Popular</span>
               <h3>Deep Cleaning</h3>
               <p class="price">$200+</p>
               <p>Extra attention for buildup, baseboards, cabinets, heavier bathroom/kitchen cleaning, and detail work.</p>
             </article>
 
-            <article class="price-card">
+            <article class="price-card coverflow-card hidden-card">
               <h3>Move-In / Move-Out</h3>
               <p class="price">$250+</p>
               <p>Empty-home reset for moving days, rental turnovers, and fresh-start cleaning.</p>
             </article>
 
-            <article class="price-card">
+            <article class="price-card coverflow-card prev">
               <h3>Custom Cleaning</h3>
               <p class="price">$40/hr</p>
-              <p>Custom cleaning based on your needs, with a 2-hour minimum</p>
+              <p>Custom cleaning based on your needs, with a 2-hour minimum.</p>
             </article>
           </div>
 
-          <button class="carousel-arrow price-next" type="button">></button>
+          <button class="coverflow-arrow price-next" type="button">›</button>
         </div>
 
         <div class="addon-card">
@@ -502,23 +502,49 @@ galleryNext.addEventListener("click", () => {
   updateGallery();
 });
 
-const priceTrack = document.querySelector(".price-track");
+const coverflowCards = Array.from(document.querySelectorAll(".coverflow-card"));
 const pricePrev = document.querySelector(".price-prev");
 const priceNext = document.querySelector(".price-next");
 
-if (priceTrack && pricePrev && priceNext) {
+let activePriceIndex = 0;
+
+function updatePriceCoverflow() {
+  coverflowCards.forEach((card, index) => {
+    card.classList.remove("active", "prev", "next", "hidden-card");
+
+    const total = coverflowCards.length;
+    const prevIndex = (activePriceIndex - 1 + total) % total;
+    const nextIndex = (activePriceIndex + 1) % total;
+
+    if (index === activePriceIndex) {
+      card.classList.add("active");
+    } else if (index === prevIndex) {
+      card.classList.add("prev");
+    } else if (index === nextIndex) {
+      card.classList.add("next");
+    } else {
+      card.classList.add("hidden-card");
+    }
+  });
+}
+
+if (coverflowCards.length && pricePrev && priceNext) {
+  updatePriceCoverflow();
+
   pricePrev.addEventListener("click", () => {
-    priceTrack.scrollBy({
-      left: -priceTrack.clientWidth,
-      behavior: "smooth"
-    });
+    activePriceIndex =
+      (activePriceIndex - 1 + coverflowCards.length) %
+      coverflowCards.length;
+
+    updatePriceCoverflow();
   });
 
   priceNext.addEventListener("click", () => {
-    priceTrack.scrollBy({
-      left: priceTrack.clientWidth,
-      behavior: "smooth"
-    });
+    activePriceIndex =
+      (activePriceIndex + 1) %
+      coverflowCards.length;
+
+    updatePriceCoverflow();
   });
 }
 
