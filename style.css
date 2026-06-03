@@ -414,6 +414,64 @@ h3 {
 
 /* PRICING */
 
+.pricing-carousel {
+  width: min(1160px, 100%);
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.price-track {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  padding: 14px 4px 22px;
+  scrollbar-width: none;
+}
+
+.price-track::-webkit-scrollbar {
+  display: none;
+}
+
+.price-track .price-card {
+  flex: 0 0 calc((100% - 36px) / 3);
+  scroll-snap-align: start;
+}
+
+.carousel-arrow {
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 999px;
+  color: white;
+  background: linear-gradient(135deg, var(--pink), var(--teal));
+  font-size: 1.8rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 14px 34px rgba(231, 90, 168, 0.24);
+}
+
+@media (max-width: 920px) {
+  .price-track .price-card {
+    flex: 0 0 100%;
+  }
+
+  .pricing-carousel {
+    gap: 8px;
+  }
+
+  .carousel-arrow {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
 .price-card {
   position: relative;
   min-height: 260px;
