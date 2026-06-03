@@ -361,7 +361,7 @@ h3 {
 
 .pricing-coverflow {
   width: min(1160px, 100%);
-  margin: 0 auto 18px;
+  margin: 0 auto 22px;
 
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr) 52px;
@@ -371,20 +371,22 @@ h3 {
 
 .coverflow-stage {
   position: relative;
-  height: 380px;
-  overflow: hidden;
+  height: 410px;
+  overflow: visible;
+  perspective: 1200px;
 }
 
-.coverflow-card {
+.coverflow-card.price-card {
   position: absolute;
-  top: 36px;
+  top: 48px;
   left: 50%;
 
-  width: min(360px, 78vw);
-  min-height: 270px;
+  width: min(350px, 78vw);
+  min-height: 275px;
 
   padding: 28px;
   border-radius: var(--radius-lg);
+  overflow: hidden;
 
   border: 1px solid rgba(255, 255, 255, 0.78);
   background: var(--glass);
@@ -402,7 +404,7 @@ h3 {
     filter 420ms ease;
 }
 
-.coverflow-card.featured {
+.coverflow-card.price-card.featured {
   background:
     linear-gradient(
       135deg,
@@ -419,8 +421,8 @@ h3 {
 
   transform:
     translateX(-50%)
-    translateY(-10px)
-    scale(1.05);
+    translateY(-14px)
+    scale(1.06);
 }
 
 .coverflow-card.prev {
@@ -429,8 +431,8 @@ h3 {
   pointer-events: auto;
 
   transform:
-    translateX(calc(-50% - 220px))
-    translateY(24px)
+    translateX(calc(-50% - 235px))
+    translateY(26px)
     scale(0.82);
 
   filter: saturate(0.88);
@@ -442,8 +444,8 @@ h3 {
   pointer-events: auto;
 
   transform:
-    translateX(calc(-50% + 220px))
-    translateY(24px)
+    translateX(calc(-50% + 235px))
+    translateY(26px)
     scale(0.82);
 
   filter: saturate(0.88);
@@ -470,21 +472,14 @@ h3 {
   border-radius: 999px;
 
   color: white;
-  background:
-    linear-gradient(
-      135deg,
-      var(--pink),
-      var(--teal)
-    );
+  background: linear-gradient(135deg, var(--pink), var(--teal));
 
   font-size: 2rem;
   font-weight: 900;
 
   cursor: pointer;
 
-  box-shadow:
-    0 14px 34px rgba(231, 90, 168, 0.24);
-
+  box-shadow: 0 14px 34px rgba(231, 90, 168, 0.24);
   transition: 180ms ease;
 }
 
@@ -492,19 +487,54 @@ h3 {
   transform: translateY(-2px);
 }
 
-.price-card {
-  position: relative;
-  min-height: 260px;
-  padding: 28px;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
+.price {
+  margin-bottom: 16px;
+  color: var(--pink);
+  font-size: 2.6rem;
+  font-weight: 950;
+  letter-spacing: -0.06em;
 }
+
+.tag {
+  display: inline-flex;
+  margin-bottom: 10px;
+
+  border-radius: 999px;
+  padding: 7px 12px;
+
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 900;
+
+  background: var(--pink);
+}
+
+/* ========================= */
+/* ADD-ONS */
+/* ========================= */
 
 .addon-card {
   width: min(1160px, 100%);
   margin: 20px auto 0;
   padding: 24px;
   border-radius: var(--radius-lg);
+}
+
+.addon-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.addon-list span {
+  border-radius: 999px;
+  padding: 10px 14px;
+
+  color: var(--deep);
+  font-weight: 850;
+
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(40, 189, 210, 0.18);
 }
 
 /* ========================= */
