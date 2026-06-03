@@ -438,6 +438,13 @@ h3 {
   filter: saturate(0.88);
 }
 
+.coverflow-card.featured.prev {
+  transform:
+    translateX(calc(-50% - 220px))
+    translateX(26px)
+    scale(0.78);
+}
+
 .coverflow-card.next {
   z-index: 3;
   opacity: 0.72;
@@ -449,6 +456,13 @@ h3 {
     scale(0.82);
 
   filter: saturate(0.88);
+}
+
+.coverflow-card.featured.next {
+  transform:
+    translateX(calc(-50% + 220px))
+    translateX(26px)
+    scale(0.78);
 }
 
 .coverflow-card.hidden-card {
