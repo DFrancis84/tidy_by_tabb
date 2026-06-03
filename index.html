@@ -82,40 +82,37 @@
           <p>Replace these cards with her real pricing when you have the file ready.</p>
         </div>
 
-        <div class="price-grid">
-          <div class="pricing-carousel">
-            <button class="carousel-arrow price-prev" type="button"><</button>
+        <div class="pricing-carousel">
+          <button class="carousel-arrow price-prev" type="button"><</button>
 
-            <div class="price-track">
-              
-              <article class="price-card">
-                <h3>Standard Cleaning</h3>
-                <p class="price">$120+</p>
-                <p>Routine refresh for kitchens, bathrooms, living areas, bedrooms, dusting, floors, and surfaces.</p>
-              </article>
+          <div class="price-track">              
+            <article class="price-card">
+              <h3>Standard Cleaning</h3>
+              <p class="price">$120+</p>
+              <p>Routine refresh for kitchens, bathrooms, living areas, bedrooms, dusting, floors, and surfaces.</p>
+            </article>
 
-              <article class="price-card featured">
-                <span class="tag">Popular</span>
-                <h3>Deep Cleaning</h3>
-                <p class="price">$200+</p>
-                <p>Extra attention for buildup, baseboards, cabinets, heavier bathroom/kitchen cleaning, and detail work.</p>
-              </article>
+            <article class="price-card featured">
+              <span class="tag">Popular</span>
+              <h3>Deep Cleaning</h3>
+              <p class="price">$200+</p>
+              <p>Extra attention for buildup, baseboards, cabinets, heavier bathroom/kitchen cleaning, and detail work.</p>
+            </article>
 
-              <article class="price-card">
-                <h3>Move-In / Move-Out</h3>
-                <p class="price">$250+</p>
-                <p>Empty-home reset for moving days, rental turnovers, and fresh-start cleaning.</p>
-              </article>
+            <article class="price-card">
+              <h3>Move-In / Move-Out</h3>
+              <p class="price">$250+</p>
+              <p>Empty-home reset for moving days, rental turnovers, and fresh-start cleaning.</p>
+            </article>
 
-              <article class="price-card">
-                <h3>Custom Cleaning</h3>
-                <p class="price">$40/hr</p>
-                <p>Custom cleaning based on your needs, with a 2-hour minimum</p>
-              </article>
-            </div>
-
-            <button class="carousel-arrow price-next" type="button">></button>
+            <article class="price-card">
+              <h3>Custom Cleaning</h3>
+              <p class="price">$40/hr</p>
+              <p>Custom cleaning based on your needs, with a 2-hour minimum</p>
+            </article>
           </div>
+
+          <button class="carousel-arrow price-next" type="button">></button>
         </div>
 
         <div class="addon-card">
@@ -504,6 +501,27 @@ galleryNext.addEventListener("click", () => {
 
   updateGallery();
 });
+
+const priceTrack = document.querySelector(".price-track");
+const pricePrev = document.querySelector(".price-prev");
+const priceNext = document.querySelector(".price-next");
+
+if (priceTrack && pricePrev && priceNext) {
+  pricePrev.addEventListener("click", () => {
+    priceTrack.scrollBy({
+      left: -priceTrack.clientWidth,
+      behavior: "smooth"
+    });
+  });
+
+  priceNext.addEventListener("click", () => {
+    priceTrack.scrollBy({
+      left: priceTrack.clientWidth,
+      behavior: "smooth"
+    });
+  });
+}
+
 </script>
 </body>
 </html>
