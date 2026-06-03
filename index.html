@@ -6,15 +6,10 @@
   <title>Tidy by Tabb | Cleaning Services</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <!--
-    Replace these placeholder links:
-    2. YOUR_SOCIAL_LINKS_HERE
-    3. gallery image paths inside the Gallery panel
-    4. review text inside the Reviews panel
-  -->
 
-  <div class="site-shell">    
+<body>
+  <div class="site-shell">
+
     <div class="logo-banner">
       <a class="brand" href="#home">
         <img
@@ -33,7 +28,7 @@
         <a href="#aboutMe">About Me</a>
         <a href="#documents">Documents</a>
         <a href="#reviews">Reviews</a>
-        <button type="button" data-gallery-open>View Gallery</button>
+        <button type="button" data-gallery-open>Gallery</button>
         <button type="button" data-modal="socialModal">Socials</button>
       </nav>
 
@@ -43,11 +38,16 @@
     </header>
 
     <main class="panel-stage">
+
       <section id="home" class="panel active-panel">
         <div class="panel-grid hero-grid">
           <div class="copy-card hero-card">
-            <p class="eyebrow">Residential Cleaning • Deep Cleans • Move-In & Move-Out Cleanings • Commercial Cleaning • Custom Cleanings • Add-ons</p>
+            <p class="eyebrow">
+              Residential Cleaning • Deep Cleans • Move-In & Move-Out Cleanings • Commercial Cleaning • Custom Cleanings • Add-ons
+            </p>
+
             <h1>A cleaner home, without the calendar chaos.</h1>
+
             <p class="lead">
               Tidy by Tabb offers reliable, detail-focused house cleaning with simple request scheduling,
               clear service options, and a personal touch.
@@ -60,12 +60,15 @@
 
           <aside class="shine-card">
             <div class="bubble-icon">🫧</div>
+
             <h2>How booking works</h2>
+
             <p>
               Customers submit a preferred date, time window, services needed, and property details.
-              We will reviews the requests, confirm the final price, and lock in the appointment.
-              Please allow 24-48hrs for a response.
+              We will review the requests, confirm the final price, and lock in the appointment.
+              Please allow 24-48 hours for a response.
             </p>
+
             <ul>
               <li>No surprise overbooking</li>
               <li>Better travel-time control</li>
@@ -79,44 +82,45 @@
         <div class="section-head">
           <p class="eyebrow">Simple service menu</p>
           <h2>Pricing & Add-ons</h2>
-          <p>Replace these cards with her real pricing when you have the file ready.</p>
+          <p>Choose the cleaning option that best fits your home, schedule, and needs.</p>
         </div>
 
         <div class="pricing-coverflow">
-          <button class="coverflow-arrow price-prev" type="button">‹</button>
+          <button class="coverflow-arrow price-prev" type="button" aria-label="Previous pricing option">‹</button>
 
           <div class="coverflow-stage">
-            <article class="price-card coverflow-card active">
+            <article class="price-card coverflow-card">
               <h3>Standard Cleaning</h3>
               <p class="price">$120+</p>
               <p>Routine refresh for kitchens, bathrooms, living areas, bedrooms, dusting, floors, and surfaces.</p>
             </article>
 
-            <article class="price-card coverflow-card next">
+            <article class="price-card coverflow-card featured">
               <span class="tag">Popular</span>
               <h3>Deep Cleaning</h3>
               <p class="price">$200+</p>
               <p>Extra attention for buildup, baseboards, cabinets, heavier bathroom/kitchen cleaning, and detail work.</p>
             </article>
 
-            <article class="price-card coverflow-card hidden-card">
+            <article class="price-card coverflow-card">
               <h3>Move-In / Move-Out</h3>
               <p class="price">$250+</p>
               <p>Empty-home reset for moving days, rental turnovers, and fresh-start cleaning.</p>
             </article>
 
-            <article class="price-card coverflow-card prev">
+            <article class="price-card coverflow-card">
               <h3>Custom Cleaning</h3>
               <p class="price">$40/hr</p>
               <p>Custom cleaning based on your needs, with a 2-hour minimum.</p>
             </article>
           </div>
 
-          <button class="coverflow-arrow price-next" type="button">›</button>
+          <button class="coverflow-arrow price-next" type="button" aria-label="Next pricing option">›</button>
         </div>
 
         <div class="addon-card">
           <h3>Add-ons</h3>
+
           <div class="addon-list">
             <span>Oven Cleaning</span>
             <span>Interior Fridge & Freezer</span>
@@ -134,43 +138,18 @@
         </div>
       </section>
 
-      <!--
-      <section id="gallery" class="panel">
-        <div class="section-head">
-          <p class="eyebrow">Before, after, sparkle</p>
-          <h2>Cleaning Gallery</h2>
-          <p>Add photos to the <strong>assets/gallery</strong> folder and update the image paths below.</p>
-        </div>
-
-        <div class="gallery-grid">
-          <figure>
-            <img src="assets/gallery/kitchen-1.jpg" alt="Clean kitchen example" />
-            <figcaption>Kitchen Refresh</figcaption>
-          </figure>
-          <figure>
-            <img src="assets/gallery/bathroom-1.jpg" alt="Clean bathroom example" />
-            <figcaption>Bathroom Detail</figcaption>
-          </figure>
-          <figure>
-            <img src="assets/gallery/living-room-1.jpg" alt="Clean living room example" />
-            <figcaption>Living Area Reset</figcaption>
-          </figure>
-          <figure>
-            <img src="assets/gallery/deep-clean-1.jpg" alt="Deep cleaning example" />
-            <figcaption>Deep Clean</figcaption>
-          </figure>
-        </div>
-      </section>
-      -->
-
       <section id="aboutMe" class="panel">
         <div class="section-head">
           <p class="eyebrow">Get to know your cleaner</p>
           <h2>About Me</h2>
+
           <p>
-            I am a solo business owner who has always had a passion for cleaning and creating fresh, organized spaces. As a mother of three, a wife, and a proud fur mom, I understand how busy life can become and how difficult it can be to keep up with a home.
-            Starting my own cleaning business has always been a dream of mine, especially one where I can help others while doing something I truly enjoy. My goal is to take stress off your plate and help you come home to a space that feels clean, peaceful, and refreshed.
-            I treat every home with the same care, respect, and attention to detail that I would give my own. I strive to create spaces that feel welcoming, comfortable, and truly cared for.
+            I am a solo business owner who has always had a passion for cleaning and creating fresh, organized spaces.
+            As a mother of three, a wife, and a proud fur mom, I understand how busy life can become and how difficult it can be to keep up with a home.
+            Starting my own cleaning business has always been a dream of mine, especially one where I can help others while doing something I truly enjoy.
+            My goal is to take stress off your plate and help you come home to a space that feels clean, peaceful, and refreshed.
+            I treat every home with the same care, respect, and attention to detail that I would give my own.
+            I strive to create spaces that feel welcoming, comfortable, and truly cared for.
             I look forward to helping you create a cleaner, more peaceful home environment.
           </p>
         </div>
@@ -188,6 +167,7 @@
             <div class="doc-icon">📋</div>
             <h3>Standard Cleaning Checklist</h3>
             <p>See what is included in a standard home cleaning visit.</p>
+
             <button
               class="doc-btn"
               type="button"
@@ -202,6 +182,7 @@
             <div class="doc-icon">🧽</div>
             <h3>Deep Cleaning Checklist</h3>
             <p>Review the extra detail work included in a deep cleaning service.</p>
+
             <button
               class="doc-btn"
               type="button"
@@ -216,6 +197,7 @@
             <div class="doc-icon">🏠</div>
             <h3>Customer Prep Instructions</h3>
             <p>Quick steps customers can take before the appointment to help the visit go smoothly.</p>
+
             <button
               class="doc-btn"
               type="button"
@@ -227,12 +209,12 @@
           </article>
         </div>
       </section>
-      
+
       <section id="reviews" class="panel">
         <div class="section-head">
           <p class="eyebrow">Fresh words from happy homes</p>
           <h2>Customer Reviews</h2>
-          <p>Manually add reviews here, or later we can connect this section to a Google Sheet.</p>
+          <p>Manually add reviews here, or later this section can be connected to a Google Sheet.</p>
         </div>
 
         <div class="review-grid">
@@ -255,6 +237,7 @@
           </article>
         </div>
       </section>
+
     </main>
 
     <footer class="mobile-hotbar">
@@ -262,67 +245,50 @@
       <a href="#pricing">Pricing</a>
       <button type="button" class="mobile-hotbar-link" data-gallery-open>Gallery</button>
       <a href="#documents">Docs</a>
-      <a href="#">FAQ</a>
-      <!--
       <a href="#reviews">Reviews</a>
-      -->
     </footer>
   </div>
 
-  <!-- ========================= -->
-<!-- ADD THIS MODAL -->
-<!-- Place ABOVE requestModal -->
-<!-- ========================= -->
+  <dialog id="pdfModal" class="modal pdf-modal">
+    <button class="modal-close" type="button" aria-label="Close document viewer">×</button>
 
-<dialog id="pdfModal" class="modal pdf-modal">
-  <button
-    class="modal-close"
-    type="button"
-    aria-label="Close document viewer">
-    ×
-  </button>
+    <div class="modal-heading">
+      <p class="eyebrow">Customer document</p>
+      <h2 id="pdfModalTitle">Document Viewer</h2>
+      <p>Review the document below without leaving the page.</p>
+    </div>
 
-  <div class="modal-heading">
-    <p class="eyebrow">Customer document</p>
-    <h2 id="pdfModalTitle">
-      Document Viewer
-    </h2>
-    <p>
-      Review the document below without leaving the page.
-    </p>
-  </div>
+    <div class="pdf-frame-wrap">
+      <img
+        id="imageViewer"
+        src=""
+        alt="Customer document"
+        loading="lazy"
+        style="display:none;"
+      />
 
-  <div class="pdf-frame-wrap">
-  <img
-    id="imageViewer"
-    src=""
-    alt="Customer document"
-    loading="lazy"
-    style="display:none;"
-  />
-  <iframe
-    id="pdfViewer"
-    src=""
-    title="Customer document PDF viewer"
-    loading="lazy"
-    style="display:none;">
-  </iframe>
-    
-</div>
+      <iframe
+        id="pdfViewer"
+        src=""
+        title="Customer document PDF viewer"
+        loading="lazy"
+        style="display:none;">
+      </iframe>
+    </div>
 
-  <a
-    id="pdfDownloadLink"
-    class="download-doc-btn"
-    href="#"
-    target="_blank"
-    rel="noopener">
-
-    Open PDF in New Tab
-  </a>
-</dialog>
+    <a
+      id="pdfDownloadLink"
+      class="download-doc-btn"
+      href="#"
+      target="_blank"
+      rel="noopener">
+      Open Document in New Tab
+    </a>
+  </dialog>
 
   <dialog id="requestModal" class="modal request-modal">
     <button class="modal-close" type="button" aria-label="Close cleaning request form">×</button>
+
     <div class="modal-heading">
       <p class="eyebrow">Request service</p>
       <h2>Submit Cleaning Request</h2>
@@ -341,16 +307,20 @@
 
   <dialog id="galleryModal" class="modal gallery-modal">
     <button class="modal-close" type="button" aria-label="Close gallery">×</button>
-    <button class="gallery-arrow gallery-prev" type="button">‹</button>
-    <img id="galleryViewer" src="assets/gallery/kitchen-1.jpg" alt="Cleaning gallery image" />
-    <button class="gallery-arrow gallery-next" type="button">›</button>
+    <button class="gallery-arrow gallery-prev" type="button" aria-label="Previous gallery image">‹</button>
+
+    <img id="galleryViewer" src="" alt="Cleaning gallery image" />
+
+    <button class="gallery-arrow gallery-next" type="button" aria-label="Next gallery image">›</button>
     <p id="galleryCaption">Kitchen Refresh</p>
   </dialog>
-  
+
   <dialog id="socialModal" class="modal">
     <button class="modal-close" type="button" aria-label="Close social links">×</button>
+
     <h2>Follow Tidy by Tabb</h2>
     <p>Replace these with her real social links.</p>
+
     <div class="social-list">
       <a href="YOUR_FACEBOOK_LINK_HERE" target="_blank" rel="noopener">Facebook</a>
       <a href="YOUR_INSTAGRAM_LINK_HERE" target="_blank" rel="noopener">Instagram</a>
@@ -360,194 +330,200 @@
   </dialog>
 
   <script>
-  const modalButtons = document.querySelectorAll("[data-modal]");
-  const closeButtons = document.querySelectorAll(".modal-close");
-  const documentButtons = document.querySelectorAll("[data-doc]");
+    const modalButtons = document.querySelectorAll("[data-modal]");
+    const closeButtons = document.querySelectorAll(".modal-close");
+    const documentButtons = document.querySelectorAll("[data-doc]");
 
-  const pdfModal = document.getElementById("pdfModal");
-  const pdfViewer = document.getElementById("pdfViewer");
-  const imageViewer = document.getElementById("imageViewer");
-  const pdfModalTitle = document.getElementById("pdfModalTitle");
-  const pdfDownloadLink = document.getElementById("pdfDownloadLink");
+    const pdfModal = document.getElementById("pdfModal");
+    const pdfViewer = document.getElementById("pdfViewer");
+    const imageViewer = document.getElementById("imageViewer");
+    const pdfModalTitle = document.getElementById("pdfModalTitle");
+    const pdfDownloadLink = document.getElementById("pdfDownloadLink");
 
-  modalButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const modal = document.getElementById(button.dataset.modal);
-      if (modal) modal.showModal();
-    });
-  });
-
-  documentButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const path = button.dataset.doc;
-      const type = button.dataset.type;
-      const title = button.dataset.title || "Customer Document";
-
-      pdfModalTitle.textContent = title;
-      pdfDownloadLink.href = path;
-
-      if (type === "image") {
-        imageViewer.src = path;
-        imageViewer.style.display = "block";
-
-        pdfViewer.src = "";
-        pdfViewer.style.display = "none";
-      } else {
-        pdfViewer.src = path;
-        pdfViewer.style.display = "block";
-
-        imageViewer.src = "";
-        imageViewer.style.display = "none";
+    const galleryImages = [
+      {
+        src: "assets/gallery/kitchen-1.png",
+        caption: "Kitchen Refresh"
+      },
+      {
+        src: "assets/gallery/bathroom-1.png",
+        caption: "Bathroom Detail"
+      },
+      {
+        src: "assets/gallery/living-room-1.png",
+        caption: "Living Area Reset"
+      },
+      {
+        src: "assets/gallery/deep-clean-1.png",
+        caption: "Deep Clean"
       }
+    ];
 
-      pdfModal.showModal();
+    let galleryIndex = 0;
+
+    const galleryModal = document.getElementById("galleryModal");
+    const galleryViewer = document.getElementById("galleryViewer");
+    const galleryCaption = document.getElementById("galleryCaption");
+    const galleryPrev = document.querySelector(".gallery-prev");
+    const galleryNext = document.querySelector(".gallery-next");
+
+    const coverflowCards = Array.from(document.querySelectorAll(".coverflow-card"));
+    const pricePrev = document.querySelector(".price-prev");
+    const priceNext = document.querySelector(".price-next");
+
+    let activePriceIndex = 0;
+
+    function updateGallery() {
+      const image = galleryImages[galleryIndex];
+
+      galleryViewer.src = image.src;
+      galleryViewer.alt = image.caption;
+      galleryCaption.textContent = image.caption;
+    }
+
+    function updatePriceCoverflow() {
+      coverflowCards.forEach((card, index) => {
+        card.classList.remove("active", "prev", "next", "hidden-card");
+
+        const total = coverflowCards.length;
+        const prevIndex = (activePriceIndex - 1 + total) % total;
+        const nextIndex = (activePriceIndex + 1) % total;
+
+        if (index === activePriceIndex) {
+          card.classList.add("active");
+        } else if (index === prevIndex) {
+          card.classList.add("prev");
+        } else if (index === nextIndex) {
+          card.classList.add("next");
+        } else {
+          card.classList.add("hidden-card");
+        }
+      });
+    }
+
+    modalButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const modal = document.getElementById(button.dataset.modal);
+        if (modal) modal.showModal();
+      });
     });
-  });
 
-  closeButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const dialog = button.closest("dialog");
+    documentButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const path = button.dataset.doc;
+        const type = button.dataset.type;
+        const title = button.dataset.title || "Customer Document";
 
-      if (dialog?.id === "pdfModal") {
-        pdfViewer.src = "";
-        imageViewer.src = "";
-      }
+        pdfModalTitle.textContent = title;
+        pdfDownloadLink.href = path;
 
-      if (dialog) dialog.close();
+        if (type === "image") {
+          imageViewer.src = path;
+          imageViewer.style.display = "block";
+
+          pdfViewer.src = "";
+          pdfViewer.style.display = "none";
+        } else {
+          pdfViewer.src = path;
+          pdfViewer.style.display = "block";
+
+          imageViewer.src = "";
+          imageViewer.style.display = "none";
+        }
+
+        pdfModal.showModal();
+      });
     });
-  });
 
-  document.querySelectorAll("dialog").forEach((dialog) => {
-    dialog.addEventListener("click", (event) => {
-      const rect = dialog.getBoundingClientRect();
+    document.querySelectorAll("[data-gallery-open]").forEach((button) => {
+      button.addEventListener("click", () => {
+        galleryIndex = 0;
+        updateGallery();
+        galleryModal.showModal();
+      });
+    });
 
-      const clickedOutside =
-        event.clientX < rect.left ||
-        event.clientX > rect.right ||
-        event.clientY < rect.top ||
-        event.clientY > rect.bottom;
+    if (galleryPrev && galleryNext) {
+      galleryPrev.addEventListener("click", (event) => {
+        event.stopPropagation();
 
-      if (clickedOutside) {
-        if (dialog.id === "pdfModal") {
+        galleryIndex =
+          (galleryIndex - 1 + galleryImages.length) % galleryImages.length;
+
+        updateGallery();
+      });
+
+      galleryNext.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        galleryIndex =
+          (galleryIndex + 1) % galleryImages.length;
+
+        updateGallery();
+      });
+    }
+
+    if (coverflowCards.length && pricePrev && priceNext) {
+      updatePriceCoverflow();
+
+      pricePrev.addEventListener("click", () => {
+        activePriceIndex =
+          (activePriceIndex - 1 + coverflowCards.length) %
+          coverflowCards.length;
+
+        updatePriceCoverflow();
+      });
+
+      priceNext.addEventListener("click", () => {
+        activePriceIndex =
+          (activePriceIndex + 1) %
+          coverflowCards.length;
+
+        updatePriceCoverflow();
+      });
+    }
+
+    closeButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const dialog = button.closest("dialog");
+
+        if (dialog?.id === "pdfModal") {
           pdfViewer.src = "";
           imageViewer.src = "";
         }
 
-        dialog.close();
-      }
+        if (dialog?.id === "galleryModal") {
+          galleryViewer.src = "";
+        }
+
+        if (dialog) dialog.close();
+      });
     });
-  });
 
-  const galleryImages = [
-  {
-    src: "assets/gallery/kitchen-1.png",
-    caption: "Kitchen Refresh"
-  },
-  {
-    src: "assets/gallery/bathroom-1.png",
-    caption: "Bathroom Detail"
-  },
-  {
-    src: "assets/gallery/living-room-1.png",
-    caption: "Living Area Reset"
-  },
-  {
-    src: "assets/gallery/deep-clean-1.png",
-    caption: "Deep Clean"
-  }
-];
+    document.querySelectorAll("dialog").forEach((dialog) => {
+      dialog.addEventListener("click", (event) => {
+        const rect = dialog.getBoundingClientRect();
 
-let galleryIndex = 0;
+        const clickedOutside =
+          event.clientX < rect.left ||
+          event.clientX > rect.right ||
+          event.clientY < rect.top ||
+          event.clientY > rect.bottom;
 
-const galleryModal = document.getElementById("galleryModal");
-const galleryOpenBtn = document.querySelector("[data-gallery-open]");
-const galleryViewer = document.getElementById("galleryViewer");
-const galleryCaption = document.getElementById("galleryCaption");
-const galleryPrev = document.querySelector(".gallery-prev");
-const galleryNext = document.querySelector(".gallery-next");
+        if (clickedOutside) {
+          if (dialog.id === "pdfModal") {
+            pdfViewer.src = "";
+            imageViewer.src = "";
+          }
 
-function updateGallery() {
-  const image = galleryImages[galleryIndex];
+          if (dialog.id === "galleryModal") {
+            galleryViewer.src = "";
+          }
 
-  galleryViewer.src = image.src;
-  galleryViewer.alt = image.caption;
-  galleryCaption.textContent = image.caption;
-}
-
-document.querySelectorAll("[data-gallery-open]").forEach((button) => {
-  button.addEventListener("click", () => {
-    galleryIndex = 0;
-    updateGallery();
-    galleryModal.showModal();
-  });
-});
-    
-galleryOpenBtn.addEventListener("click", () => {
-  galleryIndex = 0;
-  updateGallery();
-  galleryModal.showModal();
-});
-    
-galleryPrev.addEventListener("click", () => {
-  galleryIndex = 
-    (galleryIndex - 1 + galleryImages.length) % galleryImages.length;
-
-  updateGallery();
-});
-
-galleryNext.addEventListener("click", () => {
-  galleryIndex =
-    (galleryIndex + 1) % galleryImages.length;
-
-  updateGallery();
-});
-
-const coverflowCards = Array.from(document.querySelectorAll(".coverflow-card"));
-const pricePrev = document.querySelector(".price-prev");
-const priceNext = document.querySelector(".price-next");
-
-let activePriceIndex = 0;
-
-function updatePriceCoverflow() {
-  coverflowCards.forEach((card, index) => {
-    card.classList.remove("active", "prev", "next", "hidden-card");
-
-    const total = coverflowCards.length;
-    const prevIndex = (activePriceIndex - 1 + total) % total;
-    const nextIndex = (activePriceIndex + 1) % total;
-
-    if (index === activePriceIndex) {
-      card.classList.add("active");
-    } else if (index === prevIndex) {
-      card.classList.add("prev");
-    } else if (index === nextIndex) {
-      card.classList.add("next");
-    } else {
-      card.classList.add("hidden-card");
-    }
-  });
-}
-
-if (coverflowCards.length && pricePrev && priceNext) {
-  updatePriceCoverflow();
-
-  pricePrev.addEventListener("click", () => {
-    activePriceIndex =
-      (activePriceIndex - 1 + coverflowCards.length) %
-      coverflowCards.length;
-
-    updatePriceCoverflow();
-  });
-
-  priceNext.addEventListener("click", () => {
-    activePriceIndex =
-      (activePriceIndex + 1) %
-      coverflowCards.length;
-
-    updatePriceCoverflow();
-  });
-}
-
-</script>
+          dialog.close();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
