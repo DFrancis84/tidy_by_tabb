@@ -67,7 +67,8 @@ img {
 .logo-banner {
   display: flex;
   justify-content: center;
-  padding-top: 18px;
+  padding-top: 8px;
+  margin-bottom: -20px;
   position: relative;
   z-index: 1001;
 }
@@ -80,7 +81,7 @@ img {
 }
 
 .brand img {
-  height: clamp(120px, 16vw, 220px);
+  height: clamp(180px, 22vw, 340px);
   width: auto;
   object-fit: contain;
   filter:
@@ -875,7 +876,7 @@ h3 {
 
   .logo-banner { padding-top: 10px; }
 
-  .brand img { height: clamp(110px, 32vw, 160px); }
+  .brand img { height: clamp(120px, 32vw, 180px); }
 
   .topbar {
     top: 8px;
