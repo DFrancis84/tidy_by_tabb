@@ -941,7 +941,8 @@ h3 {
     backdrop-filter: blur(18px);
   }
 
-  .mobile-hotbar a {
+  .mobile-hotbar a,
+  .mobile-hotbar-link {
     display: grid;
     place-items: center;
 
@@ -957,8 +958,16 @@ h3 {
     transition: 180ms ease;
   }
 
-  .mobile-hotbar a:hover {
+  .mobile-hotbar a:hover,
+  .mobile-hotbar-link:hover {
     background: rgba(98, 220, 229, 0.18);
+  }
+
+  .mobile-hotbar-link {
+    border: 0;
+    background: transparent;
+    font: inherit;
+    cusror: pointer;
   }
 
   .request-modal,
