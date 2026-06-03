@@ -33,7 +33,7 @@
         <a href="#aboutMe">About Me</a>
         <a href="#documents">Documents</a>
         <a href="#reviews">Reviews</a>
-        <button type="button" data-modal="galleryModal">Gallery</button>
+        <button class="primary-btn gallery-open-btn" type="button" data-gallery-open>View Gallery</button>
         <button type="button" data-modal="socialModal">Socials</button>
       </nav>
 
@@ -446,6 +446,8 @@
 
 let galleryIndex = 0;
 
+const galleryModal = document.getElementById("galleryModal");
+const galleryOpenBtn = document.querySelector("[data-gallery-open]");
 const galleryViewer = document.getElementById("galleryViewer");
 const galleryCaption = document.getElementById("galleryCaption");
 const galleryPrev = document.querySelector(".gallery-prev");
@@ -459,8 +461,14 @@ function updateGallery() {
   galleryCaption.textContent = image.caption;
 }
 
+galleryOpenBtn.addEventListener("click", () => {
+  galleryIndex = 0;
+  updateGallery();
+  galleryModal.showModal();
+});
+    
 galleryPrev.addEventListener("click", () => {
-  galleryIndex =
+  galleryIndex = 
     (galleryIndex - 1 + galleryImages.length) % galleryImages.length;
 
   updateGallery();
