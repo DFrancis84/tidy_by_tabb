@@ -876,7 +876,7 @@ h3 {
 
   .logo-banner { padding-top: 10px; }
 
-  .brand img { height: clamp(120px, 32vw, 180px); }
+  .brand img { height: clamp(140px, 38vw, 220px); }
 
   .topbar {
     top: 8px;
@@ -1029,7 +1029,7 @@ h3 {
 /* ========================= */
 
 @media (max-width: 520px) {
-  .brand img { height: clamp(96px, 34vw, 135px); }
+  .brand img { height: clamp(135px, 42vw, 190px); }
 
   .topbar .request-pill {
     padding: 9px 11px;
