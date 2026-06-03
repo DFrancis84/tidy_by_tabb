@@ -360,119 +360,151 @@ h3 {
 /* ========================= */
 
 .pricing-coverflow {
-  width: min(980px, 100%);
-  margin: 0 auto;
+  width: min(1160px, 100%);
+  margin: 0 auto 18px;
+
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .coverflow-stage {
   position: relative;
-  height: 390px;
-  perspective: 1100px;
-  transform-style: preserve-3d;
-  overflow: visible;
+  height: 380px;
+  overflow: hidden;
 }
 
 .coverflow-card {
   position: absolute;
-  top: 48px;
+  top: 36px;
   left: 50%;
-  width: min(330px, 78vw);
+
+  width: min(360px, 78vw);
   min-height: 270px;
+
+  padding: 28px;
+  border-radius: var(--radius-lg);
+
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  background: var(--glass);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px);
+
   opacity: 0;
   pointer-events: none;
-  transform: translateX(-50%) scale(0.75);
+
+  transform: translateX(-50%) scale(0.76);
+
   transition:
     transform 420ms ease,
     opacity 420ms ease,
     filter 420ms ease;
 }
 
+.coverflow-card.featured {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.86),
+      rgba(98, 220, 229, 0.32)
+    ),
+    var(--glass);
+}
+
 .coverflow-card.active {
   z-index: 5;
   opacity: 1;
   pointer-events: auto;
+
   transform:
     translateX(-50%)
-    translateY(-16px)
-    scale(1.06);
+    translateY(-10px)
+    scale(1.05);
 }
 
 .coverflow-card.prev {
   z-index: 3;
-  opacity: 0.78;
+  opacity: 0.72;
   pointer-events: auto;
+
   transform:
-    translateX(calc(-50% - 190px))
-    translateY(18px)
-    rotateY(18deg)
+    translateX(calc(-50% - 220px))
+    translateY(24px)
     scale(0.82);
-  filter: saturate(0.9);
+
+  filter: saturate(0.88);
 }
 
 .coverflow-card.next {
   z-index: 3;
-  opacity: 0.78;
+  opacity: 0.72;
   pointer-events: auto;
+
   transform:
-    translateX(calc(-50% + 190px))
-    translateY(18px)
-    rotateY(-18deg)
+    translateX(calc(-50% + 220px))
+    translateY(24px)
     scale(0.82);
-  filter: saturate(0.9);
+
+  filter: saturate(0.88);
 }
 
 .coverflow-card.hidden-card {
   z-index: 1;
   opacity: 0;
+
   transform:
     translateX(-50%)
-    translateY(40px)
+    translateY(48px)
     scale(0.68);
 }
 
 .coverflow-arrow {
-  width: 44px;
-  height: 44px;
+  position: relative;
+  z-index: 8;
+
+  width: 48px;
+  height: 48px;
+
   border: 0;
   border-radius: 999px;
+
   color: white;
-  background: linear-gradient(135deg, var(--pink), var(--teal));
-  font-size: 1.8rem;
+  background:
+    linear-gradient(
+      135deg,
+      var(--pink),
+      var(--teal)
+    );
+
+  font-size: 2rem;
   font-weight: 900;
+
   cursor: pointer;
-  box-shadow: 0 14px 34px rgba(231, 90, 168, 0.24);
+
+  box-shadow:
+    0 14px 34px rgba(231, 90, 168, 0.24);
+
   transition: 180ms ease;
-  z-index: 6;
 }
 
 .coverflow-arrow:hover {
   transform: translateY(-2px);
 }
 
-.coverflow-card.price-card {
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  background: var(--glass);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(20px);
+.price-card {
+  position: relative;
+  min-height: 260px;
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
-.coverflow-card.price-card.featured {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(98, 220, 229, 0.32)),
-    var(--glass);
-}
-
-.coverflow-card .price {
-  color: var(--pink);
-}
-
-.coverflow-card .tag {
-  background: var(--pink);
-  color: white;
+.addon-card {
+  width: min(1160px, 100%);
+  margin: 20px auto 0;
+  padding: 24px;
+  border-radius: var(--radius-lg);
 }
 
 /* ========================= */
