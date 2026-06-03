@@ -462,6 +462,14 @@ function updateGallery() {
   galleryCaption.textContent = image.caption;
 }
 
+document.querySelectorAll("[data-gallery-open]").forEach((button) => {
+  button.addEventListener("click", () => {
+    galleryIndex = 0;
+    updateGallery();
+    galleryModal.showModal();
+  });
+});
+    
 galleryOpenBtn.addEventListener("click", () => {
   galleryIndex = 0;
   updateGallery();
