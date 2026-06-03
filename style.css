@@ -529,26 +529,92 @@ h3 {
 
 .addon-card {
   width: min(1160px, 100%);
-  margin: 20px auto 0;
-  padding: 24px;
-  border-radius: var(--radius-lg);
+  margin: 26px auto 0;
+  padding: 30px;
+
+  border-radius: var(--radius-xl);
+
+  position: relative;
+  overflow: hidden;
+
+  border: 1px solid rgba(255, 255, 255, 0.78);
+
+  background:
+    radial-gradient(circle at top left, rgba(255, 115, 190, 0.18), transparent 18rem),
+    radial-gradient(circle at bottom right, rgba(98, 220, 229, 0.24), transparent 18rem),
+    rgba(255, 255, 255, 0.72);
+
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px);
+}
+
+.addon-card::before {
+  content: "✨";
+  position: absolute;
+  top: 18px;
+  right: 24px;
+
+  font-size: 3rem;
+  opacity: 0.26;
+}
+
+.addon-card h3 {
+  margin-bottom: 18px;
+
+  color: var(--deep);
+
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
 }
 
 .addon-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
 
 .addon-list span {
-  border-radius: 999px;
-  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 52px;
+
+  padding: 12px 14px;
+
+  border-radius: 18px;
 
   color: var(--deep);
-  font-weight: 850;
 
-  background: rgba(255, 255, 255, 0.66);
+  font-weight: 900;
+  text-align: center;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.86),
+      rgba(255,255,255,0.58)
+    );
+
   border: 1px solid rgba(40, 189, 210, 0.18);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.62),
+    0 10px 22px rgba(21, 45, 75, 0.08);
+
+  transition: 180ms ease;
+}
+
+.addon-list span:hover {
+  transform: translateY(-3px);
+
+  border-color: rgba(231, 90, 168, 0.28);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 115, 190, 0.16),
+      rgba(98, 220, 229, 0.20)
+    );
 }
 
 /* ========================= */
@@ -883,6 +949,10 @@ h3 {
     height: 40px;
   }
 
+  .addon-list {
+    grid-template-columns: 1fr;
+  }
+  
   .mobile-hotbar {
     position: fixed;
     z-index: 60;
