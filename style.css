@@ -453,6 +453,28 @@ h3 {
   transform: translateY(-2px);
 }
 
+.coverflow-card.price-card {
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  background: var(--glass);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px);
+}
+
+.coverflow-card.price-card.featured {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(98, 220, 229, 0.32)),
+    var(--glass);
+}
+
+.coverflow-card .price {
+  color: var(--pink);
+}
+
+.coverflow-card .tag {
+  background: var(--pink);
+  color: white;
+}
+
 /* ========================= */
 /* GALLERY MODAL */
 /* ========================= */
