@@ -248,6 +248,7 @@ img {
   bottom: -90px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(98, 220, 229, 0.48), transparent 70%);
+  pointer-events: none;
 }
 
 .eyebrow {
