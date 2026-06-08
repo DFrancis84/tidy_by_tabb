@@ -1355,6 +1355,31 @@ h3 {
   color: var(--pink);
 }
 
+.footer-contact {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.footer-service-area {
+  margin: 10px 0 0;
+  max-width: 360px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.footer-legal p:first-child {
+  display: inline-flex;
+  margin: 0 0 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  color: var(--deep);
+  font-weight: 900;
+  background: rgba(255,255,255,0.68);
+  border: 1px solid rgba(40,189,210,0.18);
+}
+
 /* Mobile */
 
 @media (max-width: 920px) {
