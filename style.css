@@ -1240,6 +1240,39 @@ h3 {
 }
 
 /* ========================= */
+/* FAQ */
+/* ========================= */
+
+.faq-modal {
+  width: min(780px, calc(100% - 28px));
+}
+
+.faq-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.faq-list details {
+  border-radius: 20px;
+  padding: 16px;
+  background: rgba(255,255,255,0.68);
+  border: 1px solid rgba(40,189,210,0.18);
+}
+
+.faq-list summary {
+  cursor: pointer;
+  font-weight: 950;
+  color: var(--deep);
+}
+
+.faq-list p {
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+/* ========================= */
 /* FOOTER */
 /* ========================= */
 
