@@ -390,6 +390,24 @@
   </dialog>
 
   <script>
+
+    const socialBubble = document.querySelector(".social-bubble");
+    const socialToggle = document.querySelector(".social-toggle");
+
+      if (socialBubble && socialToggle) {
+        socialToggle.addEventListener("click", (event) => {
+          event.stopPropagation();
+          socialBubble.classList.toggle("open");
+        });
+
+        document.addEventListener("click", () => {
+          socialBubble.classList.remove("open");
+        });
+
+        socialBubble.addEventListener("click", (event) => {
+          event.stopPropagation();
+        });
+      }
     const modalButtons = document.querySelectorAll("[data-modal]");
     const closeButtons = document.querySelectorAll(".modal-close");
     const documentButtons = document.querySelectorAll("[data-doc]");
