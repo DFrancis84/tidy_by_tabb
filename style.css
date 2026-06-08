@@ -1118,6 +1118,25 @@ h3 {
 }
 
 /* ========================= */
+/* PRIVACY */
+/* ========================= */
+
+.privacy-modal {
+  width: min(720px, calc(100% - 28px));
+}
+
+.privacy-modal p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.privacy-updated {
+  margin-bottom: 0;
+  font-weight: 800;
+  color: var(--deep) !important;
+}
+
+/* ========================= */
 /* SOCIAL BUBBLE */
 /* ========================= */
 
@@ -1288,6 +1307,19 @@ h3 {
 .footer-legal a {
   color: var(--pink);
   font-weight: 800;
+}
+
+.footer-modal-link {
+  border: 0;
+  background: transparent;
+  color: var(--deep);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.footer-modal-link:hover {
+  color: var(--pink);
 }
 
 /* Mobile */
