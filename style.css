@@ -1062,6 +1062,7 @@ h3 {
   box-shadow: 0 16px 34px rgba(231, 90, 168, 0.32);
   font-size: 1.4rem;
   cursor: pointer;
+  position: relative;
 }
 
 .social-popover {
@@ -1105,6 +1106,42 @@ h3 {
 
 .social-popover a:hover {
   background: linear-gradient(135deg, rgba(255,115,190,0.16), rgba(98,220,229,0.18));
+}
+
+.social-toggle::after {
+  content: "Connect With Us";
+
+  position: absolute;
+  right: 64px;
+  top: 50%;
+
+  transform: translateY(-50%) translateX(8px);
+
+  padding: 8px 12px;
+
+  border-radius: 999px;
+
+  background: rgba(32, 50, 74, 0.92);
+  color: white;
+
+  font-size: 0.8rem;
+  font-weight: 800;
+
+  white-space: nowrap;
+
+  opacity: 0;
+  visibility: hidden;
+
+  transition: 180ms ease;
+
+  pointer-events: none;
+}
+
+.social-toggle:hover::after,
+.social-toggle:focus::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
 }
 
 /* ========================= */
