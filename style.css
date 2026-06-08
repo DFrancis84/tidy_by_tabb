@@ -760,8 +760,11 @@ h3 {
 .about-trust {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 24px;
+  justify-content: center;
+  gap: 14px;
+
+  margin: 24px auto 36px;
+  max-width: 900px;
 }
 
 .about-trust span {
@@ -785,6 +788,45 @@ h3 {
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.6),
     0 8px 18px rgba(21,45,75,0.06);
+}
+
+.trust-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 14px 18px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.82),
+      rgba(255,255,255,0.58)
+    );
+
+  border: 1px solid rgba(255,255,255,0.78);
+
+  box-shadow:
+    0 12px 28px rgba(21,45,75,0.08);
+
+  backdrop-filter: blur(16px);
+
+  font-weight: 800;
+  color: var(--deep);
+
+  transition: 180ms ease;
+}
+
+.trust-badge span {
+  font-size: 1.15rem;
+}
+
+.trust-badge:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 16px 34px rgba(40,189,210,0.14);
 }
 
 @media (max-width: 920px) {
@@ -1410,7 +1452,19 @@ h3 {
   }
 
   .download-doc-btn { width: 100%; }
-}
+
+  .about-trust {
+    gap: 10px;
+    margin: 20px auto 28px;
+  }
+
+  .trust-badge {
+    width: calc(50% - 5px);
+    justify-content: center;
+    text-align: center;
+    padding: 12px;
+    font-size: 0.9rem;
+  }
 
 /* ========================= */
 /* SMALL PHONES */
@@ -1436,5 +1490,9 @@ h3 {
   .addon-list span {
     width: 100%;
     text-align: center;
+  }
+
+  .trust-badge {
+    width: 100%;
   }
 }
