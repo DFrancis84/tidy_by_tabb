@@ -909,6 +909,23 @@ h3 {
   margin: 26px auto 0;
 }
 
+.review-coming-soon {
+  text-align: center;
+}
+
+.review-coming-soon .bubble-icon {
+  margin: 0 auto 20px;
+}
+
+.review-coming-soon h3 {
+  margin-bottom: 12px;
+}
+
+.review-coming-soon p {
+  max-width: 280px;
+  margin: 0 auto;
+}
+
 /* ========================= */
 /* MODALS */
 /* ========================= */
