@@ -1042,6 +1042,72 @@ h3 {
 }
 
 /* ========================= */
+/* SOCIAL BUBBLE */
+/* ========================= */
+
+.social-bubble {
+  position: fixed;
+  right: 18px;
+  bottom: 92px;
+  z-index: 80;
+}
+
+.social-toggle {
+  width: 54px;
+  height: 54px;
+  border: 0;
+  border-radius: 999px;
+  color: white;
+  background: linear-gradient(135deg, var(--pink), var(--teal));
+  box-shadow: 0 16px 34px rgba(231, 90, 168, 0.32);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.social-popover {
+  position: absolute;
+  right: 0;
+  bottom: 66px;
+
+  display: grid;
+  gap: 8px;
+
+  min-width: 170px;
+  padding: 12px;
+
+  border-radius: 22px;
+
+  background: rgba(255,255,255,0.82);
+  border: 1px solid rgba(255,255,255,0.78);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px);
+
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  pointer-events: none;
+
+  transition: 180ms ease;
+}
+
+.social-bubble.open .social-popover {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.social-popover a {
+  border-radius: 16px;
+  padding: 12px 14px;
+  font-weight: 900;
+  color: var(--deep);
+  background: rgba(255,255,255,0.68);
+}
+
+.social-popover a:hover {
+  background: linear-gradient(135deg, rgba(255,115,190,0.16), rgba(98,220,229,0.18));
+}
+
+/* ========================= */
 /* FOOTER */
 /* ========================= */
 
