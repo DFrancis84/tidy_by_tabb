@@ -129,25 +129,27 @@ body.accessibility-mode .stars {
 }
 
 @media (max-width: 920px) {
-
-  .accessibility-toggle{
+  .accessibility-toggle {
     position: fixed;
-
     top: 90px;
     left: 16px;
-
     right: auto;
     bottom: auto;
 
     width: 52px;
     height: 52px;
+    padding: 0;
 
     display: grid;
     place-items: center;
 
+    border: 0;
     border-radius: 50%;
 
-    z-index: 140;
+    z-index: 9999;
+
+    pointer-events: auto;
+    touch-action: manipulation;
   }
 }
 
