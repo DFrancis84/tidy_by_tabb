@@ -18,6 +18,23 @@ if (accessibilityToggle) {
   });
 }
 
+function updateAccessibilityButton() {
+  const btn = document.querySelector(".accessibility-toggle");
+
+  if (!btn) return;
+
+  if (window.innerWidth <= 920) {
+    btn.innerHTML = "♿";
+    btn.setAttribute("aria-label", "Accessibility Settings");
+  } else {
+    btn.textContent = "Accessibility";
+    btn.removeAttribute("aria-label");
+  }
+}
+
+window.addEventListener("resize", updateAccessibilityButton);
+updateAccessibilityButton();
+
 /* =========================
    MODALS
 ========================= */
