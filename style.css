@@ -129,19 +129,27 @@ body.accessibility-mode .stars {
 }
 
 @media (max-width: 920px) {
-  .accessibility-toggle {
-    right: 14px;
-    bottom: 88px;
+  .social-bubble{
+    right:14px;
+    bottom:88px;
+    z-index:130;
+  }
 
-    width: 52px;
-    height: 52px;
-    padding: 0;
+  .accessibility-toggle{
+    right:14px;
+    bottom:150px;
 
-    display: grid;
-    place-items: center;
+    width:52px;
+    height:52px;
 
-    font-size: 1.2rem;
-    z-index: 140;
+    padding:0;
+
+    display:grid;
+    place-items:center;
+
+    font-size:1.2rem;
+
+    z-index:140;
   }
 }
 
