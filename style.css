@@ -153,6 +153,18 @@ body.accessibility-mode .stars {
   }
 }
 
+@media (max-width: 520px) {
+  .social-bubble {
+    right: 12px;
+    bottom: 86px;
+  }
+
+  .accessibility-toggle {
+    right: 12px;
+    bottom: 146px;
+  }
+}
+
 /* ========================= */
 /* LOGO BANNER */
 /* ========================= */
