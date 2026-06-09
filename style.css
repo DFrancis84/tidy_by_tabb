@@ -130,22 +130,22 @@ body.accessibility-mode .stars {
 
 @media (max-width: 920px) {
 
-  .social-bubble {
-    right: 14px;
-    bottom: 88px;
-  }
+  .accessibility-toggle{
+    position: fixed;
 
-  .accessibility-toggle {
-    left: 14px;
+    top: 90px;
+    left: 16px;
+
     right: auto;
-
-    bottom: 88px;
+    bottom: auto;
 
     width: 52px;
     height: 52px;
 
     display: grid;
     place-items: center;
+
+    border-radius: 50%;
 
     z-index: 140;
   }
