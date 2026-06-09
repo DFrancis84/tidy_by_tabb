@@ -1,4 +1,24 @@
 /* =========================
+   ACCESSIBILITY TOGGLE
+========================= */
+
+const accessibilityToggle = document.querySelector(".accessibility-toggle");
+
+if (accessibilityToggle) {
+  const savedMode = localStorage.getItem("accessibilityMode") === "true";
+
+  document.body.classList.toggle("accessibility-mode", savedMode);
+  accessibilityToggle.setAttribute("aria-pressed", savedMode);
+
+  accessibilityToggle.addEventListener("click", () => {
+    const isActive = document.body.classList.toggle("accessibility-mode");
+
+    accessibilityToggle.setAttribute("aria-pressed", isActive);
+    localStorage.setItem("accessibilityMode", isActive);
+  });
+}
+
+/* =========================
    MODALS
 ========================= */
 
