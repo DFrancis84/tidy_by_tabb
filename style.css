@@ -108,20 +108,34 @@ body.accessibility-mode .stars {
   color: #6f32c9;
 }
 
-.accessibility-toggle {
-  position: fixed;
-  right: 18px;
-  bottom: 154px;
-  z-index: 80;
-  border: 0;
-  border-radius: 999px;
-  padding: 10px 14px;
-  color: white;
-  font: inherit;
-  font-weight: 900;
-  background: linear-gradient(135deg, var(--teal), var(--pink));
-  box-shadow: 0 14px 34px rgba(21, 45, 75, 0.18);
-  cursor: pointer;
+.accessibility-toggle{
+  position:fixed;
+  right:18px;
+  bottom:140px; /* above socials */
+
+  z-index:81;
+
+  border:none;
+  border-radius:999px;
+
+  padding:10px 14px;
+
+  font:inherit;
+  font-weight:800;
+
+  color:white;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--teal),
+      var(--pink)
+    );
+
+  box-shadow:
+    0 10px 24px rgba(0,0,0,.15);
+
+  cursor:pointer;
 }
 
 /* ========================= */
@@ -1447,6 +1461,21 @@ h3 {
   html { scroll-snap-type: none; }
 
   body { padding-bottom: 82px; }
+
+  .accessibility-toggle{
+    right:14px;
+    bottom:118px;
+
+    width:52px;
+    height:52px;
+
+    padding:0;
+
+    display:grid;
+    place-items:center;
+
+    font-size:1.2rem;
+  }
 
   .logo-banner { padding-top: 10px; }
 
