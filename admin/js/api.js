@@ -1,4 +1,4 @@
-const API_URL="PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE";
+const API_URL="https://script.google.com/macros/s/AKfycbyLkwoj-c2DqYWpLNaYOgsZi9_FqgvMQm-7a2Zis8TA5zpRDKY6TK4RXtistJV873gw/exec";
 export class GalleryApi{
  constructor(onRequest=()=>{}){this.onRequest=onRequest}
  async list(){return this.request("list","GET",null,{published:"all"})}
