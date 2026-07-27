@@ -16,8 +16,18 @@ function closeSidebar(){sidebar.classList.remove("open");overlay.classList.remov
 function show(id){if(!names[id])return;$$(".nav").forEach(n=>n.classList.toggle("active",n.dataset.view===id));$$(".view").forEach(v=>v.classList.toggle("active",v.id===id));pageTitle.textContent=names[id];history.replaceState(null,"","#"+id);closeSidebar();scrollTo({top:0,behavior:"smooth"})}
 function stats(){const published=records.filter(r=>r.status==="published").length,drafts=records.filter(r=>r.status==="draft").length,featured=records.find(r=>r.featured);$("#statTotal").textContent=records.length;$("#statPublished").textContent=published;$("#statDrafts").textContent=drafts;$("#statFeatured").textContent=featured?featured.title:"None"}
 function esc(v=""){return v.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
-function imageMarkup(r){const src=r.comparisonImage||r.afterImage||r.beforeImage;return src?`<img src="${esc(src)}" alt="${esc(r.title)}">`:"🫧 No preview image"}
-function render(){
+function imageMarkup(record) {
+  const source = normalizeImageUrl(
+    record.comparisonImage ||
+    record.afterImage ||
+    record.beforeImage
+  );
+
+  return source
+    ? `<img src="${esc(source)}" alt="${esc(record.title)}">`
+    : "🫧 No preview image";
+}
+ function render(){
  const q=$("#gallerySearch").value.trim().toLowerCase(),cat=$("#galleryCategory").value,status=$("#galleryStatus").value;
  const filtered=records.filter(r=>(!q||r.title.toLowerCase().includes(q)||r.category.toLowerCase().includes(q))&&(!cat||r.category===cat)&&(!status||r.status===status));
  $("#galleryGrid").innerHTML=filtered.map(r=>`<article class="gallery-card">
@@ -32,7 +42,13 @@ function render(){
  $$("[data-edit]").forEach(b=>b.onclick=()=>openDrawer(b.dataset.edit));
  $$("[data-toggle]").forEach(b=>b.onclick=()=>togglePublish(b.dataset.toggle));
 }
-function preview(input,box){const url=input.value.trim();box.innerHTML=url?`<img src="${esc(url)}" alt="">`:"No image"}
+function preview(input, box) {
+  const url = normalizeImageUrl(input.value);
+
+  box.innerHTML = url
+    ? `<img src="${esc(url)}" alt="" onerror="this.parentElement.innerHTML='Unable to load image'">`
+    : "No image";
+}
 function openDrawer(id=""){
  const r=records.find(x=>x.id===id);
  $("#drawerTitle").textContent=r?"Edit transformation":"Add transformation";
@@ -67,3 +83,23 @@ $("#afterImage").addEventListener("input",()=>preview($("#afterImage"),$("#after
 addEventListener("keydown",e=>{if(e.key==="Escape"){closeSidebar();closeDrawer()}});
 show(location.hash.slice(1)||"dashboard");render();stats();
 })();
+
+function normalizeImageUrl(url = "") {
+  const value = url.trim();
+
+  const driveMatch = value.match(
+    /drive\.google\.com\/file\/d\/([^/]+)/
+  );
+
+  if (driveMatch) {
+    return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1600`;
+  }
+
+  const idMatch = value.match(/[?&]id=([^&]+)/);
+
+  if (value.includes("drive.google.com") && idMatch) {
+    return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w1600`;
+  }
+
+  return value;
+}
