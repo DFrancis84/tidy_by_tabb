@@ -308,3 +308,20 @@ canvas {
     min-width: 0;
   }
 }
+
+
+/* v2.2 workflow and category fixes */
+#recordCategory {
+  width: 100%;
+}
+
+#drawerEyebrow {
+  max-width: 520px;
+  line-height: 1.35;
+}
+
+@media (max-width: 760px) {
+  #recordCategory {
+    font-size: 16px;
+  }
+}

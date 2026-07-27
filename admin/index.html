@@ -84,7 +84,21 @@
         <input id="recordId" type="hidden">
         <div class="form-grid">
           <label class="field field-full"><span>Title</span><input id="recordTitle" required maxlength="80"></label>
-          <label class="field field-full"><span>Category</span><input id="recordCategory" required maxlength="50"></label>
+          <label class="field field-full">
+            <span>Category</span>
+            <select id="recordCategory" required>
+              <option value="">Select a category</option>
+              <option value="Bathroom">Bathroom</option>
+              <option value="Bedroom">Bedroom</option>
+              <option value="Kitchen">Kitchen</option>
+              <option value="Living Room">Living Room</option>
+              <option value="Move-In / Move-Out">Move-In / Move-Out</option>
+              <option value="Deep Clean">Deep Clean</option>
+              <option value="Organization">Organization</option>
+              <option value="Commercial">Commercial</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
           <div class="field field-full">
             <span>Before photo</span>
             <div class="upload-row">

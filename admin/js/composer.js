@@ -6,11 +6,20 @@ import {
 import { loading, toast } from "./ui.js";
 
 export class ComparisonComposer {
-  constructor({ api, getBeforeUrl, getAfterUrl, setComparisonUrl } = {}) {
+  constructor({
+    api,
+    getBeforeUrl,
+    getAfterUrl,
+    getTitle,
+    getCategory,
+    setComparisonUrl,
+  } = {}) {
     this.api = api;
     this.getBeforeUrl = getBeforeUrl;
     this.getAfterUrl = getAfterUrl;
     this.setComparisonUrl = setComparisonUrl;
+    this.getTitle = getTitle;
+    this.getCategory = getCategory;
 
     this.canvas = document.getElementById("comparisonCanvas");
     this.preview = document.getElementById("comparisonPreview");
@@ -72,9 +81,14 @@ export class ComparisonComposer {
       const beforeUrl = this.swapped ? originalAfter : originalBefore;
       const afterUrl = this.swapped ? originalBefore : originalAfter;
 
+      const [beforeData, afterData] = await Promise.all([
+        this.api.getImageData(beforeUrl),
+        this.api.getImageData(afterUrl),
+      ]);
+
       const [beforeImage, afterImage] = await Promise.all([
-        loadImage(getPreviewUrl(beforeUrl, 1600)),
-        loadImage(getPreviewUrl(afterUrl, 1600)),
+        loadImage(beforeData.data.dataUrl),
+        loadImage(afterData.data.dataUrl),
       ]);
 
       this.drawLayout(beforeImage, afterImage);
@@ -96,7 +110,7 @@ export class ComparisonComposer {
       toast("Combined photo created.");
     } catch (error) {
       toast(
-        `${error.message} Google Drive image permissions may need to allow link access.`,
+        error.message,
         "error",
         6000
       );
@@ -232,6 +246,19 @@ export class ComparisonComposer {
     );
   }
 
+  buildComparisonFileName() {
+    const title =
+      String(this.getTitle?.() || "Untitled").trim() ||
+      "Untitled";
+
+    const category =
+      String(
+        this.getCategory?.() || "Uncategorized"
+      ).trim() || "Uncategorized";
+
+    return `${title}-${category}-Comparison.jpg`;
+  }
+
   async save() {
     if (!this.generatedDataUrl) {
       toast(
@@ -249,7 +276,7 @@ export class ComparisonComposer {
 
     try {
       const response = await this.api.uploadImage({
-        fileName: `tidy-comparison-${Date.now()}.jpg`,
+        fileName: this.buildComparisonFileName(),
         mimeType: "image/jpeg",
         dataUrl: this.generatedDataUrl,
       });

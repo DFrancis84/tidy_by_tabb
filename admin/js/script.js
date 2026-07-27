@@ -26,6 +26,9 @@ async function loadGallery() {
       : [];
 
     gallery.setRecords(records);
+    drawer.setCategories(
+      records.map((record) => record.category)
+    );
     developer.count(records.length);
   } catch (error) {
     gallery.setRecords([]);

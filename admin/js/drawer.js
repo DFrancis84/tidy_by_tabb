@@ -12,6 +12,7 @@ export class GalleryDrawer {
     this.onSaved = typeof onSaved === "function" ? onSaved : () => {};
     this.onDeleted = typeof onDeleted === "function" ? onDeleted : () => {};
     this.currentRecord = null;
+    this.categoryOptions = [];
 
     this.drawer = document.getElementById("galleryDrawer");
     this.backdrop = document.getElementById("drawerBackdrop");
@@ -43,10 +44,76 @@ export class GalleryDrawer {
       api: this.api,
       getBeforeUrl: () => this.fields.beforeImage.value,
       getAfterUrl: () => this.fields.afterImage.value,
+      getTitle: () => this.fields.title.value,
+      getCategory: () => this.fields.category.value,
       setComparisonUrl: (url) => {
         this.fields.comparisonImage.value = url;
       },
     });
+  }
+
+  setCategories(categories = []) {
+    this.categoryOptions = [
+      ...new Set(
+        categories
+          .map((category) => String(category || "").trim())
+          .filter(Boolean)
+      ),
+    ].sort((a, b) => a.localeCompare(b));
+
+    this.renderCategoryOptions(
+      this.fields.category?.value || ""
+    );
+  }
+
+  renderCategoryOptions(selectedValue = "") {
+    if (!this.fields.category) return;
+
+    const defaults = [
+      "Bathroom",
+      "Bedroom",
+      "Kitchen",
+      "Living Room",
+      "Move-In / Move-Out",
+      "Deep Clean",
+      "Organization",
+      "Commercial",
+      "Other",
+    ];
+
+    const options = [
+      ...new Set([...defaults, ...this.categoryOptions]),
+    ].sort((a, b) => a.localeCompare(b));
+
+    if (
+      selectedValue &&
+      !options.includes(selectedValue)
+    ) {
+      options.unshift(selectedValue);
+    }
+
+    this.fields.category.innerHTML = [
+      '<option value="">Select a category</option>',
+      ...options.map(
+        (category) =>
+          `<option value="${this.escapeAttribute(category)}">${this.escapeHtml(category)}</option>`
+      ),
+    ].join("");
+
+    this.fields.category.value = selectedValue || "";
+  }
+
+  escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  escapeAttribute(value) {
+    return this.escapeHtml(value);
   }
 
   bind() {
@@ -140,7 +207,7 @@ export class GalleryDrawer {
 
     this.fields.id.value = value.id || "";
     this.fields.title.value = value.title || "";
-    this.fields.category.value = value.category || "";
+    this.renderCategoryOptions(value.category || "");
     this.fields.beforeImage.value = value.beforeImage || "";
     this.fields.afterImage.value = value.afterImage || "";
     this.fields.comparisonImage.value = value.comparisonImage || "";
@@ -167,6 +234,33 @@ export class GalleryDrawer {
     };
   }
 
+  buildDriveFileName(label, originalFileName = "") {
+    const title =
+      this.fields.title?.value.trim() ||
+      "Untitled";
+
+    const category =
+      this.fields.category?.value.trim() ||
+      "Uncategorized";
+
+    const extensionMatch = String(originalFileName).match(
+      /\.([a-zA-Z0-9]+)$/
+    );
+
+    const extension = extensionMatch
+      ? extensionMatch[1].toLowerCase()
+      : "jpg";
+
+    const labelName =
+      label === "before"
+        ? "Before"
+        : label === "after"
+          ? "After"
+          : "Comparison";
+
+    return `${title}-${category}-${labelName}.${extension}`;
+  }
+
   async handleFileUpload(fileInput, urlInput, preview, status, label) {
     const file = fileInput.files?.[0];
     if (!file) return;
@@ -184,7 +278,10 @@ export class GalleryDrawer {
       const dataUrl = await readFileAsDataUrl(file);
 
       const response = await this.api.uploadImage({
-        fileName: `${label}-${Date.now()}-${file.name}`,
+        fileName: this.buildDriveFileName(
+          label,
+          file.name
+        ),
         mimeType: file.type,
         dataUrl,
       });
