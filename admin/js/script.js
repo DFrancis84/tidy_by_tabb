@@ -9,6 +9,26 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const sidebar=$("#sidebar"),overlay=$("#overlay"),menu=$("#menu"),pageTitle=$("#title"),drawer=$("#drawer"),form=$("#galleryForm");
 const names={dashboard:"Dashboard",gallery:"Gallery",reviews:"Reviews",media:"Media Pipeline",settings:"Settings"};
 
+function normalizeImageUrl(url = "") {
+  const value = url.trim();
+
+  const driveMatch = value.match(
+    /drive\.google\.com\/file\/d\/([^/]+)/
+  );
+
+  if (driveMatch) {
+    return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1600`;
+  }
+
+  const idMatch = value.match(/[?&]id=([^&]+)/);
+
+  if (value.includes("drive.google.com") && idMatch) {
+    return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w1600`;
+  }
+
+  return value;
+}      
+      
 function load(){try{const raw=localStorage.getItem(STORAGE_KEY);return raw?JSON.parse(raw):demo}catch{return demo}}
 function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(records));render();stats()}
 function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800)}
@@ -84,22 +104,4 @@ addEventListener("keydown",e=>{if(e.key==="Escape"){closeSidebar();closeDrawer()
 show(location.hash.slice(1)||"dashboard");render();stats();
 })();
 
-function normalizeImageUrl(url = "") {
-  const value = url.trim();
 
-  const driveMatch = value.match(
-    /drive\.google\.com\/file\/d\/([^/]+)/
-  );
-
-  if (driveMatch) {
-    return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1600`;
-  }
-
-  const idMatch = value.match(/[?&]id=([^&]+)/);
-
-  if (value.includes("drive.google.com") && idMatch) {
-    return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w1600`;
-  }
-
-  return value;
-}
