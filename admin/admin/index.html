@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tidy by Tabb CMS</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">TT</div>
+        <div><strong>Tidy by Tabb</strong><span>Live CMS connected</span></div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item is-active" data-view="dashboard">Dashboard</button>
+        <button class="nav-item" data-view="gallery">Gallery</button>
+        <button class="nav-item" data-view="reviews">Reviews</button>
+        <button class="nav-item" data-view="pipeline">Media Pipeline</button>
+        <button class="nav-item" data-view="settings">Settings</button>
+      </nav>
+      <div class="sidebar-footer"><span class="connection-dot"></span>Google Sheets backend</div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div><p class="eyebrow">Tidy by Tabb</p><h1 id="pageTitle">Dashboard</h1></div>
+        <button id="addTransformation" class="button button-primary">Add transformation</button>
+      </header>
+
+      <section class="view is-active" data-view-panel="dashboard">
+        <div class="stat-grid">
+          <article class="stat-card"><span>Total transformations</span><strong id="statTotal">0</strong><small>Stored in Google Sheets</small></article>
+          <article class="stat-card"><span>Published</span><strong id="statPublished">0</strong><small>Visible on the website</small></article>
+          <article class="stat-card"><span>Drafts</span><strong id="statDrafts">0</strong><small>Waiting for review</small></article>
+          <article class="stat-card"><span>Featured</span><strong id="statFeatured">0</strong><small>Homepage spotlight</small></article>
+        </div>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">Recent activity</p><h2>Latest transformations</h2></div>
+            <button class="button button-secondary" data-go-gallery>View gallery</button>
+          </div>
+          <div id="dashboardRecent" class="recent-list"></div>
+        </section>
+      </section>
+
+      <section class="view" data-view-panel="gallery">
+        <section class="panel">
+          <div class="panel-heading panel-heading-wrap">
+            <div><p class="eyebrow">Portfolio manager</p><h2>Transformations</h2></div>
+            <div class="filters">
+              <input id="gallerySearch" type="search" placeholder="Search title or category">
+              <select id="galleryCategory"><option value="">All categories</option></select>
+              <select id="galleryStatus">
+                <option value="">All statuses</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+                <option value="featured">Featured</option>
+              </select>
+            </div>
+          </div>
+          <div id="galleryLoading" class="loading-state">Loading transformations…</div>
+          <div id="galleryGrid" class="gallery-grid" hidden></div>
+          <div id="galleryEmpty" class="empty-state" hidden><h3>No transformations found</h3><p>Add one or adjust the filters.</p></div>
+        </section>
+      </section>
+
+      <section class="view" data-view-panel="reviews"><section class="panel placeholder-panel"><p class="eyebrow">Coming next</p><h2>Reviews</h2><p>Review management will live here.</p></section></section>
+      <section class="view" data-view-panel="pipeline"><section class="panel placeholder-panel"><p class="eyebrow">Coming next</p><h2>Media Pipeline</h2><p>Upload once, then prepare website and social assets.</p></section></section>
+      <section class="view" data-view-panel="settings"><section class="panel placeholder-panel"><p class="eyebrow">Configuration</p><h2>Settings</h2><p>API and CMS preferences will live here.</p></section></section>
+    </main>
+  </div>
+
+  <div id="drawerBackdrop" class="drawer-backdrop" hidden></div>
+  <aside id="galleryDrawer" class="drawer" aria-hidden="true">
+    <form id="galleryForm">
+      <div class="drawer-header">
+        <div><p class="eyebrow">Gallery record</p><h2 id="drawerTitle">Add transformation</h2></div>
+        <button id="drawerClose" class="icon-button" type="button">×</button>
+      </div>
+      <div class="drawer-body">
+        <input id="recordId" type="hidden">
+        <div class="form-grid">
+          <label class="field field-full"><span>Title</span><input id="recordTitle" required maxlength="80"></label>
+          <label class="field field-full"><span>Category</span><input id="recordCategory" required maxlength="50"></label>
+          <label class="field field-full"><span>Before image URL</span><input id="beforeImage" type="url" required></label>
+          <div class="field field-full"><span>Before preview</span><div id="beforePreview" class="image-preview"><div class="preview-empty">No before image selected</div></div></div>
+          <label class="field field-full"><span>After image URL</span><input id="afterImage" type="url" required></label>
+          <div class="field field-full"><span>After preview</span><div id="afterPreview" class="image-preview"><div class="preview-empty">No after image selected</div></div></div>
+          <label class="field field-full"><span>Comparison image URL <small>(optional)</small></span><input id="comparisonImage" type="url"></label>
+          <label class="field"><span>Status</span><select id="recordStatus"><option value="draft">Draft</option><option value="published">Published</option></select></label>
+          <label class="switch-field"><input id="recordFeatured" type="checkbox"><span class="switch"></span><span>Featured transformation</span></label>
+        </div>
+      </div>
+      <div class="drawer-actions">
+        <button id="deleteRecord" class="button button-danger" type="button" hidden>Delete</button>
+        <div class="drawer-actions-right">
+          <button id="drawerCancel" class="button button-secondary" type="button">Cancel</button>
+          <button id="saveRecord" class="button button-primary" type="submit">Save transformation</button>
+        </div>
+      </div>
+    </form>
+  </aside>
+
+  <button id="developerToggle" class="developer-toggle" type="button">Developer</button>
+  <aside id="developerPanel" class="developer-panel" aria-hidden="true">
+    <div class="developer-panel-header">
+      <div><strong>Developer Console</strong><span>CMS request diagnostics</span></div>
+      <button id="developerClose" type="button">×</button>
+    </div>
+    <div class="developer-panel-actions">
+      <button id="developerRefresh" type="button">Refresh diagnostics</button>
+      <button id="developerClear" type="button">Clear log</button>
+    </div>
+    <div class="developer-status-grid">
+      <div><span>API</span><strong id="developerApiStatus">Unknown</strong></div>
+      <div><span>Last request</span><strong id="developerLastRequest">None</strong></div>
+      <div><span>Duration</span><strong id="developerDuration">–</strong></div>
+      <div><span>Records</span><strong id="developerRecordCount">0</strong></div>
+    </div>
+    <pre id="developerLog" class="developer-log">No requests logged.</pre>
+  </aside>
+
+  <div id="toastRegion" class="toast-region"></div>
+  <script type="module" src="js/script.js"></script>
+</body>
+</html>
