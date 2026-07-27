@@ -1,1 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tidy by Tabb | Admin</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="shell">
+  <aside id="sidebar">
+    <div class="brand"><span>🫧</span><div><b>Tidy by Tabb</b><small>Operations Dashboard</small></div></div>
+    <nav>
+      <button class="nav active" data-view="dashboard">⌂ Dashboard</button>
+      <button class="nav" data-view="gallery">▣ Gallery</button>
+      <button class="nav" data-view="reviews">★ Reviews</button>
+      <button class="nav" data-view="media">⇄ Media Pipeline</button>
+      <button class="nav" data-view="settings">⚙ Settings</button>
+    </nav>
+    <footer><span>● Dashboard preview</span><a href="../index.html">Return to website</a></footer>
+  </aside>
 
+  <div class="page">
+    <header>
+      <button id="menu" aria-label="Open menu">☰</button>
+      <div><small>PRIVATE WORKSPACE</small><h1 id="title">Dashboard</h1></div>
+      <div class="profile"><span>T</span><div><b>Tabb</b><small>Administrator</small></div></div>
+    </header>
+
+    <main>
+      <section id="dashboard" class="view active">
+        <div class="hero">
+          <div><small>WELCOME BACK</small><h2>Everything tidy, all in one place.</h2><p>Review requests, manage transformations, and keep the public site fresh without digging through code.</p></div>
+          <button data-go="media">Review media queue</button>
+        </div>
+        <div class="stats">
+          <article><label>New requests</label><strong>0</strong><small>Connect the request form later</small></article>
+          <article><label>Pending reviews</label><strong>0</strong><small>No moderation source connected</small></article>
+          <article><label>Ready to publish</label><strong>0</strong><small>Media pipeline not connected</small></article>
+          <article><label>Featured transformation</label><strong>None</strong><small>Choose one from Gallery</small></article>
+        </div>
+        <div class="grid">
+          <article class="panel"><small>ACTIVITY</small><h3>Recent updates</h3><div class="empty">🧹<h4>No activity yet</h4><p>Recent reviews, uploads, and publishing activity will appear here.</p></div></article>
+          <article class="panel"><small>QUICK ACTIONS</small><h3>Get something done</h3><div class="actions">
+            <button data-go="gallery">Manage gallery</button><button data-go="reviews">Moderate reviews</button><button data-go="media">Check media pipeline</button><button data-go="settings">Update website settings</button>
+          </div></article>
+        </div>
+      </section>
+
+      <section id="gallery" class="view">
+        <div class="heading"><div><small>WEBSITE CONTENT</small><h2>Gallery Manager</h2><p>Manage before-and-after transformations and decide what appears publicly.</p></div><button disabled>Add transformation</button></div>
+        <div class="filters"><input placeholder="Search transformations"><select><option>All categories</option><option>Kitchen</option><option>Bathroom</option><option>Bedroom</option><option>Move-Out</option></select></div>
+        <article class="panel empty">🖼️<h3>No gallery records connected</h3><p>Paired images, publication status, and featured controls will appear here.</p></article>
+      </section>
+
+      <section id="reviews" class="view">
+        <div class="heading"><div><small>CUSTOMER FEEDBACK</small><h2>Review Manager</h2><p>Approve, reject, and feature reviews before they reach the public website.</p></div></div>
+        <div class="tabs"><button>Pending</button><button>Approved</button><button>Featured</button></div>
+        <article class="panel empty">💬<h3>No reviews waiting</h3><p>Submissions will appear here after the review form is connected.</p></article>
+      </section>
+
+      <section id="media" class="view">
+        <div class="heading"><div><small>AUTOMATION</small><h2>Media Pipeline</h2><p>Track photo pairs from upload through branded comparison and publication.</p></div><button disabled>Run pipeline</button></div>
+        <div class="stats pipeline"><article><b>1</b><h3>Incoming</h3><p>Photos detected in the source folder.</p><strong>0 files</strong></article><article><b>2</b><h3>Matched</h3><p>Before and after photos successfully paired.</p><strong>0 pairs</strong></article><article><b>3</b><h3>Generated</h3><p>Branded comparisons ready for review.</p><strong>0 images</strong></article><article><b>4</b><h3>Published</h3><p>Images visible on the website.</p><strong>0 items</strong></article></div>
+        <article class="panel empty">✅<h3>Nothing needs attention</h3><p>Duplicates, incomplete pairs, and failures will appear here.</p></article>
+      </section>
+
+      <section id="settings" class="view">
+        <div class="heading"><div><small>WEBSITE CONTROLS</small><h2>Settings</h2><p>Visual placeholders until a secure backend is connected.</p></div></div>
+        <div class="grid">
+          <article class="panel"><h3>Homepage sections</h3><label class="row">Gallery <input type="checkbox" checked disabled></label><label class="row">Reviews <input type="checkbox" checked disabled></label><label class="row">FAQ <input type="checkbox" checked disabled></label></article>
+          <article class="panel"><h3>Featured content</h3><p>Select the transformation shown on the homepage.</p><select disabled><option>No gallery items available</option></select><button disabled>Save featured item</button></article>
+          <article class="panel"><h3>Admin access</h3><p>Google authentication will be the next security milestone.</p><div class="notice"><b>Not connected</b><span>Only approved accounts will be allowed.</span></div></article>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<div id="overlay"></div>
+<script src="js/script.js"></script>
+</body>
+</html>
