@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Tidy by Tabb CMS</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -11,7 +11,7 @@
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-mark">TT</div>
-        <div><strong>Tidy by Tabb</strong><span>Live CMS connected</span></div>
+        <div><strong>Tidy by Tabb</strong><span>Gallery CMS</span></div>
       </div>
       <nav class="sidebar-nav">
         <button class="nav-item is-active" data-view="dashboard">Dashboard</button>
@@ -33,10 +33,9 @@
         <div class="stat-grid">
           <article class="stat-card"><span>Total transformations</span><strong id="statTotal">0</strong><small>Stored in Google Sheets</small></article>
           <article class="stat-card"><span>Published</span><strong id="statPublished">0</strong><small>Visible on the website</small></article>
-          <article class="stat-card"><span>Drafts</span><strong id="statDrafts">0</strong><small>Waiting for review</small></article>
+          <article class="stat-card"><span>Drafts</span><strong id="statDrafts">0</strong><small>Before-only records included</small></article>
           <article class="stat-card"><span>Featured</span><strong id="statFeatured">0</strong><small>Homepage spotlight</small></article>
         </div>
-
         <section class="panel">
           <div class="panel-heading">
             <div><p class="eyebrow">Recent activity</p><h2>Latest transformations</h2></div>
@@ -77,86 +76,87 @@
   <aside id="galleryDrawer" class="drawer" aria-hidden="true">
     <form id="galleryForm">
       <div class="drawer-header">
-        <div><p class="eyebrow">Gallery record</p><h2 id="drawerTitle">Add transformation</h2></div>
-        <button id="drawerClose" class="icon-button" type="button">×</button>
+        <div>
+          <p class="eyebrow">Transformation editor</p>
+          <h2 id="drawerTitle">Add transformation</h2>
+          <small class="drawer-subtitle">Save the Before photo now. Return later to add the After photo and publish.</small>
+        </div>
+        <button id="drawerClose" class="icon-button" type="button" aria-label="Close editor">×</button>
       </div>
+
       <div class="drawer-body">
         <input id="recordId" type="hidden">
         <div class="form-grid">
-          <label class="field field-full"><span>Title</span><input id="recordTitle" required maxlength="80"></label>
+          <label class="field field-full"><span>Title</span><input id="recordTitle" required maxlength="80" autocomplete="off"></label>
+
           <label class="field field-full">
             <span>Category</span>
-            <select id="recordCategory" required>
-              <option value="">Select a category</option>
-              <option value="Bathroom">Bathroom</option>
-              <option value="Bedroom">Bedroom</option>
-              <option value="Kitchen">Kitchen</option>
-              <option value="Living Room">Living Room</option>
-              <option value="Move-In / Move-Out">Move-In / Move-Out</option>
-              <option value="Deep Clean">Deep Clean</option>
-              <option value="Organization">Organization</option>
-              <option value="Commercial">Commercial</option>
-              <option value="Other">Other</option>
-            </select>
+            <select id="recordCategory" required><option value="">Select a category</option></select>
           </label>
-          <div class="field field-full">
-            <span>Before photo</span>
-            <div class="upload-row">
-              <label class="button button-secondary file-button">
-                Choose Before photo
-                <input id="beforeFile" type="file" accept="image/jpeg,image/png,image/webp" capture="environment">
-              </label>
-              <span id="beforeUploadStatus" class="upload-status">No upload selected</span>
-            </div>
-            <input id="beforeImage" type="url" placeholder="Uploaded image URL" required>
-          </div>
-          <div class="field field-full"><span>Before preview</span><div id="beforePreview" class="image-preview"><div class="preview-empty">No before image selected</div></div></div>
-          <div class="field field-full">
-            <span>After photo</span>
-            <div class="upload-row">
-              <label class="button button-secondary file-button">
-                Choose After photo
-                <input id="afterFile" type="file" accept="image/jpeg,image/png,image/webp" capture="environment">
-              </label>
-              <span id="afterUploadStatus" class="upload-status">No upload selected</span>
-            </div>
-            <input id="afterImage" type="url" placeholder="Uploaded image URL" required>
-          </div>
-          <div class="field field-full"><span>After preview</span><div id="afterPreview" class="image-preview"><div class="preview-empty">No after image selected</div></div></div>
-          <div class="field field-full composer-section">
-            <div class="composer-heading">
-              <div>
-                <span>Combined Before / After photo</span>
-                <small>Uses the saved Tidy by Tabb branded layout.</small>
-              </div>
-              <button id="generateComparison" class="button button-secondary" type="button">
-                Create combined photo
-              </button>
-            </div>
 
+          <section class="photo-card field-full" data-photo-section="before">
+            <div class="photo-card-heading">
+              <div><span class="step-pill">1</span><strong>Before photo</strong><small>Required to save the initial draft</small></div>
+              <span id="beforeUploadStatus" class="upload-status">No photo selected</span>
+            </div>
+            <div id="beforeDropZone" class="drop-zone" tabindex="0">
+              <div id="beforePreview" class="image-preview"><div class="preview-empty">Drop a photo here or choose an option below</div></div>
+              <div class="upload-actions">
+                <label class="button button-secondary file-button">Photo library<input id="beforeFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
+                <label class="button button-secondary file-button">Take photo<input id="beforeCamera" type="file" accept="image/*" capture="environment"></label>
+              </div>
+              <small class="drop-hint">Desktop: drag and drop. Phone: use camera or photo library.</small>
+            </div>
+            <input id="beforeImage" type="hidden" required>
+          </section>
+
+          <section class="photo-card field-full" data-photo-section="after">
+            <div class="photo-card-heading">
+              <div><span class="step-pill">2</span><strong>After photo</strong><small>Add later when the cleaning is complete</small></div>
+              <span id="afterUploadStatus" class="upload-status">Not added yet</span>
+            </div>
+            <div id="afterDropZone" class="drop-zone" tabindex="0">
+              <div id="afterPreview" class="image-preview"><div class="preview-empty">Return later to add the finished result</div></div>
+              <div class="upload-actions">
+                <label class="button button-secondary file-button">Photo library<input id="afterFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
+                <label class="button button-secondary file-button">Take photo<input id="afterCamera" type="file" accept="image/*" capture="environment"></label>
+              </div>
+              <small class="drop-hint">The record can remain a draft until this photo is ready.</small>
+            </div>
+            <input id="afterImage" type="hidden">
+          </section>
+
+          <section class="photo-card composer-section field-full">
+            <div class="photo-card-heading">
+              <div><span class="step-pill">3</span><strong>Branded comparison</strong><small>Available after both photos are uploaded</small></div>
+            </div>
             <canvas id="comparisonCanvas" width="1200" height="800" hidden></canvas>
-
-            <div id="comparisonPreview" class="image-preview comparison-preview">
-              <div class="preview-empty">
-                Upload both photos, then create the combined image.
-              </div>
-            </div>
-
+            <div id="comparisonPreview" class="image-preview comparison-preview"><div class="preview-empty">Upload both photos to unlock the comparison builder</div></div>
             <div class="composer-controls">
-              <button id="swapComparisonImages" class="button button-secondary" type="button">
-                Swap Before / After
-              </button>
-              <button id="saveComparisonImage" class="button button-primary" type="button" disabled>
-                Save combined photo
-              </button>
+              <button id="generateComparison" class="button button-secondary" type="button">Create combined photo</button>
+              <button id="swapComparisonImages" class="button button-secondary" type="button">Swap sides</button>
+              <button id="saveComparisonImage" class="button button-primary" type="button" disabled>Save combined photo</button>
             </div>
+            <input id="comparisonImage" type="hidden">
+          </section>
 
-            <input id="comparisonImage" type="url" placeholder="Combined image URL" readonly>
-          </div>
-          <label class="field"><span>Status</span><select id="recordStatus"><option value="draft">Draft</option><option value="published">Published</option></select></label>
-          <label class="switch-field"><input id="recordFeatured" type="checkbox"><span class="switch"></span><span>Featured transformation</span></label>
+          <label class="field">
+            <span>Status</span>
+            <select id="recordStatus">
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </select>
+            <small id="statusHelp">Drafts may contain only the Before photo.</small>
+          </label>
+
+          <label class="switch-field">
+            <input id="recordFeatured" type="checkbox">
+            <span class="switch"></span>
+            <span>Featured transformation</span>
+          </label>
         </div>
       </div>
+
       <div class="drawer-actions">
         <button id="deleteRecord" class="button button-danger" type="button" hidden>Delete</button>
         <div class="drawer-actions-right">
@@ -167,22 +167,33 @@
     </form>
   </aside>
 
+  <div id="cropModal" class="modal-shell" hidden>
+    <div class="modal-backdrop"></div>
+    <section class="modal-card crop-modal-card" role="dialog" aria-modal="true" aria-labelledby="cropTitle">
+      <div class="modal-header"><div><p class="eyebrow">Photo editor</p><h2 id="cropTitle">Crop photo</h2></div><button id="cropClose" class="icon-button" type="button">×</button></div>
+      <div class="crop-stage"><canvas id="cropCanvas" width="900" height="650"></canvas></div>
+      <div class="crop-controls">
+        <label><span>Zoom</span><input id="cropZoom" type="range" min="1" max="3" step="0.01" value="1"></label>
+        <small>Drag the photo to reposition it inside the frame.</small>
+      </div>
+      <div class="modal-actions"><button id="cropCancel" class="button button-secondary" type="button">Cancel</button><button id="cropApply" class="button button-primary" type="button">Use this crop</button></div>
+    </section>
+  </div>
+
+  <div id="deleteModal" class="modal-shell" hidden>
+    <div class="modal-backdrop"></div>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+      <div class="modal-header"><div><p class="eyebrow">Permanent action</p><h2 id="deleteTitle">Delete transformation?</h2></div></div>
+      <p id="deleteMessage">This record will be removed from the gallery. The Drive images will remain available.</p>
+      <div class="modal-actions"><button id="deleteCancel" class="button button-secondary" type="button">Cancel</button><button id="deleteConfirm" class="button button-danger" type="button">Delete transformation</button></div>
+    </section>
+  </div>
+
   <button id="developerToggle" class="developer-toggle" type="button">Developer</button>
   <aside id="developerPanel" class="developer-panel" aria-hidden="true">
-    <div class="developer-panel-header">
-      <div><strong>Developer Console</strong><span>CMS request diagnostics</span></div>
-      <button id="developerClose" type="button">×</button>
-    </div>
-    <div class="developer-panel-actions">
-      <button id="developerRefresh" type="button">Refresh diagnostics</button>
-      <button id="developerClear" type="button">Clear log</button>
-    </div>
-    <div class="developer-status-grid">
-      <div><span>API</span><strong id="developerApiStatus">Unknown</strong></div>
-      <div><span>Last request</span><strong id="developerLastRequest">None</strong></div>
-      <div><span>Duration</span><strong id="developerDuration">–</strong></div>
-      <div><span>Records</span><strong id="developerRecordCount">0</strong></div>
-    </div>
+    <div class="developer-panel-header"><div><strong>Developer Console</strong><span>CMS request diagnostics</span></div><button id="developerClose" type="button">×</button></div>
+    <div class="developer-panel-actions"><button id="developerRefresh" type="button">Refresh diagnostics</button><button id="developerClear" type="button">Clear log</button></div>
+    <div class="developer-status-grid"><div><span>API</span><strong id="developerApiStatus">Unknown</strong></div><div><span>Last request</span><strong id="developerLastRequest">None</strong></div><div><span>Duration</span><strong id="developerDuration">–</strong></div><div><span>Records</span><strong id="developerRecordCount">0</strong></div></div>
     <pre id="developerLog" class="developer-log">No requests logged.</pre>
   </aside>
 

@@ -1,10 +1,19 @@
-import {
-  getPreviewUrl,
-  normalizeRecord,
-  readFileAsDataUrl,
-} from "./utils.js";
+import { getPreviewUrl, normalizeRecord } from "./utils.js";
 import { loading, toast } from "./ui.js";
 import { ComparisonComposer } from "./composer.js";
+import { ImageCropper } from "./cropper.js";
+
+const DEFAULT_CATEGORIES = [
+  "Bathroom",
+  "Bedroom",
+  "Kitchen",
+  "Living Room",
+  "Move-In / Move-Out",
+  "Deep Clean",
+  "Organization",
+  "Commercial",
+  "Other",
+];
 
 export class GalleryDrawer {
   constructor({ api, onSaved, onDeleted } = {}) {
@@ -13,6 +22,9 @@ export class GalleryDrawer {
     this.onDeleted = typeof onDeleted === "function" ? onDeleted : () => {};
     this.currentRecord = null;
     this.categoryOptions = [];
+    this.scrollPosition = 0;
+    this.pendingDeleteId = "";
+    this.cropper = new ImageCropper();
 
     this.drawer = document.getElementById("galleryDrawer");
     this.backdrop = document.getElementById("drawerBackdrop");
@@ -32,13 +44,26 @@ export class GalleryDrawer {
       featured: document.getElementById("recordFeatured"),
     };
 
-    this.beforeFile = document.getElementById("beforeFile");
-    this.afterFile = document.getElementById("afterFile");
-    this.beforeStatus = document.getElementById("beforeUploadStatus");
-    this.afterStatus = document.getElementById("afterUploadStatus");
+    this.photoControls = {
+      before: {
+        inputs: [document.getElementById("beforeFile"), document.getElementById("beforeCamera")],
+        dropZone: document.getElementById("beforeDropZone"),
+        preview: document.getElementById("beforePreview"),
+        status: document.getElementById("beforeUploadStatus"),
+        urlField: this.fields.beforeImage,
+      },
+      after: {
+        inputs: [document.getElementById("afterFile"), document.getElementById("afterCamera")],
+        dropZone: document.getElementById("afterDropZone"),
+        preview: document.getElementById("afterPreview"),
+        status: document.getElementById("afterUploadStatus"),
+        urlField: this.fields.afterImage,
+      },
+    };
 
-    this.beforePreview = document.getElementById("beforePreview");
-    this.afterPreview = document.getElementById("afterPreview");
+    this.deleteModal = document.getElementById("deleteModal");
+    this.deleteMessage = document.getElementById("deleteMessage");
+    this.deleteConfirm = document.getElementById("deleteConfirm");
 
     this.composer = new ComparisonComposer({
       api: this.api,
@@ -53,57 +78,25 @@ export class GalleryDrawer {
   }
 
   setCategories(categories = []) {
-    this.categoryOptions = [
-      ...new Set(
-        categories
-          .map((category) => String(category || "").trim())
-          .filter(Boolean)
-      ),
-    ].sort((a, b) => a.localeCompare(b));
-
-    this.renderCategoryOptions(
-      this.fields.category?.value || ""
-    );
+    this.categoryOptions = [...new Set(
+      categories.map((value) => String(value || "").trim()).filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b));
+    this.renderCategoryOptions(this.fields.category?.value || "");
   }
 
   renderCategoryOptions(selectedValue = "") {
-    if (!this.fields.category) return;
-
-    const defaults = [
-      "Bathroom",
-      "Bedroom",
-      "Kitchen",
-      "Living Room",
-      "Move-In / Move-Out",
-      "Deep Clean",
-      "Organization",
-      "Commercial",
-      "Other",
-    ];
-
-    const options = [
-      ...new Set([...defaults, ...this.categoryOptions]),
-    ].sort((a, b) => a.localeCompare(b));
-
-    if (
-      selectedValue &&
-      !options.includes(selectedValue)
-    ) {
-      options.unshift(selectedValue);
-    }
+    const options = [...new Set([...DEFAULT_CATEGORIES, ...this.categoryOptions])]
+      .sort((a, b) => a.localeCompare(b));
+    if (selectedValue && !options.includes(selectedValue)) options.unshift(selectedValue);
 
     this.fields.category.innerHTML = [
       '<option value="">Select a category</option>',
-      ...options.map(
-        (category) =>
-          `<option value="${this.escapeAttribute(category)}">${this.escapeHtml(category)}</option>`
-      ),
+      ...options.map((value) => `<option value="${this.escape(value)}">${this.escape(value)}</option>`),
     ].join("");
-
-    this.fields.category.value = selectedValue || "";
+    this.fields.category.value = selectedValue;
   }
 
-  escapeHtml(value) {
+  escape(value) {
     return String(value)
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
@@ -112,99 +105,85 @@ export class GalleryDrawer {
       .replaceAll("'", "&#039;");
   }
 
-  escapeAttribute(value) {
-    return this.escapeHtml(value);
-  }
-
   bind() {
     document.getElementById("drawerClose")?.addEventListener("click", () => this.close());
     document.getElementById("drawerCancel")?.addEventListener("click", () => this.close());
     this.backdrop?.addEventListener("click", () => this.close());
-
     this.form?.addEventListener("submit", (event) => this.handleSubmit(event));
-    this.deleteButton?.addEventListener("click", () => this.handleDelete());
+    this.deleteButton?.addEventListener("click", () => this.openDeleteModal());
+    document.getElementById("deleteCancel")?.addEventListener("click", () => this.closeDeleteModal());
+    this.deleteModal?.querySelector(".modal-backdrop")?.addEventListener("click", () => this.closeDeleteModal());
+    this.deleteConfirm?.addEventListener("click", () => this.handleDelete());
 
-    this.fields.beforeImage?.addEventListener("input", () => {
-      this.renderPreview(this.beforePreview, this.fields.beforeImage.value, "before");
+    Object.entries(this.photoControls).forEach(([label, controls]) => {
+      controls.inputs.forEach((input) => {
+        input?.addEventListener("change", () => {
+          const file = input.files?.[0];
+          if (file) this.prepareAndUpload(file, label);
+          input.value = "";
+        });
+      });
+
+      ["dragenter", "dragover"].forEach((type) => {
+        controls.dropZone?.addEventListener(type, (event) => {
+          event.preventDefault();
+          controls.dropZone.classList.add("is-dragging");
+        });
+      });
+
+      ["dragleave", "drop"].forEach((type) => {
+        controls.dropZone?.addEventListener(type, (event) => {
+          event.preventDefault();
+          controls.dropZone.classList.remove("is-dragging");
+        });
+      });
+
+      controls.dropZone?.addEventListener("drop", (event) => {
+        const file = event.dataTransfer?.files?.[0];
+        if (file) this.prepareAndUpload(file, label);
+      });
     });
 
-    this.fields.afterImage?.addEventListener("input", () => {
-      this.renderPreview(this.afterPreview, this.fields.afterImage.value, "after");
-    });
-
-    this.beforeFile?.addEventListener("change", () => {
-      this.handleFileUpload(
-        this.beforeFile,
-        this.fields.beforeImage,
-        this.beforePreview,
-        this.beforeStatus,
-        "before"
-      );
-    });
-
-    this.afterFile?.addEventListener("change", () => {
-      this.handleFileUpload(
-        this.afterFile,
-        this.fields.afterImage,
-        this.afterPreview,
-        this.afterStatus,
-        "after"
-      );
-    });
-
+    this.fields.status?.addEventListener("change", () => this.updateStatusHelp());
     this.composer.bind();
 
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && this.drawer?.classList.contains("is-open")) {
-        this.close();
-      }
+      if (event.key !== "Escape") return;
+      if (!this.deleteModal?.hidden) this.closeDeleteModal();
+      else if (!document.getElementById("cropModal")?.hidden) this.cropper.cancel();
+      else if (this.drawer?.classList.contains("is-open")) this.close();
     });
   }
 
   open(record = null) {
     this.currentRecord = record ? normalizeRecord(record) : null;
-
-    if (this.title) {
-      this.title.textContent = this.currentRecord
-        ? "Edit transformation"
-        : "Add transformation";
-    }
-
-    if (this.deleteButton) {
-      this.deleteButton.hidden = !this.currentRecord;
-    }
-
+    this.title.textContent = this.currentRecord ? "Edit transformation" : "Add transformation";
+    this.deleteButton.hidden = !this.currentRecord;
     this.populate(this.currentRecord);
 
-    this.drawer?.classList.add("is-open");
-    this.drawer?.setAttribute("aria-hidden", "false");
-    if (this.backdrop) this.backdrop.hidden = false;
+    this.scrollPosition = window.scrollY || 0;
+    this.drawer.classList.add("is-open");
+    this.drawer.setAttribute("aria-hidden", "false");
+    this.backdrop.hidden = false;
+    document.body.style.top = `-${this.scrollPosition}px`;
     document.body.classList.add("drawer-open");
-
-    window.setTimeout(() => this.fields.title?.focus(), 50);
+    window.setTimeout(() => this.fields.title?.focus({ preventScroll: true }), 80);
   }
 
   close() {
-    this.drawer?.classList.remove("is-open");
-    this.drawer?.setAttribute("aria-hidden", "true");
-    if (this.backdrop) this.backdrop.hidden = true;
+    this.drawer.classList.remove("is-open");
+    this.drawer.setAttribute("aria-hidden", "true");
+    this.backdrop.hidden = true;
     document.body.classList.remove("drawer-open");
-    this.form?.reset();
+    document.body.style.top = "";
+    window.scrollTo(0, this.scrollPosition);
+    this.form.reset();
     this.currentRecord = null;
+    this.pendingDeleteId = "";
   }
 
   populate(record) {
-    const value = record || {
-      id: "",
-      title: "",
-      category: "",
-      beforeImage: "",
-      afterImage: "",
-      comparisonImage: "",
-      published: false,
-      featured: false,
-    };
-
+    const value = record || {};
     this.fields.id.value = value.id || "";
     this.fields.title.value = value.title || "";
     this.renderCategoryOptions(value.category || "");
@@ -214,12 +193,20 @@ export class GalleryDrawer {
     this.fields.status.value = value.published ? "published" : "draft";
     this.fields.featured.checked = Boolean(value.featured);
 
-    if (this.beforeStatus) this.beforeStatus.textContent = "Choose or replace photo";
-    if (this.afterStatus) this.afterStatus.textContent = "Choose or replace photo";
+    this.renderPreview("before", value.beforeImage);
+    this.renderPreview("after", value.afterImage);
+    this.photoControls.before.status.textContent = value.beforeImage ? "Before photo saved" : "No photo selected";
+    this.photoControls.after.status.textContent = value.afterImage ? "After photo saved" : "Not added yet";
+    this.composer.reset(value.comparisonImage || "");
+    this.updateStatusHelp();
+  }
 
-    this.renderPreview(this.beforePreview, value.beforeImage, "before");
-    this.renderPreview(this.afterPreview, value.afterImage, "after");
-    this.composer.reset(value.comparisonImage);
+  updateStatusHelp() {
+    const help = document.getElementById("statusHelp");
+    const publishing = this.fields.status.value === "published";
+    help.textContent = publishing
+      ? "Publishing requires Before, After, and the saved combined photo."
+      : "Drafts may contain only the Before photo.";
   }
 
   getPayload() {
@@ -234,130 +221,138 @@ export class GalleryDrawer {
     };
   }
 
-  buildDriveFileName(label, originalFileName = "") {
-    const title =
-      this.fields.title?.value.trim() ||
-      "Untitled";
-
-    const category =
-      this.fields.category?.value.trim() ||
-      "Uncategorized";
-
-    const extensionMatch = String(originalFileName).match(
-      /\.([a-zA-Z0-9]+)$/
-    );
-
-    const extension = extensionMatch
-      ? extensionMatch[1].toLowerCase()
-      : "jpg";
-
-    const labelName =
-      label === "before"
-        ? "Before"
-        : label === "after"
-          ? "After"
-          : "Comparison";
-
-    return `${title}-${category}-${labelName}.${extension}`;
+  buildDriveFileName(label, extension = "jpg") {
+    const title = this.fields.title.value.trim() || "Untitled";
+    const category = this.fields.category.value.trim() || "Uncategorized";
+    const suffix = label === "before" ? "Before" : label === "after" ? "After" : "Comparison";
+    return `${title}-${category}-${suffix}.${extension}`;
   }
 
-  async handleFileUpload(fileInput, urlInput, preview, status, label) {
-    const file = fileInput.files?.[0];
-    if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast("Image must be 10 MB or smaller.", "error");
-      fileInput.value = "";
+  async prepareAndUpload(file, label) {
+    const controls = this.photoControls[label];
+    if (!file.type.startsWith("image/")) {
+      toast("Please choose an image file.", "error");
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      toast("The original photo must be 15 MB or smaller.", "error");
       return;
     }
 
-    status.textContent = "Uploading…";
-    fileInput.disabled = true;
-
     try {
-      const dataUrl = await readFileAsDataUrl(file);
+      const cropped = await this.cropper.open(file, label === "before" ? "Before" : "After");
+      controls.status.textContent = "Uploading cropped photo…";
+      this.setPhotoInputsDisabled(label, true);
 
       const response = await this.api.uploadImage({
-        fileName: this.buildDriveFileName(
-          label,
-          file.name
-        ),
-        mimeType: file.type,
-        dataUrl,
+        fileName: this.buildDriveFileName(label, cropped.extension),
+        mimeType: cropped.mimeType,
+        dataUrl: cropped.dataUrl,
       });
 
-      urlInput.value = response.data.url;
-      this.renderPreview(preview, response.data.url, label);
-      status.textContent = "Uploaded to Google Drive";
+      const url = response.data?.url || "";
+      if (!url) throw new Error("The upload completed without returning an image URL.");
 
+      controls.urlField.value = url;
+      controls.status.textContent = `${label === "before" ? "Before" : "After"} photo saved`;
+      this.renderPreview(label, url);
+      this.composer.reset(this.fields.comparisonImage.value);
       toast(`${label === "before" ? "Before" : "After"} photo uploaded.`);
     } catch (error) {
-      status.textContent = "Upload failed";
-      toast(error.message, "error", 6000);
+      if (error.message !== "Crop cancelled.") {
+        controls.status.textContent = "Upload failed";
+        toast(error.message, "error", 6000);
+      }
     } finally {
-      fileInput.disabled = false;
-      fileInput.value = "";
+      this.setPhotoInputsDisabled(label, false);
     }
+  }
+
+  setPhotoInputsDisabled(label, disabled) {
+    this.photoControls[label].inputs.forEach((input) => {
+      if (input) input.disabled = disabled;
+    });
+  }
+
+  renderPreview(label, url) {
+    const preview = this.photoControls[label].preview;
+    if (!url) {
+      preview.innerHTML = `<div class="preview-empty">${label === "before" ? "Drop a photo here or choose an option below" : "Return later to add the finished result"}</div>`;
+      return;
+    }
+    preview.innerHTML = `<img src="${getPreviewUrl(url, 1000)}" alt="${label} transformation photo">`;
+  }
+
+  validatePublish(payload) {
+    if (!payload.published) return true;
+    if (!payload.beforeImage || !payload.afterImage || !payload.comparisonImage) {
+      toast("To publish, add the Before photo, After photo, and save the combined photo.", "error", 6500);
+      return false;
+    }
+    return true;
   }
 
   async handleSubmit(event) {
     event.preventDefault();
-
-    if (!this.form?.reportValidity()) return;
-
+    if (!this.form.reportValidity()) return;
     const payload = this.getPayload();
-    loading(this.saveButton, true);
+    if (!this.validatePublish(payload)) return;
 
+    loading(this.saveButton, true, "Saving…");
     try {
-      const response = this.currentRecord
-        ? await this.api.update(this.currentRecord.id, payload)
+      const recordId = this.fields.id.value.trim();
+      const response = recordId
+        ? await this.api.update(recordId, payload)
         : await this.api.create(payload);
 
       toast(response.message || "Transformation saved.");
       this.close();
       await this.onSaved(response.data);
     } catch (error) {
-      toast(error.message, "error", 5200);
+      toast(error.message, "error", 6000);
     } finally {
       loading(this.saveButton, false);
     }
   }
 
-  async handleDelete() {
-    if (!this.currentRecord) return;
-
-    const confirmed = window.confirm(
-      `Delete "${this.currentRecord.title || "this transformation"}"? This cannot be undone.`
-    );
-
-    if (!confirmed) return;
-
-    loading(this.deleteButton, true, "Deleting…");
-
-    try {
-      const response = await this.api.delete(this.currentRecord.id);
-      toast(response.message || "Transformation deleted.");
-      this.close();
-      await this.onDeleted(this.currentRecord.id);
-    } catch (error) {
-      toast(error.message, "error", 5200);
-    } finally {
-      loading(this.deleteButton, false);
+  openDeleteModal() {
+    const recordId = this.fields.id.value.trim();
+    if (!recordId) {
+      toast("This transformation does not have a record ID yet.", "error");
+      return;
     }
+    this.pendingDeleteId = recordId;
+    const title = this.fields.title.value.trim() || "this transformation";
+    this.deleteMessage.textContent = `Delete “${title}”? This removes the gallery record and cannot be undone. Drive images will not be deleted.`;
+    this.deleteModal.hidden = false;
+    document.body.classList.add("modal-open");
   }
 
-  renderPreview(container, imageUrl, label) {
-    if (!container) return;
+  closeDeleteModal() {
+    this.deleteModal.hidden = true;
+    this.pendingDeleteId = "";
+    document.body.classList.remove("modal-open");
+  }
 
-    const previewUrl = getPreviewUrl(imageUrl, 700);
-
-    if (!previewUrl) {
-      container.innerHTML = `<div class="preview-empty">No ${label} image selected</div>`;
+  async handleDelete() {
+    const recordId = this.pendingDeleteId || this.fields.id.value.trim();
+    if (!recordId) {
+      toast("A gallery record ID is required.", "error");
+      this.closeDeleteModal();
       return;
     }
 
-    container.innerHTML = `
-      <img src="${previewUrl}" alt="${label} image preview">
-    `;
+    loading(this.deleteConfirm, true, "Deleting…");
+    try {
+      const response = await this.api.delete(recordId);
+      toast(response.message || "Transformation deleted.");
+      this.closeDeleteModal();
+      this.close();
+      await this.onDeleted(recordId);
+    } catch (error) {
+      toast(error.message, "error", 6000);
+    } finally {
+      loading(this.deleteConfirm, false);
+    }
   }
 }

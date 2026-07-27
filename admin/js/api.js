@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbyLkwoj-c2DqYWpLNaYOgsZi9_FqgvMQm-7a2Zis8TA5zpRDKY6TK4RXtistJV873gw/exec";
+const API_URL = "PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE";
 
 export class GalleryApi {
   constructor(onRequest = () => {}) {
@@ -31,9 +31,16 @@ export class GalleryApi {
   }
 
   async delete(id) {
+    const recordId = String(id || "").trim();
+
+    if (!recordId) {
+      throw new Error("A gallery record ID is required.");
+    }
+
     return this.request("delete", "POST", {
       action: "delete",
-      id,
+      id: recordId,
+      payload: { id: recordId },
     });
   }
 
