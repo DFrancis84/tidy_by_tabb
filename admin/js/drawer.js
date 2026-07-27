@@ -130,7 +130,248 @@ export class GalleryDrawer {
       .replaceAll("'", "&#039;");
   }
 
+
+  ensureWorkflowStyles() {
+    if (document.getElementById("galleryWorkflowStyles")) return;
+
+    const style = document.createElement("style");
+    style.id = "galleryWorkflowStyles";
+    style.textContent = `
+      .drawer-subtitle {
+        display: block;
+        max-width: 460px;
+        margin-top: 6px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+
+      .workflow-progress {
+        display: grid;
+        grid-template-columns: 18px minmax(24px, 1fr) 18px minmax(24px, 1fr) 18px minmax(24px, 1fr) 18px;
+        align-items: center;
+        width: min(420px, 100%);
+        margin: 0 auto 22px;
+      }
+
+      .progress-dot {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #cbd4dc;
+        border-radius: 50%;
+        background: #fff;
+      }
+
+      .progress-dot.is-complete {
+        border-color: var(--success);
+        background: var(--success);
+        box-shadow: inset 0 0 0 4px #fff;
+      }
+
+      .progress-line {
+        height: 2px;
+        background: #dce3e8;
+      }
+
+      .workflow-stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .workflow-card {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fff;
+      }
+
+      .workflow-card.is-open {
+        border-color: rgba(25, 50, 74, 0.32);
+        box-shadow: 0 12px 32px rgba(17, 34, 51, 0.08);
+      }
+
+      .workflow-card.is-complete {
+        border-color: rgba(36, 115, 77, 0.28);
+      }
+
+      .workflow-card-toggle {
+        display: grid;
+        grid-template-columns: 38px minmax(0, 1fr) 28px;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        border: 0;
+        padding: 15px 16px;
+        background: #fff;
+        color: var(--ink);
+        text-align: left;
+      }
+
+      .workflow-card-toggle:hover {
+        background: var(--soft);
+      }
+
+      .workflow-number {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--blue-soft);
+        color: var(--navy);
+        font-weight: 800;
+      }
+
+      .workflow-card.is-complete .workflow-number {
+        background: #e9f7ef;
+        color: var(--success);
+      }
+
+      .workflow-heading strong,
+      .workflow-heading small {
+        display: block;
+      }
+
+      .workflow-heading small {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 500;
+      }
+
+      .workflow-check {
+        color: var(--muted);
+        font-size: 1.2rem;
+        font-weight: 900;
+        text-align: center;
+      }
+
+      .workflow-card.is-complete .workflow-check {
+        color: var(--success);
+      }
+
+      .workflow-card-body {
+        display: none;
+        padding: 0 16px 18px;
+      }
+
+      .workflow-card.is-open .workflow-card-body {
+        display: grid;
+        gap: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+      }
+
+      .workflow-next-row {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .photo-card-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .drop-zone {
+        display: grid;
+        gap: 13px;
+        padding: 14px;
+        border: 2px dashed rgba(25, 50, 74, 0.18);
+        border-radius: 16px;
+        background: var(--soft);
+        outline: none;
+      }
+
+      .drop-zone:focus,
+      .drop-zone.is-dragging {
+        border-color: var(--navy);
+        background: var(--blue-soft);
+      }
+
+      .drop-zone .image-preview {
+        max-width: none;
+      }
+
+      .upload-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+      }
+
+      .drop-hint {
+        color: var(--muted);
+        line-height: 1.4;
+      }
+
+      .publishing-card {
+        display: grid;
+        gap: 16px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--soft);
+      }
+
+      .comparison-workflow {
+        display: grid;
+        gap: 14px;
+      }
+
+      .publish-readiness {
+        border: 1px solid #ead59d;
+        border-radius: 13px;
+        padding: 12px 14px;
+        background: #fff8e6;
+        color: #765100;
+        font-size: 0.86rem;
+        font-weight: 700;
+        line-height: 1.4;
+      }
+
+      .publish-readiness.is-ready {
+        border-color: rgba(36, 115, 77, 0.24);
+        background: #e9f7ef;
+        color: var(--success);
+      }
+
+      @media (max-width: 760px) {
+        .workflow-progress {
+          width: 100%;
+          margin-bottom: 16px;
+        }
+
+        .workflow-card-toggle {
+          grid-template-columns: 34px minmax(0, 1fr) 24px;
+          gap: 9px;
+          padding: 14px 12px;
+        }
+
+        .workflow-card-body {
+          padding-left: 12px;
+          padding-right: 12px;
+        }
+
+        .workflow-next-row,
+        .workflow-next-row .button,
+        .upload-actions,
+        .upload-actions .button {
+          width: 100%;
+        }
+
+        .workflow-next-row .button,
+        .upload-actions .button {
+          display: flex;
+          justify-content: center;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
   bind() {
+    this.ensureWorkflowStyles();
     document.getElementById("drawerClose")?.addEventListener("click", () => this.close());
     document.getElementById("drawerCancel")?.addEventListener("click", () => this.close());
     this.backdrop?.addEventListener("click", () => this.close());
