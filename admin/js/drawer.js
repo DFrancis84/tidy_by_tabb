@@ -15,6 +15,8 @@ const DEFAULT_CATEGORIES = [
   "Other",
 ];
 
+const WORKFLOW_STEPS = ["details", "before", "after", "publishing"];
+
 export class GalleryDrawer {
   constructor({ api, onSaved, onDeleted } = {}) {
     this.api = api;
@@ -32,6 +34,7 @@ export class GalleryDrawer {
     this.title = document.getElementById("drawerTitle");
     this.saveButton = document.getElementById("saveRecord");
     this.deleteButton = document.getElementById("deleteRecord");
+    this.publishReadiness = document.getElementById("publishReadiness");
 
     this.fields = {
       id: document.getElementById("recordId"),
@@ -61,6 +64,27 @@ export class GalleryDrawer {
       },
     };
 
+    this.workflowCards = new Map(
+      WORKFLOW_STEPS.map((step) => [
+        step,
+        document.querySelector(`[data-workflow-step="${step}"]`),
+      ])
+    );
+
+    this.progressDots = new Map(
+      WORKFLOW_STEPS.map((step) => [
+        step,
+        document.querySelector(`[data-progress-step="${step}"]`),
+      ])
+    );
+
+    this.stepChecks = new Map(
+      WORKFLOW_STEPS.map((step) => [
+        step,
+        document.querySelector(`[data-step-check="${step}"]`),
+      ])
+    );
+
     this.deleteModal = document.getElementById("deleteModal");
     this.deleteMessage = document.getElementById("deleteMessage");
     this.deleteConfirm = document.getElementById("deleteConfirm");
@@ -73,6 +97,7 @@ export class GalleryDrawer {
       getCategory: () => this.fields.category.value,
       setComparisonUrl: (url) => {
         this.fields.comparisonImage.value = url;
+        this.updateWorkflowState();
       },
     });
   }
@@ -115,6 +140,14 @@ export class GalleryDrawer {
     this.deleteModal?.querySelector(".modal-backdrop")?.addEventListener("click", () => this.closeDeleteModal());
     this.deleteConfirm?.addEventListener("click", () => this.handleDelete());
 
+    document.querySelectorAll("[data-step-toggle]").forEach((button) => {
+      button.addEventListener("click", () => this.openStep(button.dataset.stepToggle));
+    });
+
+    document.querySelectorAll("[data-next-step]").forEach((button) => {
+      button.addEventListener("click", () => this.handleNextStep(button.dataset.nextStep));
+    });
+
     Object.entries(this.photoControls).forEach(([label, controls]) => {
       controls.inputs.forEach((input) => {
         input?.addEventListener("change", () => {
@@ -142,9 +175,21 @@ export class GalleryDrawer {
         const file = event.dataTransfer?.files?.[0];
         if (file) this.prepareAndUpload(file, label);
       });
+
+      controls.dropZone?.addEventListener("keydown", (event) => {
+        if (!["Enter", " "].includes(event.key)) return;
+        event.preventDefault();
+        controls.inputs[0]?.click();
+      });
     });
 
-    this.fields.status?.addEventListener("change", () => this.updateStatusHelp());
+    this.fields.title?.addEventListener("input", () => this.updateWorkflowState());
+    this.fields.category?.addEventListener("change", () => this.updateWorkflowState());
+    this.fields.status?.addEventListener("change", () => {
+      this.updateStatusHelp();
+      this.updateWorkflowState();
+    });
+
     this.composer.bind();
 
     document.addEventListener("keydown", (event) => {
@@ -167,7 +212,13 @@ export class GalleryDrawer {
     this.backdrop.hidden = false;
     document.body.style.top = `-${this.scrollPosition}px`;
     document.body.classList.add("drawer-open");
-    window.setTimeout(() => this.fields.title?.focus({ preventScroll: true }), 80);
+
+    this.updateWorkflowState();
+    this.openStep(this.getNextIncompleteStep());
+
+    if (!this.currentRecord) {
+      window.setTimeout(() => this.fields.title?.focus({ preventScroll: true }), 80);
+    }
   }
 
   close() {
@@ -199,10 +250,122 @@ export class GalleryDrawer {
     this.photoControls.after.status.textContent = value.afterImage ? "After photo saved" : "Not added yet";
     this.composer.reset(value.comparisonImage || "");
     this.updateStatusHelp();
+    this.updateWorkflowState();
+  }
+
+  openStep(step) {
+    if (!WORKFLOW_STEPS.includes(step)) return;
+
+    this.workflowCards.forEach((card, cardStep) => {
+      if (!card) return;
+      const isOpen = cardStep === step;
+      card.classList.toggle("is-open", isOpen);
+      card.querySelector(".workflow-card-toggle")?.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    const activeCard = this.workflowCards.get(step);
+    activeCard?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  handleNextStep(nextStep) {
+    const state = this.getCompletionState();
+
+    if (nextStep === "before" && !state.details) {
+      toast("Add a title and category before continuing.", "error");
+      this.openStep("details");
+      return;
+    }
+
+    if (nextStep === "after" && !state.before) {
+      toast("Add the Before photo before continuing.", "error");
+      this.openStep("before");
+      return;
+    }
+
+    this.openStep(nextStep);
+  }
+
+  getCompletionState() {
+    const details = Boolean(
+      this.fields.title.value.trim() &&
+      this.fields.category.value.trim()
+    );
+    const before = Boolean(this.fields.beforeImage.value.trim());
+    const after = Boolean(this.fields.afterImage.value.trim());
+    const comparison = Boolean(this.fields.comparisonImage.value.trim());
+    const publishing = before && after && comparison;
+
+    return {
+      details,
+      before,
+      after,
+      comparison,
+      publishing,
+    };
+  }
+
+  getNextIncompleteStep() {
+    const state = this.getCompletionState();
+
+    if (!state.details) return "details";
+    if (!state.before) return "before";
+    if (!state.after) return "after";
+    return "publishing";
+  }
+
+  updateWorkflowState() {
+    const state = this.getCompletionState();
+    const completion = {
+      details: state.details,
+      before: state.before,
+      after: state.after,
+      publishing: state.publishing,
+    };
+
+    WORKFLOW_STEPS.forEach((step) => {
+      const complete = completion[step];
+      const card = this.workflowCards.get(step);
+      const dot = this.progressDots.get(step);
+      const check = this.stepChecks.get(step);
+
+      card?.classList.toggle("is-complete", complete);
+      dot?.classList.toggle("is-complete", complete);
+
+      if (check) {
+        check.textContent = complete ? "✓" : "○";
+        check.setAttribute("aria-label", complete ? "Complete" : "Incomplete");
+      }
+    });
+
+    if (!this.publishReadiness) return;
+
+    const missing = [];
+    if (!state.before) missing.push("Before photo");
+    if (!state.after) missing.push("After photo");
+    if (!state.comparison) missing.push("saved combined photo");
+
+    if (!missing.length) {
+      this.publishReadiness.classList.add("is-ready");
+      this.publishReadiness.textContent = "Ready to publish. Every required photo is saved.";
+      return;
+    }
+
+    this.publishReadiness.classList.remove("is-ready");
+    this.publishReadiness.textContent =
+      `Draft ready. To publish, add ${this.formatList(missing)}.`;
+  }
+
+  formatList(items) {
+    if (items.length === 0) return "";
+    if (items.length === 1) return items[0];
+    if (items.length === 2) return `${items[0]} and ${items[1]}`;
+    return `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
   }
 
   updateStatusHelp() {
     const help = document.getElementById("statusHelp");
+    if (!help) return;
+
     const publishing = this.fields.status.value === "published";
     help.textContent = publishing
       ? "Publishing requires Before, After, and the saved combined photo."
@@ -257,6 +420,14 @@ export class GalleryDrawer {
       controls.status.textContent = `${label === "before" ? "Before" : "After"} photo saved`;
       this.renderPreview(label, url);
       this.composer.reset(this.fields.comparisonImage.value);
+      this.updateWorkflowState();
+
+      if (label === "before") {
+        this.openStep("after");
+      } else {
+        this.openStep("publishing");
+      }
+
       toast(`${label === "before" ? "Before" : "After"} photo uploaded.`);
     } catch (error) {
       if (error.message !== "Crop cancelled.") {
@@ -276,10 +447,13 @@ export class GalleryDrawer {
 
   renderPreview(label, url) {
     const preview = this.photoControls[label].preview;
+    if (!preview) return;
+
     if (!url) {
       preview.innerHTML = `<div class="preview-empty">${label === "before" ? "Drop a photo here or choose an option below" : "Return later to add the finished result"}</div>`;
       return;
     }
+
     preview.innerHTML = `<img src="${getPreviewUrl(url, 1000)}" alt="${label} transformation photo">`;
   }
 
@@ -287,6 +461,7 @@ export class GalleryDrawer {
     if (!payload.published) return true;
     if (!payload.beforeImage || !payload.afterImage || !payload.comparisonImage) {
       toast("To publish, add the Before photo, After photo, and save the combined photo.", "error", 6500);
+      this.openStep("publishing");
       return false;
     }
     return true;
@@ -294,7 +469,21 @@ export class GalleryDrawer {
 
   async handleSubmit(event) {
     event.preventDefault();
+
+    if (!this.fields.title.value.trim() || !this.fields.category.value.trim()) {
+      this.openStep("details");
+      this.form.reportValidity();
+      return;
+    }
+
+    if (!this.fields.beforeImage.value.trim()) {
+      toast("Add a Before photo before saving the transformation.", "error");
+      this.openStep("before");
+      return;
+    }
+
     if (!this.form.reportValidity()) return;
+
     const payload = this.getPayload();
     if (!this.validatePublish(payload)) return;
 
@@ -321,9 +510,11 @@ export class GalleryDrawer {
       toast("This transformation does not have a record ID yet.", "error");
       return;
     }
+
     this.pendingDeleteId = recordId;
     const title = this.fields.title.value.trim() || "this transformation";
-    this.deleteMessage.textContent = `Delete “${title}”? This removes the gallery record and cannot be undone. Drive images will not be deleted.`;
+    this.deleteMessage.textContent =
+      `Delete “${title}”? This removes the gallery record and cannot be undone. Drive images will not be deleted.`;
     this.deleteModal.hidden = false;
     document.body.classList.add("modal-open");
   }
