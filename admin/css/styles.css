@@ -47,3 +47,74 @@
     padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
   }
 }
+
+button:disabled,
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.gallery-grid.loading {
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.gallery-card-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+
+.gallery-image-placeholder {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.gallery-image-placeholder span {
+  font-size: 2rem;
+}
+
+body.drawer-open {
+  overflow: hidden;
+}
+
+.toast.error {
+  background: #7f1d1d;
+}
+
+.toast.success {
+  background: #14532d;
+}
+
+/*
+ * Mobile drawer fix:
+ * keeps Save Transformation reachable above mobile browser controls.
+ */
+.drawer {
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+#galleryForm {
+  padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+}
+
+.drawer-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  background: inherit;
+}
