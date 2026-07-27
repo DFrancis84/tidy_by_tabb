@@ -15,7 +15,7 @@ const DEFAULT_CATEGORIES = [
   "Other",
 ];
 
-const WORKFLOW_STEPS = ["details", "before", "after", "publishing"];
+const WORKFLOW_STEPS = ["details", "before", "after", "comparison", "publishing"];
 
 export class GalleryDrawer {
   constructor({ api, onSaved, onDeleted } = {}) {
@@ -147,7 +147,7 @@ export class GalleryDrawer {
 
       .workflow-progress {
         display: grid;
-        grid-template-columns: 18px minmax(24px, 1fr) 18px minmax(24px, 1fr) 18px minmax(24px, 1fr) 18px;
+        grid-template-columns: 18px minmax(16px, 1fr) 18px minmax(16px, 1fr) 18px minmax(16px, 1fr) 18px minmax(16px, 1fr) 18px;
         align-items: center;
         width: min(420px, 100%);
         margin: 0 auto 22px;
@@ -316,6 +316,17 @@ export class GalleryDrawer {
       .comparison-workflow {
         display: grid;
         gap: 14px;
+      }
+
+      .gallery-display-note {
+        margin: 0;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: var(--blue-soft);
+        color: var(--navy);
+        font-size: 0.84rem;
+        font-weight: 700;
+        line-height: 1.45;
       }
 
       .publish-readiness {
@@ -534,7 +545,7 @@ export class GalleryDrawer {
     const before = Boolean(this.fields.beforeImage.value.trim());
     const after = Boolean(this.fields.afterImage.value.trim());
     const comparison = Boolean(this.fields.comparisonImage.value.trim());
-    const publishing = before && after && comparison;
+    const publishing = before && after && comparison && this.fields.status.value === "published";
 
     return {
       details,
@@ -551,6 +562,7 @@ export class GalleryDrawer {
     if (!state.details) return "details";
     if (!state.before) return "before";
     if (!state.after) return "after";
+    if (!state.comparison) return "comparison";
     return "publishing";
   }
 
@@ -560,6 +572,7 @@ export class GalleryDrawer {
       details: state.details,
       before: state.before,
       after: state.after,
+      comparison: state.comparison,
       publishing: state.publishing,
     };
 
@@ -587,13 +600,13 @@ export class GalleryDrawer {
 
     if (!missing.length) {
       this.publishReadiness.classList.add("is-ready");
-      this.publishReadiness.textContent = "Ready to publish. Every required photo is saved.";
+      this.publishReadiness.textContent = "Ready to publish. The branded gallery image is saved.";
       return;
     }
 
     this.publishReadiness.classList.remove("is-ready");
     this.publishReadiness.textContent =
-      `Draft ready. To publish, add ${this.formatList(missing)}.`;
+      `Keep this as a draft, or add ${this.formatList(missing)} before publishing.`;
   }
 
   formatList(items) {
@@ -666,7 +679,7 @@ export class GalleryDrawer {
       if (label === "before") {
         this.openStep("after");
       } else {
-        this.openStep("publishing");
+        this.openStep("comparison");
       }
 
       toast(`${label === "before" ? "Before" : "After"} photo uploaded.`);
