@@ -1,11 +1,266 @@
-import{getPreviewUrl,normalizeRecord}from"./utils.js";import{toast,loading}from"./ui.js";
-export class GalleryDrawer{
- constructor(api,onChanged){this.api=api;this.onChanged=onChanged;this.drawer=document.getElementById("galleryDrawer");this.backdrop=document.getElementById("drawerBackdrop");this.form=document.getElementById("galleryForm");this.save=document.getElementById("saveRecord");this.del=document.getElementById("deleteRecord");this.f={id:recordId,title:recordTitle,category:recordCategory,beforeImage,afterImage,comparisonImage,status:recordStatus,featured:recordFeatured};this.beforePreview=document.getElementById("beforePreview");this.afterPreview=document.getElementById("afterPreview")}
- bind(){drawerClose.onclick=()=>this.close();drawerCancel.onclick=()=>this.close();this.backdrop.onclick=()=>this.close();this.form.onsubmit=e=>this.submit(e);this.del.onclick=()=>this.remove();this.f.beforeImage.oninput=()=>this.preview(this.beforePreview,this.f.beforeImage.value,"before");this.f.afterImage.oninput=()=>this.preview(this.afterPreview,this.f.afterImage.value,"after")}
- open(record=null){this.current=record?normalizeRecord(record):null;drawerTitle.textContent=this.current?"Edit transformation":"Add transformation";this.del.hidden=!this.current;const r=this.current||{};this.f.id.value=r.id||"";this.f.title.value=r.title||"";this.f.category.value=r.category||"";this.f.beforeImage.value=r.beforeImage||"";this.f.afterImage.value=r.afterImage||"";this.f.comparisonImage.value=r.comparisonImage||"";this.f.status.value=r.published?"published":"draft";this.f.featured.checked=!!r.featured;this.preview(this.beforePreview,r.beforeImage,"before");this.preview(this.afterPreview,r.afterImage,"after");this.drawer.classList.add("is-open");this.drawer.setAttribute("aria-hidden","false");this.backdrop.hidden=false;document.body.classList.add("drawer-open")}
- close(){this.drawer.classList.remove("is-open");this.drawer.setAttribute("aria-hidden","true");this.backdrop.hidden=true;document.body.classList.remove("drawer-open");this.form.reset();this.current=null}
- payload(){return{title:this.f.title.value.trim(),category:this.f.category.value.trim(),beforeImage:this.f.beforeImage.value.trim(),afterImage:this.f.afterImage.value.trim(),comparisonImage:this.f.comparisonImage.value.trim(),published:this.f.status.value==="published",featured:this.f.featured.checked}}
- async submit(e){e.preventDefault();if(!this.form.reportValidity())return;loading(this.save,true);try{const res=this.current?await this.api.update(this.current.id,this.payload()):await this.api.create(this.payload());toast(res.message||"Saved.");this.close();await this.onChanged()}catch(err){toast(err.message,"error")}finally{loading(this.save,false)}}
- async remove(){if(!this.current||!confirm(`Delete "${this.current.title}"?`))return;loading(this.del,true,"Deleting…");try{const res=await this.api.delete(this.current.id);toast(res.message||"Deleted.");this.close();await this.onChanged()}catch(err){toast(err.message,"error")}finally{loading(this.del,false)}}
- preview(el,url,label){const src=getPreviewUrl(url,700);el.innerHTML=src?`<img src="${src}" alt="${label} image preview">`:`<div class="preview-empty">No ${label} image selected</div>`}
+import {
+  getPreviewUrl,
+  normalizeRecord,
+  readFileAsDataUrl,
+} from "./utils.js";
+import { loading, toast } from "./ui.js";
+import { ComparisonComposer } from "./composer.js";
+
+export class GalleryDrawer {
+  constructor({ api, onSaved, onDeleted } = {}) {
+    this.api = api;
+    this.onSaved = typeof onSaved === "function" ? onSaved : () => {};
+    this.onDeleted = typeof onDeleted === "function" ? onDeleted : () => {};
+    this.currentRecord = null;
+
+    this.drawer = document.getElementById("galleryDrawer");
+    this.backdrop = document.getElementById("drawerBackdrop");
+    this.form = document.getElementById("galleryForm");
+    this.title = document.getElementById("drawerTitle");
+    this.saveButton = document.getElementById("saveRecord");
+    this.deleteButton = document.getElementById("deleteRecord");
+
+    this.fields = {
+      id: document.getElementById("recordId"),
+      title: document.getElementById("recordTitle"),
+      category: document.getElementById("recordCategory"),
+      beforeImage: document.getElementById("beforeImage"),
+      afterImage: document.getElementById("afterImage"),
+      comparisonImage: document.getElementById("comparisonImage"),
+      status: document.getElementById("recordStatus"),
+      featured: document.getElementById("recordFeatured"),
+    };
+
+    this.beforeFile = document.getElementById("beforeFile");
+    this.afterFile = document.getElementById("afterFile");
+    this.beforeStatus = document.getElementById("beforeUploadStatus");
+    this.afterStatus = document.getElementById("afterUploadStatus");
+
+    this.beforePreview = document.getElementById("beforePreview");
+    this.afterPreview = document.getElementById("afterPreview");
+
+    this.composer = new ComparisonComposer({
+      api: this.api,
+      getBeforeUrl: () => this.fields.beforeImage.value,
+      getAfterUrl: () => this.fields.afterImage.value,
+      setComparisonUrl: (url) => {
+        this.fields.comparisonImage.value = url;
+      },
+    });
+  }
+
+  bind() {
+    document.getElementById("drawerClose")?.addEventListener("click", () => this.close());
+    document.getElementById("drawerCancel")?.addEventListener("click", () => this.close());
+    this.backdrop?.addEventListener("click", () => this.close());
+
+    this.form?.addEventListener("submit", (event) => this.handleSubmit(event));
+    this.deleteButton?.addEventListener("click", () => this.handleDelete());
+
+    this.fields.beforeImage?.addEventListener("input", () => {
+      this.renderPreview(this.beforePreview, this.fields.beforeImage.value, "before");
+    });
+
+    this.fields.afterImage?.addEventListener("input", () => {
+      this.renderPreview(this.afterPreview, this.fields.afterImage.value, "after");
+    });
+
+    this.beforeFile?.addEventListener("change", () => {
+      this.handleFileUpload(
+        this.beforeFile,
+        this.fields.beforeImage,
+        this.beforePreview,
+        this.beforeStatus,
+        "before"
+      );
+    });
+
+    this.afterFile?.addEventListener("change", () => {
+      this.handleFileUpload(
+        this.afterFile,
+        this.fields.afterImage,
+        this.afterPreview,
+        this.afterStatus,
+        "after"
+      );
+    });
+
+    this.composer.bind();
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && this.drawer?.classList.contains("is-open")) {
+        this.close();
+      }
+    });
+  }
+
+  open(record = null) {
+    this.currentRecord = record ? normalizeRecord(record) : null;
+
+    if (this.title) {
+      this.title.textContent = this.currentRecord
+        ? "Edit transformation"
+        : "Add transformation";
+    }
+
+    if (this.deleteButton) {
+      this.deleteButton.hidden = !this.currentRecord;
+    }
+
+    this.populate(this.currentRecord);
+
+    this.drawer?.classList.add("is-open");
+    this.drawer?.setAttribute("aria-hidden", "false");
+    if (this.backdrop) this.backdrop.hidden = false;
+    document.body.classList.add("drawer-open");
+
+    window.setTimeout(() => this.fields.title?.focus(), 50);
+  }
+
+  close() {
+    this.drawer?.classList.remove("is-open");
+    this.drawer?.setAttribute("aria-hidden", "true");
+    if (this.backdrop) this.backdrop.hidden = true;
+    document.body.classList.remove("drawer-open");
+    this.form?.reset();
+    this.currentRecord = null;
+  }
+
+  populate(record) {
+    const value = record || {
+      id: "",
+      title: "",
+      category: "",
+      beforeImage: "",
+      afterImage: "",
+      comparisonImage: "",
+      published: false,
+      featured: false,
+    };
+
+    this.fields.id.value = value.id || "";
+    this.fields.title.value = value.title || "";
+    this.fields.category.value = value.category || "";
+    this.fields.beforeImage.value = value.beforeImage || "";
+    this.fields.afterImage.value = value.afterImage || "";
+    this.fields.comparisonImage.value = value.comparisonImage || "";
+    this.fields.status.value = value.published ? "published" : "draft";
+    this.fields.featured.checked = Boolean(value.featured);
+
+    if (this.beforeStatus) this.beforeStatus.textContent = "Choose or replace photo";
+    if (this.afterStatus) this.afterStatus.textContent = "Choose or replace photo";
+
+    this.renderPreview(this.beforePreview, value.beforeImage, "before");
+    this.renderPreview(this.afterPreview, value.afterImage, "after");
+    this.composer.reset(value.comparisonImage);
+  }
+
+  getPayload() {
+    return {
+      title: this.fields.title.value.trim(),
+      category: this.fields.category.value.trim(),
+      beforeImage: this.fields.beforeImage.value.trim(),
+      afterImage: this.fields.afterImage.value.trim(),
+      comparisonImage: this.fields.comparisonImage.value.trim(),
+      published: this.fields.status.value === "published",
+      featured: this.fields.featured.checked,
+    };
+  }
+
+  async handleFileUpload(fileInput, urlInput, preview, status, label) {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast("Image must be 10 MB or smaller.", "error");
+      fileInput.value = "";
+      return;
+    }
+
+    status.textContent = "Uploading…";
+    fileInput.disabled = true;
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+
+      const response = await this.api.uploadImage({
+        fileName: `${label}-${Date.now()}-${file.name}`,
+        mimeType: file.type,
+        dataUrl,
+      });
+
+      urlInput.value = response.data.url;
+      this.renderPreview(preview, response.data.url, label);
+      status.textContent = "Uploaded to Google Drive";
+
+      toast(`${label === "before" ? "Before" : "After"} photo uploaded.`);
+    } catch (error) {
+      status.textContent = "Upload failed";
+      toast(error.message, "error", 6000);
+    } finally {
+      fileInput.disabled = false;
+      fileInput.value = "";
+    }
+  }
+
+  async handleSubmit(event) {
+    event.preventDefault();
+
+    if (!this.form?.reportValidity()) return;
+
+    const payload = this.getPayload();
+    loading(this.saveButton, true);
+
+    try {
+      const response = this.currentRecord
+        ? await this.api.update(this.currentRecord.id, payload)
+        : await this.api.create(payload);
+
+      toast(response.message || "Transformation saved.");
+      this.close();
+      await this.onSaved(response.data);
+    } catch (error) {
+      toast(error.message, "error", 5200);
+    } finally {
+      loading(this.saveButton, false);
+    }
+  }
+
+  async handleDelete() {
+    if (!this.currentRecord) return;
+
+    const confirmed = window.confirm(
+      `Delete "${this.currentRecord.title || "this transformation"}"? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    loading(this.deleteButton, true, "Deleting…");
+
+    try {
+      const response = await this.api.delete(this.currentRecord.id);
+      toast(response.message || "Transformation deleted.");
+      this.close();
+      await this.onDeleted(this.currentRecord.id);
+    } catch (error) {
+      toast(error.message, "error", 5200);
+    } finally {
+      loading(this.deleteButton, false);
+    }
+  }
+
+  renderPreview(container, imageUrl, label) {
+    if (!container) return;
+
+    const previewUrl = getPreviewUrl(imageUrl, 700);
+
+    if (!previewUrl) {
+      container.innerHTML = `<div class="preview-empty">No ${label} image selected</div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <img src="${previewUrl}" alt="${label} image preview">
+    `;
+  }
 }

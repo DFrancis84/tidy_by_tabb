@@ -85,11 +85,60 @@
         <div class="form-grid">
           <label class="field field-full"><span>Title</span><input id="recordTitle" required maxlength="80"></label>
           <label class="field field-full"><span>Category</span><input id="recordCategory" required maxlength="50"></label>
-          <label class="field field-full"><span>Before image URL</span><input id="beforeImage" type="url" required></label>
+          <div class="field field-full">
+            <span>Before photo</span>
+            <div class="upload-row">
+              <label class="button button-secondary file-button">
+                Choose Before photo
+                <input id="beforeFile" type="file" accept="image/jpeg,image/png,image/webp" capture="environment">
+              </label>
+              <span id="beforeUploadStatus" class="upload-status">No upload selected</span>
+            </div>
+            <input id="beforeImage" type="url" placeholder="Uploaded image URL" required>
+          </div>
           <div class="field field-full"><span>Before preview</span><div id="beforePreview" class="image-preview"><div class="preview-empty">No before image selected</div></div></div>
-          <label class="field field-full"><span>After image URL</span><input id="afterImage" type="url" required></label>
+          <div class="field field-full">
+            <span>After photo</span>
+            <div class="upload-row">
+              <label class="button button-secondary file-button">
+                Choose After photo
+                <input id="afterFile" type="file" accept="image/jpeg,image/png,image/webp" capture="environment">
+              </label>
+              <span id="afterUploadStatus" class="upload-status">No upload selected</span>
+            </div>
+            <input id="afterImage" type="url" placeholder="Uploaded image URL" required>
+          </div>
           <div class="field field-full"><span>After preview</span><div id="afterPreview" class="image-preview"><div class="preview-empty">No after image selected</div></div></div>
-          <label class="field field-full"><span>Comparison image URL <small>(optional)</small></span><input id="comparisonImage" type="url"></label>
+          <div class="field field-full composer-section">
+            <div class="composer-heading">
+              <div>
+                <span>Combined Before / After photo</span>
+                <small>Uses the saved Tidy by Tabb branded layout.</small>
+              </div>
+              <button id="generateComparison" class="button button-secondary" type="button">
+                Create combined photo
+              </button>
+            </div>
+
+            <canvas id="comparisonCanvas" width="1200" height="800" hidden></canvas>
+
+            <div id="comparisonPreview" class="image-preview comparison-preview">
+              <div class="preview-empty">
+                Upload both photos, then create the combined image.
+              </div>
+            </div>
+
+            <div class="composer-controls">
+              <button id="swapComparisonImages" class="button button-secondary" type="button">
+                Swap Before / After
+              </button>
+              <button id="saveComparisonImage" class="button button-primary" type="button" disabled>
+                Save combined photo
+              </button>
+            </div>
+
+            <input id="comparisonImage" type="url" placeholder="Combined image URL" readonly>
+          </div>
           <label class="field"><span>Status</span><select id="recordStatus"><option value="draft">Draft</option><option value="published">Published</option></select></label>
           <label class="switch-field"><input id="recordFeatured" type="checkbox"><span class="switch"></span><span>Featured transformation</span></label>
         </div>
