@@ -695,3 +695,274 @@ body.modal-open {
     max-height: 64dvh;
   }
 }
+
+
+/* ==========================================================
+   Gallery CMS v3.1: guided workflow + safe mobile publishing
+   ========================================================== */
+
+.workflow-progress {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px 18px;
+}
+
+.progress-dot {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  border-radius: 999px;
+  border: 2px solid #b7c8ce;
+  background: #fff;
+}
+
+.progress-dot.is-complete {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.progress-line {
+  height: 2px;
+  flex: 1;
+  background: #d7e1e5;
+}
+
+.workflow-stack {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 28px;
+}
+
+.workflow-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(18, 46, 57, .05);
+}
+
+.workflow-card-toggle {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  border: 0;
+  padding: 15px;
+  text-align: left;
+  background: #fff;
+  color: inherit;
+  cursor: pointer;
+}
+
+.workflow-card.is-open .workflow-card-toggle {
+  border-bottom: 1px solid var(--line);
+}
+
+.workflow-number {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border-radius: 999px;
+  background: #eaf2f4;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.workflow-card.is-complete .workflow-number {
+  background: var(--primary);
+  color: #fff;
+}
+
+.workflow-heading {
+  display: grid;
+  gap: 3px;
+}
+
+.workflow-heading small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.workflow-check {
+  color: #9babb1;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.workflow-card.is-complete .workflow-check {
+  color: var(--primary);
+}
+
+.workflow-card-body {
+  display: none;
+  padding: 16px;
+}
+
+.workflow-card.is-open .workflow-card-body {
+  display: grid;
+  gap: 15px;
+}
+
+.workflow-next-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.publishing-card {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f8fbfc;
+}
+
+.featured-field {
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.featured-field > span:last-child {
+  display: grid;
+  gap: 3px;
+}
+
+.featured-field small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.comparison-workflow {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.publish-readiness {
+  padding: 13px 14px;
+  border-radius: 12px;
+  background: #eef3f5;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.publish-readiness.is-ready {
+  background: #e8f6ee;
+  color: #246b43;
+}
+
+.publish-readiness.is-warning {
+  background: #fff4db;
+  color: #835a00;
+}
+
+.delete-file-options {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+}
+
+.delete-file-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 11px;
+  align-items: start;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.delete-file-option input {
+  margin-top: 3px;
+}
+
+.delete-file-option > span {
+  display: grid;
+  gap: 3px;
+}
+
+.delete-file-option small {
+  color: var(--muted);
+}
+
+.delete-file-option:has(input:disabled) {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.delete-warning {
+  margin-top: 14px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  background: #fff4db;
+  color: #835a00;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .drawer-body {
+    /*
+     * The large bottom padding guarantees the Publishing controls can
+     * scroll fully above the sticky action bar and iPhone home indicator.
+     */
+    height: calc(100dvh - 150px);
+    max-height: calc(100dvh - 150px);
+    padding: 12px 12px calc(150px + env(safe-area-inset-bottom));
+  }
+
+  .drawer-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 9px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .drawer-actions-right {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+    width: 100%;
+  }
+
+  #deleteRecord {
+    width: 100%;
+    order: 2;
+  }
+
+  #saveRecord,
+  #drawerCancel {
+    width: 100%;
+  }
+
+  .workflow-card-toggle {
+    padding: 13px;
+  }
+
+  .workflow-card-body {
+    padding: 13px;
+  }
+
+  .workflow-next-row .button {
+    width: 100%;
+  }
+
+  .publishing-card,
+  .comparison-workflow {
+    padding: 13px;
+  }
+
+  .delete-file-option {
+    min-height: 58px;
+  }
+}
