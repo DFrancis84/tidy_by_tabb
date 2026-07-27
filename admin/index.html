@@ -77,91 +77,213 @@
     <form id="galleryForm">
       <div class="drawer-header">
         <div>
-          <p class="eyebrow">Transformation editor</p>
+          <p class="eyebrow">Transformation workflow</p>
           <h2 id="drawerTitle">Add transformation</h2>
-          <small class="drawer-subtitle">Save the Before photo now. Return later to add the After photo and publish.</small>
+          <small class="drawer-subtitle">
+            Save the Before photo now, then return later to finish and publish.
+          </small>
         </div>
         <button id="drawerClose" class="icon-button" type="button" aria-label="Close editor">×</button>
       </div>
 
       <div class="drawer-body">
         <input id="recordId" type="hidden">
-        <div class="form-grid">
-          <label class="field field-full"><span>Title</span><input id="recordTitle" required maxlength="80" autocomplete="off"></label>
 
-          <label class="field field-full">
-            <span>Category</span>
-            <select id="recordCategory" required><option value="">Select a category</option></select>
-          </label>
+        <div class="workflow-progress" aria-label="Transformation progress">
+          <span class="progress-dot" data-progress-step="details"></span>
+          <span class="progress-line"></span>
+          <span class="progress-dot" data-progress-step="before"></span>
+          <span class="progress-line"></span>
+          <span class="progress-dot" data-progress-step="after"></span>
+          <span class="progress-line"></span>
+          <span class="progress-dot" data-progress-step="publishing"></span>
+        </div>
 
-          <section class="photo-card field-full" data-photo-section="before">
-            <div class="photo-card-heading">
-              <div><span class="step-pill">1</span><strong>Before photo</strong><small>Required to save the initial draft</small></div>
-              <span id="beforeUploadStatus" class="upload-status">No photo selected</span>
-            </div>
-            <div id="beforeDropZone" class="drop-zone" tabindex="0">
-              <div id="beforePreview" class="image-preview"><div class="preview-empty">Drop a photo here or choose an option below</div></div>
-              <div class="upload-actions">
-                <label class="button button-secondary file-button">Photo library<input id="beforeFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
-                <label class="button button-secondary file-button">Take photo<input id="beforeCamera" type="file" accept="image/*" capture="environment"></label>
+        <div class="workflow-stack">
+          <section class="workflow-card is-open" data-workflow-step="details">
+            <button class="workflow-card-toggle" type="button" data-step-toggle="details">
+              <span class="workflow-number">1</span>
+              <span class="workflow-heading">
+                <strong>Details</strong>
+                <small>Title and service category</small>
+              </span>
+              <span class="workflow-check" data-step-check="details">○</span>
+            </button>
+            <div class="workflow-card-body">
+              <label class="field">
+                <span>Title</span>
+                <input id="recordTitle" required maxlength="80" autocomplete="off">
+              </label>
+              <label class="field">
+                <span>Category</span>
+                <select id="recordCategory" required>
+                  <option value="">Select a category</option>
+                </select>
+              </label>
+              <div class="workflow-next-row">
+                <button class="button button-primary" type="button" data-next-step="before">
+                  Continue to Before photo
+                </button>
               </div>
-              <small class="drop-hint">Desktop: drag and drop. Phone: use camera or photo library.</small>
             </div>
-            <input id="beforeImage" type="hidden" required>
           </section>
 
-          <section class="photo-card field-full" data-photo-section="after">
-            <div class="photo-card-heading">
-              <div><span class="step-pill">2</span><strong>After photo</strong><small>Add later when the cleaning is complete</small></div>
-              <span id="afterUploadStatus" class="upload-status">Not added yet</span>
-            </div>
-            <div id="afterDropZone" class="drop-zone" tabindex="0">
-              <div id="afterPreview" class="image-preview"><div class="preview-empty">Return later to add the finished result</div></div>
-              <div class="upload-actions">
-                <label class="button button-secondary file-button">Photo library<input id="afterFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
-                <label class="button button-secondary file-button">Take photo<input id="afterCamera" type="file" accept="image/*" capture="environment"></label>
+          <section class="workflow-card" data-workflow-step="before">
+            <button class="workflow-card-toggle" type="button" data-step-toggle="before">
+              <span class="workflow-number">2</span>
+              <span class="workflow-heading">
+                <strong>Before photo</strong>
+                <small>Required to save the initial draft</small>
+              </span>
+              <span class="workflow-check" data-step-check="before">○</span>
+            </button>
+            <div class="workflow-card-body">
+              <div class="photo-card-heading">
+                <span id="beforeUploadStatus" class="upload-status">No photo selected</span>
               </div>
-              <small class="drop-hint">The record can remain a draft until this photo is ready.</small>
+              <div id="beforeDropZone" class="drop-zone" tabindex="0">
+                <div id="beforePreview" class="image-preview">
+                  <div class="preview-empty">Drop a photo here or choose an option below</div>
+                </div>
+                <div class="upload-actions">
+                  <label class="button button-secondary file-button">
+                    Photo library
+                    <input id="beforeFile" type="file" accept="image/jpeg,image/png,image/webp">
+                  </label>
+                  <label class="button button-secondary file-button">
+                    Take photo
+                    <input id="beforeCamera" type="file" accept="image/*" capture="environment">
+                  </label>
+                </div>
+                <small class="drop-hint">
+                  Desktop: drag and drop. Phone: use camera or photo library.
+                </small>
+              </div>
+              <input id="beforeImage" type="hidden" required>
+              <div class="workflow-next-row">
+                <button class="button button-primary" type="button" data-next-step="after">
+                  Continue to After photo
+                </button>
+              </div>
             </div>
-            <input id="afterImage" type="hidden">
           </section>
 
-          <section class="photo-card composer-section field-full">
-            <div class="photo-card-heading">
-              <div><span class="step-pill">3</span><strong>Branded comparison</strong><small>Available after both photos are uploaded</small></div>
+          <section class="workflow-card" data-workflow-step="after">
+            <button class="workflow-card-toggle" type="button" data-step-toggle="after">
+              <span class="workflow-number">3</span>
+              <span class="workflow-heading">
+                <strong>After photo</strong>
+                <small>Add it now or return later</small>
+              </span>
+              <span class="workflow-check" data-step-check="after">○</span>
+            </button>
+            <div class="workflow-card-body">
+              <div class="photo-card-heading">
+                <span id="afterUploadStatus" class="upload-status">Not added yet</span>
+              </div>
+              <div id="afterDropZone" class="drop-zone" tabindex="0">
+                <div id="afterPreview" class="image-preview">
+                  <div class="preview-empty">Return later to add the finished result</div>
+                </div>
+                <div class="upload-actions">
+                  <label class="button button-secondary file-button">
+                    Photo library
+                    <input id="afterFile" type="file" accept="image/jpeg,image/png,image/webp">
+                  </label>
+                  <label class="button button-secondary file-button">
+                    Take photo
+                    <input id="afterCamera" type="file" accept="image/*" capture="environment">
+                  </label>
+                </div>
+                <small class="drop-hint">
+                  A draft can be saved before the After photo is ready.
+                </small>
+              </div>
+              <input id="afterImage" type="hidden">
+              <div class="workflow-next-row">
+                <button class="button button-primary" type="button" data-next-step="publishing">
+                  Continue to Publishing
+                </button>
+              </div>
             </div>
-            <canvas id="comparisonCanvas" width="1200" height="800" hidden></canvas>
-            <div id="comparisonPreview" class="image-preview comparison-preview"><div class="preview-empty">Upload both photos to unlock the comparison builder</div></div>
-            <div class="composer-controls">
-              <button id="generateComparison" class="button button-secondary" type="button">Create combined photo</button>
-              <button id="swapComparisonImages" class="button button-secondary" type="button">Swap sides</button>
-              <button id="saveComparisonImage" class="button button-primary" type="button" disabled>Save combined photo</button>
-            </div>
-            <input id="comparisonImage" type="hidden">
           </section>
 
-          <label class="field">
-            <span>Status</span>
-            <select id="recordStatus">
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-            </select>
-            <small id="statusHelp">Drafts may contain only the Before photo.</small>
-          </label>
+          <section class="workflow-card" data-workflow-step="publishing">
+            <button class="workflow-card-toggle" type="button" data-step-toggle="publishing">
+              <span class="workflow-number">4</span>
+              <span class="workflow-heading">
+                <strong>Publishing</strong>
+                <small>Status, featured setting, and combined photo</small>
+              </span>
+              <span class="workflow-check" data-step-check="publishing">○</span>
+            </button>
+            <div class="workflow-card-body">
+              <div class="publishing-card">
+                <label class="field">
+                  <span>Status</span>
+                  <select id="recordStatus">
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                  </select>
+                  <small id="statusHelp">Drafts may contain only the Before photo.</small>
+                </label>
 
-          <label class="switch-field">
-            <input id="recordFeatured" type="checkbox">
-            <span class="switch"></span>
-            <span>Featured transformation</span>
-          </label>
+                <label class="switch-field featured-field">
+                  <input id="recordFeatured" type="checkbox">
+                  <span class="switch"></span>
+                  <span>
+                    <strong>Featured transformation</strong>
+                    <small>Show this transformation in the homepage spotlight.</small>
+                  </span>
+                </label>
+              </div>
+
+              <section class="comparison-workflow">
+                <div class="photo-card-heading">
+                  <div>
+                    <strong>Branded comparison</strong>
+                    <small>Required before publishing</small>
+                  </div>
+                </div>
+                <canvas id="comparisonCanvas" width="1200" height="800" hidden></canvas>
+                <div id="comparisonPreview" class="image-preview comparison-preview">
+                  <div class="preview-empty">
+                    Upload both photos to unlock the comparison builder
+                  </div>
+                </div>
+                <div class="composer-controls">
+                  <button id="generateComparison" class="button button-secondary" type="button">
+                    Create combined photo
+                  </button>
+                  <button id="swapComparisonImages" class="button button-secondary" type="button">
+                    Swap sides
+                  </button>
+                  <button id="saveComparisonImage" class="button button-primary" type="button" disabled>
+                    Save combined photo
+                  </button>
+                </div>
+                <input id="comparisonImage" type="hidden">
+              </section>
+
+              <div id="publishReadiness" class="publish-readiness">
+                Save as a draft now, or complete every item to publish.
+              </div>
+            </div>
+          </section>
         </div>
       </div>
 
       <div class="drawer-actions">
-        <button id="deleteRecord" class="button button-danger" type="button" hidden>Delete</button>
+        <button id="deleteRecord" class="button button-danger" type="button" hidden>
+          Delete
+        </button>
         <div class="drawer-actions-right">
-          <button id="drawerCancel" class="button button-secondary" type="button">Cancel</button>
-          <button id="saveRecord" class="button button-primary" type="submit">Save transformation</button>
+          <button id="drawerCancel" class="button button-secondary" type="button">
+            Cancel
+          </button>
+          <button id="saveRecord" class="button button-primary" type="submit">
+            Save transformation
+          </button>
         </div>
       </div>
     </form>
@@ -183,9 +305,53 @@
   <div id="deleteModal" class="modal-shell" hidden>
     <div class="modal-backdrop"></div>
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
-      <div class="modal-header"><div><p class="eyebrow">Permanent action</p><h2 id="deleteTitle">Delete transformation?</h2></div></div>
-      <p id="deleteMessage">This record will be removed from the gallery. The Drive images will remain available.</p>
-      <div class="modal-actions"><button id="deleteCancel" class="button button-secondary" type="button">Cancel</button><button id="deleteConfirm" class="button button-danger" type="button">Delete transformation</button></div>
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Permanent action</p>
+          <h2 id="deleteTitle">Delete transformation?</h2>
+        </div>
+      </div>
+
+      <p id="deleteMessage">
+        This removes the gallery record. Choose whether its Drive files should also be moved to Trash.
+      </p>
+
+      <div class="delete-file-options">
+        <label class="delete-file-option">
+          <input id="deleteBeforeFile" type="checkbox">
+          <span>
+            <strong>Before photo</strong>
+            <small id="deleteBeforeFileName">No file attached</small>
+          </span>
+        </label>
+
+        <label class="delete-file-option">
+          <input id="deleteAfterFile" type="checkbox">
+          <span>
+            <strong>After photo</strong>
+            <small id="deleteAfterFileName">No file attached</small>
+          </span>
+        </label>
+
+        <label class="delete-file-option">
+          <input id="deleteComparisonFile" type="checkbox">
+          <span>
+            <strong>Combined photo</strong>
+            <small id="deleteComparisonFileName">No file attached</small>
+          </span>
+        </label>
+      </div>
+
+      <div class="delete-warning">
+        Selected files are moved to Google Drive Trash, not permanently erased.
+      </div>
+
+      <div class="modal-actions">
+        <button id="deleteCancel" class="button button-secondary" type="button">Cancel</button>
+        <button id="deleteConfirm" class="button button-danger" type="button">
+          Delete transformation
+        </button>
+      </div>
     </section>
   </div>
 
