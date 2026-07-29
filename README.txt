@@ -1,36 +1,24 @@
-Tidy by Tabb - Gallery V2
-============================
+Tidy by Tabb - Gallery V3: Sponge Wipe
+========================================
 
-This package contains one replacement file:
+Replace the existing root-level script.js with the included script.js.
 
-  script.js
-
-What it changes
----------------
-- Keeps the existing public Gallery button and modal.
-- Rebuilds the modal at runtime as an interactive Before/After slider.
-- Uses the original beforeImage and afterImage URLs from the Gallery API.
-- Supports mouse dragging, touch dragging, keyboard slider control,
-  previous/next navigation, Escape to close, and mobile layouts.
-- Injects the required Gallery V2 CSS automatically, so index.html and
-  style.css do not need to be edited.
-
-Install
--------
-1. Back up the current script.js.
-2. Drag this script.js into the repository root.
-3. Replace/overwrite the existing script.js.
-4. Commit and push the change.
-5. Hard-refresh the public site.
-
-Important
+New in V3
 ---------
-The API records must include both:
-- beforeImage
-- afterImage
+- Automatically detects portrait, square, or landscape images.
+- Resizes the modal and comparison stage around the uploaded image orientation.
+- Greatly reduces unused white space around the photos.
+- Replaces the generic slider handle with a branded sponge handle.
+- Adds a short sponge-wipe reveal when the gallery opens and when navigating.
+- Preserves mouse, touch, keyboard, Escape, and previous/next controls.
+- No index.html or style.css changes are required.
 
-Records missing either image are skipped by the slider.
+Upload guideline
+----------------
+Each Before/After pair should use matching:
+- orientation
+- dimensions or aspect ratio
 
 Suggested commit message
 ------------------------
-feat: add interactive before-after gallery slider
+feat: add responsive sponge wipe gallery

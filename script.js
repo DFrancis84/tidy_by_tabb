@@ -129,6 +129,8 @@ let galleryState = "loading";
 let galleryIndex = 0;
 let comparisonPosition = 50;
 let isDraggingComparison = false;
+let galleryIntroAnimationFrame = 0;
+let galleryShouldAnimateIntro = false;
 
 function getGalleryImageUrl(url) {
   const originalUrl = String(url || "").trim();
@@ -158,9 +160,10 @@ function installGalleryV2Styles() {
   style.textContent = `
     .gallery-modal.gallery-v2 {
       width: min(1180px, calc(100% - 24px));
-      height: min(900px, calc(100dvh - 24px));
+      max-height: calc(100dvh - 24px);
       padding: 18px;
-      overflow: hidden;
+      overflow: auto;
+      transition: width 260ms ease, max-width 260ms ease;
       background:
         radial-gradient(circle at top left, rgba(255, 115, 190, 0.22), transparent 28rem),
         radial-gradient(circle at top right, rgba(98, 220, 229, 0.32), transparent 26rem),
@@ -168,11 +171,22 @@ function installGalleryV2Styles() {
     }
 
     .gallery-v2-layout {
-      height: 100%;
       min-height: 0;
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-rows: auto auto auto;
       gap: 12px;
+    }
+
+    .gallery-modal.gallery-v2.is-portrait {
+      width: min(660px, calc(100% - 24px));
+    }
+
+    .gallery-modal.gallery-v2.is-square {
+      width: min(850px, calc(100% - 24px));
+    }
+
+    .gallery-modal.gallery-v2.is-landscape {
+      width: min(1180px, calc(100% - 24px));
     }
 
     .gallery-v2-heading {
@@ -196,8 +210,8 @@ function installGalleryV2Styles() {
     .comparison-stage {
       position: relative;
       width: 100%;
-      min-height: 280px;
-      height: 100%;
+      max-height: calc(100dvh - 190px);
+      aspect-ratio: var(--gallery-aspect-ratio, 16 / 9);
       overflow: hidden;
       border-radius: 24px;
       background: rgba(255, 255, 255, 0.72);
@@ -206,6 +220,17 @@ function installGalleryV2Styles() {
       touch-action: none;
       cursor: ew-resize;
       outline: none;
+      transition: aspect-ratio 260ms ease, opacity 220ms ease, transform 220ms ease;
+    }
+
+    .comparison-stage.gallery-intro {
+      opacity: 0;
+      transform: scale(0.985);
+    }
+
+    .comparison-stage.gallery-intro.is-visible {
+      opacity: 1;
+      transform: scale(1);
     }
 
     .comparison-stage:focus-visible {
@@ -267,10 +292,21 @@ function installGalleryV2Styles() {
       box-shadow:
         0 12px 32px rgba(21, 45, 75, 0.28),
         0 0 0 5px rgba(255, 255, 255, 0.8);
-      font-size: 1.35rem;
+      font-size: 1.65rem;
       font-weight: 950;
       line-height: 1;
       pointer-events: none;
+      transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+    }
+
+    .comparison-stage:hover .comparison-handle,
+    .comparison-stage:focus-visible .comparison-handle {
+      transform: translate(-50%, -50%) scale(1.08);
+      filter: drop-shadow(0 0 9px rgba(255, 255, 255, 0.95));
+      box-shadow:
+        0 14px 36px rgba(21, 45, 75, 0.3),
+        0 0 0 5px rgba(255, 255, 255, 0.86),
+        0 0 24px rgba(98, 220, 229, 0.7);
     }
 
     .comparison-label {
@@ -347,9 +383,12 @@ function installGalleryV2Styles() {
     }
 
     @media (max-width: 700px) {
-      .gallery-modal.gallery-v2 {
+      .gallery-modal.gallery-v2,
+      .gallery-modal.gallery-v2.is-portrait,
+      .gallery-modal.gallery-v2.is-square,
+      .gallery-modal.gallery-v2.is-landscape {
         width: calc(100% - 12px);
-        height: calc(100dvh - 12px);
+        max-height: calc(100dvh - 12px);
         padding: 10px;
         border-radius: 22px;
       }
@@ -367,7 +406,7 @@ function installGalleryV2Styles() {
       }
 
       .comparison-stage {
-        min-height: 220px;
+        max-height: calc(100dvh - 155px);
         border-radius: 18px;
       }
 
@@ -449,7 +488,7 @@ function installGalleryV2Markup() {
         <span class="comparison-label before">Before</span>
         <span class="comparison-label after">After</span>
         <span class="comparison-divider" aria-hidden="true"></span>
-        <span class="comparison-handle" aria-hidden="true">↔</span>
+        <span class="comparison-handle" aria-hidden="true">🧽</span>
 
         <div id="galleryStatus" class="gallery-v2-status" hidden></div>
       </div>
@@ -522,6 +561,86 @@ function updateGalleryControls() {
   if (galleryNext) galleryNext.disabled = disabled;
 }
 
+function applyGalleryOrientation() {
+  if (!galleryModal || !comparisonStage || !galleryBeforeImage) return;
+
+  const width = galleryBeforeImage.naturalWidth;
+  const height = galleryBeforeImage.naturalHeight;
+
+  if (!width || !height) return;
+
+  const ratio = width / height;
+  const clampedRatio = Math.min(2.1, Math.max(0.58, ratio));
+
+  comparisonStage.style.setProperty(
+    "--gallery-aspect-ratio",
+    `${width} / ${height}`
+  );
+
+  galleryModal.classList.remove("is-portrait", "is-square", "is-landscape");
+
+  if (ratio < 0.86) {
+    galleryModal.classList.add("is-portrait");
+  } else if (ratio > 1.16) {
+    galleryModal.classList.add("is-landscape");
+  } else {
+    galleryModal.classList.add("is-square");
+  }
+}
+
+function runGalleryIntroAnimation() {
+  if (!comparisonStage || !galleryModal?.open || !galleryShouldAnimateIntro) {
+    return;
+  }
+
+  galleryShouldAnimateIntro = false;
+  cancelAnimationFrame(galleryIntroAnimationFrame);
+
+  comparisonStage.classList.add("gallery-intro");
+  setComparisonPosition(4);
+
+  requestAnimationFrame(() => {
+    comparisonStage.classList.add("is-visible");
+  });
+
+  const duration = 680;
+  const startTime = performance.now();
+
+  const animate = (now) => {
+    const progress = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+
+    setComparisonPosition(4 + (46 * eased));
+
+    if (progress < 1) {
+      galleryIntroAnimationFrame = requestAnimationFrame(animate);
+      return;
+    }
+
+    setComparisonPosition(50);
+
+    window.setTimeout(() => {
+      comparisonStage.classList.remove("gallery-intro", "is-visible");
+    }, 180);
+  };
+
+  galleryIntroAnimationFrame = requestAnimationFrame(animate);
+}
+
+function handleGalleryImagesReady() {
+  if (
+    !galleryBeforeImage?.complete ||
+    !galleryAfterImage?.complete ||
+    !galleryBeforeImage.naturalWidth ||
+    !galleryAfterImage.naturalWidth
+  ) {
+    return;
+  }
+
+  applyGalleryOrientation();
+  runGalleryIntroAnimation();
+}
+
 function updateGallery() {
   if (
     !galleryBeforeImage ||
@@ -560,6 +679,8 @@ function updateGallery() {
 
   galleryBeforeImage.onerror = handleGalleryImageError;
   galleryAfterImage.onerror = handleGalleryImageError;
+  galleryBeforeImage.onload = handleGalleryImagesReady;
+  galleryAfterImage.onload = handleGalleryImagesReady;
 
   galleryBeforeImage.src = image.beforeSrc;
   galleryAfterImage.src = image.afterSrc;
@@ -683,9 +804,14 @@ comparisonStage?.addEventListener("keydown", (event) => {
 document.querySelectorAll("[data-gallery-open]").forEach((button) => {
   button.addEventListener("click", () => {
     galleryIndex = 0;
+    galleryShouldAnimateIntro = true;
     updateGallery();
     galleryModal?.showModal();
-    window.setTimeout(() => comparisonStage?.focus(), 50);
+
+    window.setTimeout(() => {
+      handleGalleryImagesReady();
+      comparisonStage?.focus();
+    }, 50);
   });
 });
 
@@ -696,6 +822,7 @@ galleryPrev?.addEventListener("click", () => {
     (galleryIndex - 1 + galleryImages.length) %
     galleryImages.length;
 
+  galleryShouldAnimateIntro = true;
   updateGallery();
 });
 
@@ -706,6 +833,7 @@ galleryNext?.addEventListener("click", () => {
     (galleryIndex + 1) %
     galleryImages.length;
 
+  galleryShouldAnimateIntro = true;
   updateGallery();
 });
 
@@ -723,6 +851,7 @@ document.addEventListener("keydown", (event) => {
     galleryIndex =
       (galleryIndex - 1 + galleryImages.length) %
       galleryImages.length;
+    galleryShouldAnimateIntro = true;
     updateGallery();
   }
 
@@ -730,6 +859,7 @@ document.addEventListener("keydown", (event) => {
     galleryIndex =
       (galleryIndex + 1) %
       galleryImages.length;
+    galleryShouldAnimateIntro = true;
     updateGallery();
   }
 });
