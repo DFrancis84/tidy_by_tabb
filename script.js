@@ -279,7 +279,7 @@ function installGalleryV2Styles() {
       top: 0;
       bottom: 0;
       left: var(--comparison-position, 50%);
-      width: 4px;
+      width: 3px;
       transform: translateX(-50%);
       background: rgba(255, 255, 255, 0.96);
       box-shadow:
@@ -309,6 +309,13 @@ function installGalleryV2Styles() {
       line-height: 1;
       pointer-events: none;
       transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+    }
+
+    .comparison-sponge {
+      display: block;
+      transform: translateY(-2px);
+      line-height: 1;
+      pointer-events: none;
     }
 
     .comparison-stage:hover .comparison-handle,
@@ -342,7 +349,11 @@ function installGalleryV2Styles() {
       position: absolute;
       z-index: 6;
       top: 16px;
-      padding: 9px 14px;
+      width: 112px;
+      height: 48px;
+      padding: 0;
+      display: grid;
+      place-items: center;
       border-radius: 999px;
       color: white;
       background: rgba(23, 34, 53, 0.72);
@@ -355,8 +366,8 @@ function installGalleryV2Styles() {
       pointer-events: none;
     }
 
-    .comparison-label.before { left: 16px; }
-    .comparison-label.after { right: 16px; }
+    .comparison-label.before { left: 18px; }
+    .comparison-label.after { right: 18px; }
 
     .gallery-v2-footer {
       display: grid;
@@ -373,6 +384,24 @@ function installGalleryV2Styles() {
       display: grid;
       place-items: center;
       flex: none;
+      padding: 0;
+      line-height: 0;
+    }
+
+    .gallery-v2 .gallery-arrow svg {
+      display: block;
+      width: 21px;
+      height: 21px;
+      margin: 0;
+      transform: translate(0, 0);
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .gallery-v2 .gallery-arrow {
+      appearance: none;
+      -webkit-appearance: none;
+      text-indent: 0;
     }
 
     .gallery-v2 .gallery-arrow:disabled {
@@ -461,12 +490,14 @@ function installGalleryV2Styles() {
 
       .comparison-label {
         top: 10px;
-        padding: 7px 10px;
+        width: 96px;
+        height: 40px;
+        padding: 0;
         font-size: 0.66rem;
       }
 
-      .comparison-label.before { left: 10px; }
-      .comparison-label.after { right: 10px; }
+      .comparison-label.before { left: 12px; }
+      .comparison-label.after { right: 12px; }
 
       .comparison-handle {
         width: 40px;
@@ -548,20 +579,30 @@ function installGalleryV2Markup() {
         <span class="comparison-label before">Before</span>
         <span class="comparison-label after">After</span>
         <span class="comparison-divider" aria-hidden="true"></span>
-        <span class="comparison-handle" aria-hidden="true">🧽</span>
+        <span class="comparison-handle" aria-hidden="true">
+          <span class="comparison-sponge">🧽</span>
+        </span>
 
         <div id="galleryStatus" class="gallery-v2-status" hidden></div>
       </div>
 
       <div class="gallery-v2-footer">
-        <button class="gallery-arrow gallery-prev" type="button" aria-label="Previous gallery item">‹</button>
+        <button class="gallery-arrow gallery-prev" type="button" aria-label="Previous gallery item">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M15 4L7 12L15 20" fill="none" stroke="currentColor" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
 
         <div class="gallery-v2-caption">
           <strong id="galleryCaption">Tidy by Tabb transformation</strong>
           <span id="galleryCategory"></span>
         </div>
 
-        <button class="gallery-arrow gallery-next" type="button" aria-label="Next gallery item">›</button>
+        <button class="gallery-arrow gallery-next" type="button" aria-label="Next gallery item">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M9 4L17 12L9 20" fill="none" stroke="currentColor" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
       </div>
     </div>
   `;

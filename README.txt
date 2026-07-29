@@ -1,21 +1,21 @@
-Tidy by Tabb - Gallery V5 True Mobile Fix
-===========================================
+Tidy by Tabb - Gallery V7 Final Polish
+====================================
 
-Replace the root-level script.js in the repository with the included script.js.
+Replace the root-level script.js with the included script.js.
 
-The repository's index.html is already using:
-<script src="script.js?v=6"></script>
+Changes
+-------
+- Locks Before and After badges to identical dimensions.
+- Uses perfectly mirrored left/right offsets.
+- Keeps SVG navigation chevrons mathematically centered.
+- Removes iOS button appearance drift.
+- Nudges only the sponge emoji upward by 2px.
+- Reduces the divider from 4px to 3px.
+- Preserves mobile sizing, wipe animation, touch, keyboard, navigation,
+  accessibility, document modals, pricing controls, and social controls.
 
-Changes:
-- Forces the gallery dialog to use content-sized height on iOS/Safari.
-- Overrides the old full-screen mobile .gallery-modal height.
-- Makes the modal wrap the heading, image, and footer instead of stretching.
-- Keeps portrait/landscape aspect-ratio detection.
-- Reduces the mobile sponge handle to 40px.
-- Reduces the mobile divider to 3px.
-- Preserves the gallery wipe, nudge, touch controls, keyboard controls,
-  navigation, pricing coverflow, accessibility toggle, document modals,
-  and social controls.
+Also update index.html:
+<script src="script.js?v=8"></script>
 
 Suggested commit message:
-fix: make mobile gallery modal wrap image content
+fix: finalize gallery alignment and control centering
