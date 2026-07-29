@@ -129,6 +129,25 @@ let galleryState = "loading";
 
 let galleryIndex = 0;
 
+function getGalleryImageUrl(url) {
+  const originalUrl = String(url || "").trim();
+  if (!originalUrl || !originalUrl.includes("drive.google.com")) {
+    return originalUrl;
+  }
+
+  const fileId = [
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+    /\/file\/d\/([a-zA-Z0-9_-]+)(?:\/|$)/,
+    /\/d\/([a-zA-Z0-9_-]+)(?:\/|$)/,
+  ]
+    .map((pattern) => originalUrl.match(pattern)?.[1])
+    .find(Boolean);
+
+  return fileId
+    ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1600`
+    : originalUrl;
+}
+
 const galleryModal = document.getElementById("galleryModal");
 const galleryViewer = document.getElementById("galleryViewer");
 const galleryCaption = document.getElementById("galleryCaption");
@@ -153,10 +172,25 @@ function updateGallery() {
   galleryIndex = Math.min(galleryIndex, galleryImages.length - 1);
   const image = galleryImages[galleryIndex];
 
+  galleryViewer.onerror = handleGalleryImageError;
   galleryViewer.src = image.src;
   galleryViewer.alt = image.caption || "Cleaning transformation";
   galleryCaption.textContent = image.caption || "Tidy by Tabb transformation";
   updateGalleryControls();
+}
+
+function handleGalleryImageError() {
+  if (!galleryViewer) return;
+
+  const failedSource = galleryViewer.currentSrc || galleryViewer.src;
+  console.error("Unable to display public Gallery image.", failedSource);
+
+  galleryViewer.onerror = null;
+  galleryViewer.removeAttribute("src");
+  galleryImages = [];
+  galleryIndex = 0;
+  galleryState = "error";
+  updateGallery();
 }
 
 function updateGalleryControls() {
@@ -183,16 +217,20 @@ async function loadGalleryImages() {
         record?.published === true &&
         record?.showInGallery === true
       )
-      .map((record) => ({
-        src:
+      .map((record) => {
+        const selectedImageUrl =
           record.comparisonImage ||
           record.afterImage ||
           record.beforeImage ||
-          "",
-        caption: record.title,
-        category: record.category,
-        id: record.id,
-      }))
+          "";
+
+        return {
+          src: getGalleryImageUrl(selectedImageUrl),
+          caption: record.title,
+          category: record.category,
+          id: record.id,
+        };
+      })
       .filter((image) => Boolean(image.src));
 
     galleryIndex = 0;
