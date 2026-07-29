@@ -1,4 +1,11 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbyLkwoj-c2DqYWpLNaYOgsZi9_FqgvMQm-7a2Zis8TA5zpRDKY6TK4RXtistJV873gw/exec";
+const APPS_SCRIPT_API_URL = "https://script.google.com/macros/s/AKfycbyLkwoj-c2DqYWpLNaYOgsZi9_FqgvMQm-7a2Zis8TA5zpRDKY6TK4RXtistJV873gw/exec";
+const ADMIN_MUTATION_API_URL = "/admin/api";
+const MUTATION_ACTIONS = new Set([
+  "create",
+  "update",
+  "delete",
+  "uploadImage",
+]);
 
 export class GalleryApi {
   constructor(onRequest = () => {}) {
@@ -73,13 +80,22 @@ export class GalleryApi {
     body = null,
     query = {}
   ) {
-    if (API_URL.includes("PASTE_YOUR")) {
+    if (APPS_SCRIPT_API_URL.includes("PASTE_YOUR")) {
       throw new Error(
         "Set your deployed Apps Script /exec URL in js/api.js."
       );
     }
 
-    const url = new URL(API_URL);
+    const isMutation =
+      method === "POST" &&
+      MUTATION_ACTIONS.has(action);
+
+    const url = new URL(
+      isMutation
+        ? ADMIN_MUTATION_API_URL
+        : APPS_SCRIPT_API_URL,
+      window.location.origin
+    );
     url.searchParams.set("action", action);
 
     Object.entries(query).forEach(([key, value]) => {
@@ -93,6 +109,7 @@ export class GalleryApi {
     try {
       response = await fetch(url, {
         method,
+        credentials: isMutation ? "same-origin" : "omit",
         headers:
           method === "POST"
             ? { "Content-Type": "text/plain;charset=utf-8" }

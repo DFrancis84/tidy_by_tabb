@@ -81,6 +81,8 @@ function doPost(event) {
       body.action || parameterAction
     ).toLowerCase();
 
+    Code_requireGatewayAuthorization_(body, action);
+
     const payload =
       body.record ||
       body.payload ||
@@ -115,6 +117,65 @@ function doPost(event) {
       }
     );
   }
+}
+
+function Code_requireGatewayAuthorization_(body, action) {
+  const mutationActions = [
+    "create",
+    "update",
+    "delete",
+    "uploadimage"
+  ];
+
+  if (mutationActions.indexOf(action) === -1) {
+    return;
+  }
+
+  const expectedSecret = Helpers_cleanString(
+    PropertiesService
+      .getScriptProperties()
+      .getProperty(CONFIG.GATEWAY_SECRET_PROPERTY)
+  );
+
+  const suppliedSecret = Helpers_cleanString(
+    body && body.gatewaySecret
+  );
+
+  const actorEmail = Helpers_cleanString(
+    body && body.actorEmail
+  ).toLowerCase();
+
+  if (!expectedSecret) {
+    throw new Error(
+      "Mutation gateway authorization is not configured."
+    );
+  }
+
+  if (
+    !suppliedSecret ||
+    !Code_secureStringEquals_(suppliedSecret, expectedSecret)
+  ) {
+    throw new Error("Mutation authorization failed.");
+  }
+
+  if (!actorEmail || actorEmail.indexOf("@") <= 0) {
+    throw new Error("Authenticated administrator email is required.");
+  }
+}
+
+function Code_secureStringEquals_(left, right) {
+  const leftValue = String(left || "");
+  const rightValue = String(right || "");
+  const maxLength = Math.max(leftValue.length, rightValue.length);
+  let difference = leftValue.length ^ rightValue.length;
+
+  for (let index = 0; index < maxLength; index += 1) {
+    difference |=
+      (leftValue.charCodeAt(index) || 0) ^
+      (rightValue.charCodeAt(index) || 0);
+  }
+
+  return difference === 0;
 }
 
 function Code_createRecord_(payload) {

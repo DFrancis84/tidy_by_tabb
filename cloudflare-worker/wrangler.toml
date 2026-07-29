@@ -1,0 +1,8 @@
+name = "tidy-by-tabb-admin-gateway"
+main = "src/index.js"
+compatibility_date = "2026-07-29"
+workers_dev = false
+
+routes = [
+  { pattern = "www.tidybytabb.com/admin/api*", zone_name = "tidybytabb.com" }
+]

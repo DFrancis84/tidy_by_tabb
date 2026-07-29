@@ -35,5 +35,7 @@ const CONFIG = Object.freeze({
     "updated"
   ]),
 
-  LOCK_TIMEOUT_MS: 30000
+  LOCK_TIMEOUT_MS: 30000,
+
+  GATEWAY_SECRET_PROPERTY: "APPS_SCRIPT_SHARED_SECRET"
 });
