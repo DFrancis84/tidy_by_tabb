@@ -1,24 +1,24 @@
-Tidy by Tabb - Gallery V3: Sponge Wipe
-========================================
+Tidy by Tabb - Gallery V4 Mobile Orientation Fix
+=================================================
 
 Replace the existing root-level script.js with the included script.js.
 
-New in V3
----------
-- Automatically detects portrait, square, or landscape images.
-- Resizes the modal and comparison stage around the uploaded image orientation.
-- Greatly reduces unused white space around the photos.
-- Replaces the generic slider handle with a branded sponge handle.
-- Adds a short sponge-wipe reveal when the gallery opens and when navigating.
-- Preserves mouse, touch, keyboard, Escape, and previous/next controls.
-- No index.html or style.css changes are required.
+Changes in V4
+-------------
+- Fixes the mobile modal retaining a tall portrait-shaped height.
+- Landscape uploads now create a short, wide comparison area on mobile.
+- Portrait uploads remain tall and properly fitted.
+- The modal now wraps the image stage instead of inheriting a fixed height.
+- Slightly reduces the mobile sponge circle from 48px to 44px.
+- Softens the sponge glow.
+- Adds one subtle left/right nudge after the first wipe animation to show that
+  the sponge can be dragged. It only runs once per page load.
+- Keeps mouse, touch, keyboard, Escape, and previous/next controls.
 
 Upload guideline
 ----------------
-Each Before/After pair should use matching:
-- orientation
-- dimensions or aspect ratio
+Each Before/After pair should use matching dimensions and orientation.
 
 Suggested commit message
 ------------------------
-feat: add responsive sponge wipe gallery
+fix: improve mobile gallery orientation and sponge control

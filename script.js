@@ -131,6 +131,7 @@ let comparisonPosition = 50;
 let isDraggingComparison = false;
 let galleryIntroAnimationFrame = 0;
 let galleryShouldAnimateIntro = false;
+let galleryHandleHasNudged = false;
 
 function getGalleryImageUrl(url) {
   const originalUrl = String(url || "").trim();
@@ -160,6 +161,8 @@ function installGalleryV2Styles() {
   style.textContent = `
     .gallery-modal.gallery-v2 {
       width: min(1180px, calc(100% - 24px));
+      height: auto !important;
+      min-height: 0 !important;
       max-height: calc(100dvh - 24px);
       padding: 18px;
       overflow: auto;
@@ -306,7 +309,24 @@ function installGalleryV2Styles() {
       box-shadow:
         0 14px 36px rgba(21, 45, 75, 0.3),
         0 0 0 5px rgba(255, 255, 255, 0.86),
-        0 0 24px rgba(98, 220, 229, 0.7);
+        0 0 19px rgba(98, 220, 229, 0.56);
+    }
+
+
+    .comparison-handle.is-nudging {
+      animation: spongeHandleNudge 520ms ease-in-out;
+    }
+
+    @keyframes spongeHandleNudge {
+      0%, 100% {
+        transform: translate(-50%, -50%);
+      }
+      28% {
+        transform: translate(calc(-50% - 8px), -50%);
+      }
+      68% {
+        transform: translate(calc(-50% + 8px), -50%);
+      }
     }
 
     .comparison-label {
@@ -388,6 +408,8 @@ function installGalleryV2Styles() {
       .gallery-modal.gallery-v2.is-square,
       .gallery-modal.gallery-v2.is-landscape {
         width: calc(100% - 12px);
+        height: auto !important;
+        min-height: 0 !important;
         max-height: calc(100dvh - 12px);
         padding: 10px;
         border-radius: 22px;
@@ -406,8 +428,20 @@ function installGalleryV2Styles() {
       }
 
       .comparison-stage {
+        width: 100%;
+        height: auto !important;
+        min-height: 0 !important;
         max-height: calc(100dvh - 155px);
+        aspect-ratio: var(--gallery-aspect-ratio, 16 / 9);
         border-radius: 18px;
+      }
+
+      .gallery-modal.gallery-v2.is-landscape .comparison-stage {
+        max-height: min(58dvh, 520px);
+      }
+
+      .gallery-modal.gallery-v2.is-portrait .comparison-stage {
+        max-height: calc(100dvh - 155px);
       }
 
       .comparison-label {
@@ -420,9 +454,20 @@ function installGalleryV2Styles() {
       .comparison-label.after { right: 10px; }
 
       .comparison-handle {
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
         font-size: 1.05rem;
+        box-shadow:
+          0 9px 23px rgba(21, 45, 75, 0.24),
+          0 0 0 4px rgba(255, 255, 255, 0.78);
+      }
+
+      .comparison-stage:hover .comparison-handle,
+      .comparison-stage:focus-visible .comparison-handle {
+        box-shadow:
+          0 10px 26px rgba(21, 45, 75, 0.26),
+          0 0 0 4px rgba(255, 255, 255, 0.82),
+          0 0 15px rgba(98, 220, 229, 0.46);
       }
 
       .gallery-v2-footer {
@@ -621,6 +666,20 @@ function runGalleryIntroAnimation() {
 
     window.setTimeout(() => {
       comparisonStage.classList.remove("gallery-intro", "is-visible");
+
+      if (!galleryHandleHasNudged) {
+        const handle = comparisonStage.querySelector(".comparison-handle");
+
+        galleryHandleHasNudged = true;
+
+        window.setTimeout(() => {
+          handle?.classList.add("is-nudging");
+
+          window.setTimeout(() => {
+            handle?.classList.remove("is-nudging");
+          }, 560);
+        }, 140);
+      }
     }, 180);
   };
 
