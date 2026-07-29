@@ -44,7 +44,7 @@ export class GalleryDrawer {
       afterImage: document.getElementById("afterImage"),
       comparisonImage: document.getElementById("comparisonImage"),
       status: document.getElementById("recordStatus"),
-      featured: document.getElementById("recordFeatured"),
+      showInGallery: document.getElementById("recordShowInGallery"),
     };
 
     this.photoControls = {
@@ -88,6 +88,11 @@ export class GalleryDrawer {
     this.deleteModal = document.getElementById("deleteModal");
     this.deleteMessage = document.getElementById("deleteMessage");
     this.deleteConfirm = document.getElementById("deleteConfirm");
+    this.deleteFileFields = {
+      beforeImage: document.getElementById("deleteBeforeFile"),
+      afterImage: document.getElementById("deleteAfterFile"),
+      comparisonImage: document.getElementById("deleteComparisonFile"),
+    };
 
     this.composer = new ComparisonComposer({
       api: this.api,
@@ -438,6 +443,7 @@ export class GalleryDrawer {
     this.fields.title?.addEventListener("input", () => this.updateWorkflowState());
     this.fields.category?.addEventListener("change", () => this.updateWorkflowState());
     this.fields.status?.addEventListener("change", () => {
+      this.syncGalleryVisibility();
       this.updateStatusHelp();
       this.updateWorkflowState();
     });
@@ -494,7 +500,8 @@ export class GalleryDrawer {
     this.fields.afterImage.value = value.afterImage || "";
     this.fields.comparisonImage.value = value.comparisonImage || "";
     this.fields.status.value = value.published ? "published" : "draft";
-    this.fields.featured.checked = Boolean(value.featured);
+    this.fields.showInGallery.checked = Boolean(value.showInGallery);
+    this.syncGalleryVisibility();
 
     this.renderPreview("before", value.beforeImage);
     this.renderPreview("after", value.afterImage);
@@ -626,6 +633,12 @@ export class GalleryDrawer {
       : "Drafts may contain only the Before photo.";
   }
 
+  syncGalleryVisibility() {
+    const published = this.fields.status.value === "published";
+    if (!published) this.fields.showInGallery.checked = false;
+    this.fields.showInGallery.disabled = !published;
+  }
+
   getPayload() {
     return {
       title: this.fields.title.value.trim(),
@@ -634,7 +647,9 @@ export class GalleryDrawer {
       afterImage: this.fields.afterImage.value.trim(),
       comparisonImage: this.fields.comparisonImage.value.trim(),
       published: this.fields.status.value === "published",
-      featured: this.fields.featured.checked,
+      showInGallery:
+        this.fields.status.value === "published" &&
+        this.fields.showInGallery.checked,
     };
   }
 
@@ -768,7 +783,18 @@ export class GalleryDrawer {
     this.pendingDeleteId = recordId;
     const title = this.fields.title.value.trim() || "this transformation";
     this.deleteMessage.textContent =
-      `Delete “${title}”? This removes the gallery record and cannot be undone. Drive images will not be deleted.`;
+      `Delete “${title}”? This removes the gallery record and cannot be undone. Select any Drive images that should also be moved to Trash.`;
+    const fileLabels = {
+      beforeImage: document.getElementById("deleteBeforeFileName"),
+      afterImage: document.getElementById("deleteAfterFileName"),
+      comparisonImage: document.getElementById("deleteComparisonFileName"),
+    };
+    Object.entries(this.deleteFileFields).forEach(([key, checkbox]) => {
+      const url = this.fields[key].value.trim();
+      checkbox.checked = false;
+      checkbox.disabled = !url;
+      if (fileLabels[key]) fileLabels[key].textContent = url ? "File attached" : "No file attached";
+    });
     this.deleteModal.hidden = false;
     document.body.classList.add("modal-open");
   }
@@ -789,7 +815,13 @@ export class GalleryDrawer {
 
     loading(this.deleteConfirm, true, "Deleting…");
     try {
-      const response = await this.api.delete(recordId);
+      const deleteFiles = Object.fromEntries(
+        Object.entries(this.deleteFileFields).map(([key, checkbox]) => [
+          key,
+          Boolean(checkbox?.checked && !checkbox.disabled),
+        ])
+      );
+      const response = await this.api.delete(recordId, { deleteFiles });
       toast(response.message || "Transformation deleted.");
       this.closeDeleteModal();
       this.close();

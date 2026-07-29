@@ -13,7 +13,7 @@ Replace the existing `/admin` folder with the included `/admin` folder, or copy 
 - Add/edit drawer
 - Before/after URL previews
 - Draft and published states
-- Featured transformation selection
+- Public Gallery visibility selection
 - Dashboard statistics
 - Local browser storage
 - Delete confirmation

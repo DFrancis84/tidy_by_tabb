@@ -11,7 +11,7 @@ FEATURES
 - Compact image previews
 - Branded combined Before/After image generator
 - Save generated comparison image to Drive
-- Existing create/edit/publish/feature/delete behavior
+- Existing create/edit/publish/Gallery visibility/delete behavior
 
 INSTALLATION
 

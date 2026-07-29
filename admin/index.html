@@ -32,9 +32,9 @@
       <section class="view is-active" data-view-panel="dashboard">
         <div class="stat-grid">
           <article class="stat-card"><span>Total transformations</span><strong id="statTotal">0</strong><small>Stored in Google Sheets</small></article>
-          <article class="stat-card"><span>Published</span><strong id="statPublished">0</strong><small>Visible on the website</small></article>
+          <article class="stat-card"><span>Published</span><strong id="statPublished">0</strong><small>Published records</small></article>
           <article class="stat-card"><span>Drafts</span><strong id="statDrafts">0</strong><small>Before-only records included</small></article>
-          <article class="stat-card"><span>Featured</span><strong id="statFeatured">0</strong><small>Homepage spotlight</small></article>
+          <article class="stat-card"><span>Shown in Gallery</span><strong id="statShownInGallery">0</strong><small>Visible in the public Gallery</small></article>
         </div>
         <section class="panel">
           <div class="panel-heading">
@@ -56,7 +56,7 @@
                 <option value="">All statuses</option>
                 <option value="published">Published</option>
                 <option value="draft">Draft</option>
-                <option value="featured">Featured</option>
+                <option value="showInGallery">Shown in Gallery</option>
               </select>
             </div>
           </div>
@@ -195,7 +195,7 @@
           <section class="workflow-card" data-workflow-step="publishing">
             <button class="workflow-card-toggle" type="button" data-step-toggle="publishing">
               <span class="workflow-number">5</span>
-              <span class="workflow-heading"><strong>Website display</strong><small>Choose draft, published, and featured settings</small></span>
+              <span class="workflow-heading"><strong>Website display</strong><small>Choose publication and Gallery visibility settings</small></span>
               <span class="workflow-check" data-step-check="publishing">○</span>
             </button>
             <div class="workflow-card-body">
@@ -209,10 +209,10 @@
                   <small id="statusHelp">Drafts may contain only the Before photo.</small>
                 </label>
 
-                <label class="switch-field featured-field">
-                  <input id="recordFeatured" type="checkbox">
+                <label class="switch-field show-in-gallery-field">
+                  <input id="recordShowInGallery" type="checkbox">
                   <span class="switch"></span>
-                  <span><strong>Featured transformation</strong><small>Show this transformation in the homepage spotlight.</small></span>
+                  <span><strong>Show in Gallery</strong><small>Display this transformation on the public Gallery page.</small></span>
                 </label>
               </div>
 

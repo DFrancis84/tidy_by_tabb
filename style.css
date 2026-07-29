@@ -511,7 +511,7 @@ h3 {
     filter 420ms ease;
 }
 
-.coverflow-card.price-card.featured {
+.coverflow-card.price-card.popular {
   background:
     linear-gradient(
       135deg,
@@ -545,7 +545,7 @@ h3 {
   filter: saturate(0.88);
 }
 
-.coverflow-card.featured.prev {
+.coverflow-card.popular.prev {
   transform:
     translateX(calc(-50% - 220px))
     translateX(26px)
@@ -565,7 +565,7 @@ h3 {
   filter: saturate(0.88);
 }
 
-.coverflow-card.featured.next {
+.coverflow-card.popular.next {
   transform:
     translateX(calc(-50% + 220px))
     translateX(26px)

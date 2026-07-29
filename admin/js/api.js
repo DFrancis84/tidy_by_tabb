@@ -30,7 +30,7 @@ export class GalleryApi {
     });
   }
 
-  async delete(id) {
+  async delete(id, { deleteFiles = {} } = {}) {
     const recordId = String(id || "").trim();
 
     if (!recordId) {
@@ -40,7 +40,14 @@ export class GalleryApi {
     return this.request("delete", "POST", {
       action: "delete",
       id: recordId,
-      payload: { id: recordId },
+      payload: {
+        id: recordId,
+        deleteFiles: {
+          beforeImage: Boolean(deleteFiles.beforeImage),
+          afterImage: Boolean(deleteFiles.afterImage),
+          comparisonImage: Boolean(deleteFiles.comparisonImage),
+        },
+      },
     });
   }
 
