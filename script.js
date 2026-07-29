@@ -159,11 +159,16 @@ function installGalleryV2Styles() {
   const style = document.createElement("style");
   style.id = "galleryV2Styles";
   style.textContent = `
-    .gallery-modal.gallery-v2 {
+    .gallery-modal.gallery-v2,
+    .gallery-modal.gallery-v2[open] {
+      display: block !important;
       width: min(1180px, calc(100% - 24px));
-      height: auto !important;
+      height: fit-content !important;
+      block-size: fit-content !important;
       min-height: 0 !important;
-      max-height: calc(100dvh - 24px);
+      min-block-size: 0 !important;
+      max-height: calc(100dvh - 24px) !important;
+      max-block-size: calc(100dvh - 24px) !important;
       padding: 18px;
       overflow: auto;
       transition: width 260ms ease, max-width 260ms ease;
@@ -174,8 +179,12 @@ function installGalleryV2Styles() {
     }
 
     .gallery-v2-layout {
-      min-height: 0;
+      height: auto !important;
+      block-size: auto !important;
+      min-height: 0 !important;
+      min-block-size: 0 !important;
       display: grid;
+      align-content: start;
       grid-template-rows: auto auto auto;
       gap: 12px;
     }
@@ -404,13 +413,18 @@ function installGalleryV2Styles() {
 
     @media (max-width: 700px) {
       .gallery-modal.gallery-v2,
+      .gallery-modal.gallery-v2[open],
       .gallery-modal.gallery-v2.is-portrait,
       .gallery-modal.gallery-v2.is-square,
       .gallery-modal.gallery-v2.is-landscape {
+        display: block !important;
         width: calc(100% - 12px);
-        height: auto !important;
+        height: fit-content !important;
+        block-size: fit-content !important;
         min-height: 0 !important;
-        max-height: calc(100dvh - 12px);
+        min-block-size: 0 !important;
+        max-height: calc(100dvh - 12px) !important;
+        max-block-size: calc(100dvh - 12px) !important;
         padding: 10px;
         border-radius: 22px;
       }
@@ -430,6 +444,7 @@ function installGalleryV2Styles() {
       .comparison-stage {
         width: 100%;
         height: auto !important;
+        block-size: auto !important;
         min-height: 0 !important;
         max-height: calc(100dvh - 155px);
         aspect-ratio: var(--gallery-aspect-ratio, 16 / 9);
@@ -454,8 +469,8 @@ function installGalleryV2Styles() {
       .comparison-label.after { right: 10px; }
 
       .comparison-handle {
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
         font-size: 1.05rem;
         box-shadow:
           0 9px 23px rgba(21, 45, 75, 0.24),

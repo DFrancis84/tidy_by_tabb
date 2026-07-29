@@ -1,24 +1,21 @@
-Tidy by Tabb - Gallery V4 Mobile Orientation Fix
-=================================================
+Tidy by Tabb - Gallery V5 True Mobile Fix
+===========================================
 
-Replace the existing root-level script.js with the included script.js.
+Replace the root-level script.js in the repository with the included script.js.
 
-Changes in V4
--------------
-- Fixes the mobile modal retaining a tall portrait-shaped height.
-- Landscape uploads now create a short, wide comparison area on mobile.
-- Portrait uploads remain tall and properly fitted.
-- The modal now wraps the image stage instead of inheriting a fixed height.
-- Slightly reduces the mobile sponge circle from 48px to 44px.
-- Softens the sponge glow.
-- Adds one subtle left/right nudge after the first wipe animation to show that
-  the sponge can be dragged. It only runs once per page load.
-- Keeps mouse, touch, keyboard, Escape, and previous/next controls.
+The repository's index.html is already using:
+<script src="script.js?v=6"></script>
 
-Upload guideline
-----------------
-Each Before/After pair should use matching dimensions and orientation.
+Changes:
+- Forces the gallery dialog to use content-sized height on iOS/Safari.
+- Overrides the old full-screen mobile .gallery-modal height.
+- Makes the modal wrap the heading, image, and footer instead of stretching.
+- Keeps portrait/landscape aspect-ratio detection.
+- Reduces the mobile sponge handle to 40px.
+- Reduces the mobile divider to 3px.
+- Preserves the gallery wipe, nudge, touch controls, keyboard controls,
+  navigation, pricing coverflow, accessibility toggle, document modals,
+  and social controls.
 
-Suggested commit message
-------------------------
-fix: improve mobile gallery orientation and sponge control
+Suggested commit message:
+fix: make mobile gallery modal wrap image content
