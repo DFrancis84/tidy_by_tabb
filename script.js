@@ -348,20 +348,21 @@ function installGalleryV2Styles() {
     .comparison-label {
       position: absolute;
       z-index: 6;
-      top: 16px;
-      width: 112px;
-      height: 48px;
+      top: 20px;
+      width: 88px;
+      height: 38px;
       padding: 0;
       display: grid;
       place-items: center;
-      border-radius: 999px;
+      border-radius: 18px;
       color: white;
-      background: rgba(23, 34, 53, 0.72);
+      background: rgba(24, 33, 52, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow: 0 8px 22px rgba(21, 45, 75, 0.18);
       backdrop-filter: blur(10px);
-      font-size: 0.76rem;
-      font-weight: 950;
-      letter-spacing: 0.12em;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       pointer-events: none;
     }
@@ -489,11 +490,11 @@ function installGalleryV2Styles() {
       }
 
       .comparison-label {
-        top: 10px;
-        width: 96px;
-        height: 40px;
+        top: 14px;
+        width: 82px;
+        height: 34px;
         padding: 0;
-        font-size: 0.66rem;
+        font-size: 0.7rem;
       }
 
       .comparison-label.before { left: 12px; }
