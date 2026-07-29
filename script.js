@@ -121,24 +121,11 @@ document.querySelectorAll("dialog").forEach((dialog) => {
    GALLERY
 ========================= */
 
-const galleryImages = [
-  {
-    src: "assets/gallery/kitchen-1.png",
-    caption: "Kitchen Refresh"
-  },
-  {
-    src: "assets/gallery/bathroom-1.png",
-    caption: "Bathroom Detail"
-  },
-  {
-    src: "assets/gallery/living-room-1.png",
-    caption: "Living Area Reset"
-  },
-  {
-    src: "assets/gallery/deep-clean-1.png",
-    caption: "Deep Clean"
-  }
-];
+const GALLERY_API_URL =
+  "https://script.google.com/macros/s/AKfycbyLkwoj-c2DqYWpLNaYOgsZi9_FqgvMQm-7a2Zis8TA5zpRDKY6TK4RXtistJV873gw/exec?action=list&published=true&showInGallery=true";
+
+let galleryImages = [];
+let galleryState = "loading";
 
 let galleryIndex = 0;
 
@@ -149,22 +136,87 @@ const galleryPrev = document.querySelector(".gallery-prev");
 const galleryNext = document.querySelector(".gallery-next");
 
 function updateGallery() {
+  if (!galleryViewer || !galleryCaption) return;
+
+  if (!galleryImages.length) {
+    galleryViewer.removeAttribute("src");
+    galleryViewer.alt = "";
+    galleryCaption.textContent = galleryState === "error"
+      ? "We couldn’t load the Gallery right now. Please try again later."
+      : galleryState === "empty"
+        ? "No Gallery transformations are available yet."
+        : "Loading Gallery transformations…";
+    updateGalleryControls();
+    return;
+  }
+
+  galleryIndex = Math.min(galleryIndex, galleryImages.length - 1);
   const image = galleryImages[galleryIndex];
 
   galleryViewer.src = image.src;
-  galleryViewer.alt = image.caption;
-  galleryCaption.textContent = image.caption;
+  galleryViewer.alt = image.caption || "Cleaning transformation";
+  galleryCaption.textContent = image.caption || "Tidy by Tabb transformation";
+  updateGalleryControls();
+}
+
+function updateGalleryControls() {
+  const disabled = galleryImages.length < 2;
+  if (galleryPrev) galleryPrev.disabled = disabled;
+  if (galleryNext) galleryNext.disabled = disabled;
+}
+
+async function loadGalleryImages() {
+  galleryState = "loading";
+  updateGallery();
+
+  try {
+    const response = await fetch(GALLERY_API_URL);
+    if (!response.ok) {
+      throw new Error(`Gallery request failed (${response.status}).`);
+    }
+
+    const payload = await response.json();
+    const records = Array.isArray(payload.data) ? payload.data : [];
+
+    galleryImages = records
+      .filter((record) =>
+        record?.published === true &&
+        record?.showInGallery === true
+      )
+      .map((record) => ({
+        src:
+          record.comparisonImage ||
+          record.afterImage ||
+          record.beforeImage ||
+          "",
+        caption: record.title,
+        category: record.category,
+        id: record.id,
+      }))
+      .filter((image) => Boolean(image.src));
+
+    galleryIndex = 0;
+    galleryState = galleryImages.length ? "ready" : "empty";
+  } catch (error) {
+    galleryImages = [];
+    galleryIndex = 0;
+    galleryState = "error";
+    console.error("Unable to load public Gallery records.", error);
+  }
+
+  updateGallery();
 }
 
 document.querySelectorAll("[data-gallery-open]").forEach((button) => {
   button.addEventListener("click", () => {
     galleryIndex = 0;
     updateGallery();
-    galleryModal.showModal();
+    galleryModal?.showModal();
   });
 });
 
 galleryPrev?.addEventListener("click", () => {
+  if (galleryImages.length < 2) return;
   galleryIndex =
     (galleryIndex - 1 + galleryImages.length) %
     galleryImages.length;
@@ -173,12 +225,15 @@ galleryPrev?.addEventListener("click", () => {
 });
 
 galleryNext?.addEventListener("click", () => {
+  if (galleryImages.length < 2) return;
   galleryIndex =
     (galleryIndex + 1) %
     galleryImages.length;
 
   updateGallery();
 });
+
+loadGalleryImages();
 
 /* =========================
    PRICING COVERFLOW
