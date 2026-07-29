@@ -92,7 +92,7 @@ closeButtons.forEach((button) => {
       imageViewer.src = "";
     }
 
-    dialog.close();
+    dialog?.close();
   });
 });
 
@@ -118,7 +118,7 @@ document.querySelectorAll("dialog").forEach((dialog) => {
 });
 
 /* =========================
-   GALLERY
+   GALLERY V2 - BEFORE/AFTER SLIDER
 ========================= */
 
 const GALLERY_API_URL =
@@ -126,11 +126,13 @@ const GALLERY_API_URL =
 
 let galleryImages = [];
 let galleryState = "loading";
-
 let galleryIndex = 0;
+let comparisonPosition = 50;
+let isDraggingComparison = false;
 
 function getGalleryImageUrl(url) {
   const originalUrl = String(url || "").trim();
+
   if (!originalUrl || !originalUrl.includes("drive.google.com")) {
     return originalUrl;
   }
@@ -144,27 +146,408 @@ function getGalleryImageUrl(url) {
     .find(Boolean);
 
   return fileId
-    ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1600`
+    ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w2000`
     : originalUrl;
 }
 
+function installGalleryV2Styles() {
+  if (document.getElementById("galleryV2Styles")) return;
+
+  const style = document.createElement("style");
+  style.id = "galleryV2Styles";
+  style.textContent = `
+    .gallery-modal.gallery-v2 {
+      width: min(1180px, calc(100% - 24px));
+      height: min(900px, calc(100dvh - 24px));
+      padding: 18px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at top left, rgba(255, 115, 190, 0.22), transparent 28rem),
+        radial-gradient(circle at top right, rgba(98, 220, 229, 0.32), transparent 26rem),
+        linear-gradient(135deg, #eaf8ff 0%, #f8fbff 45%, #fff1f9 100%);
+    }
+
+    .gallery-v2-layout {
+      height: 100%;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 12px;
+    }
+
+    .gallery-v2-heading {
+      padding: 2px 54px 0;
+      text-align: center;
+    }
+
+    .gallery-v2-heading h2 {
+      margin: 0;
+      font-size: clamp(1.4rem, 3vw, 2.3rem);
+      line-height: 1.1;
+      letter-spacing: -0.045em;
+    }
+
+    .gallery-v2-heading p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .comparison-stage {
+      position: relative;
+      width: 100%;
+      min-height: 280px;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: var(--shadow);
+      user-select: none;
+      touch-action: none;
+      cursor: ew-resize;
+      outline: none;
+    }
+
+    .comparison-stage:focus-visible {
+      box-shadow:
+        0 0 0 4px rgba(40, 189, 210, 0.32),
+        var(--shadow);
+    }
+
+    .comparison-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .comparison-layer img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      object-fit: contain;
+      object-position: center;
+      background: rgba(255, 255, 255, 0.72);
+      pointer-events: none;
+    }
+
+    .comparison-after {
+      clip-path: inset(0 0 0 var(--comparison-position, 50%));
+    }
+
+    .comparison-divider {
+      position: absolute;
+      z-index: 4;
+      top: 0;
+      bottom: 0;
+      left: var(--comparison-position, 50%);
+      width: 4px;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow:
+        0 0 0 1px rgba(23, 34, 53, 0.1),
+        0 0 24px rgba(23, 34, 53, 0.22);
+      pointer-events: none;
+    }
+
+    .comparison-handle {
+      position: absolute;
+      z-index: 5;
+      left: var(--comparison-position, 50%);
+      top: 50%;
+      width: 58px;
+      height: 58px;
+      transform: translate(-50%, -50%);
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      background: linear-gradient(135deg, var(--pink), var(--teal));
+      box-shadow:
+        0 12px 32px rgba(21, 45, 75, 0.28),
+        0 0 0 5px rgba(255, 255, 255, 0.8);
+      font-size: 1.35rem;
+      font-weight: 950;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .comparison-label {
+      position: absolute;
+      z-index: 6;
+      top: 16px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      color: white;
+      background: rgba(23, 34, 53, 0.72);
+      box-shadow: 0 8px 22px rgba(21, 45, 75, 0.18);
+      backdrop-filter: blur(10px);
+      font-size: 0.76rem;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .comparison-label.before { left: 16px; }
+    .comparison-label.after { right: 16px; }
+
+    .gallery-v2-footer {
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr) 52px;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .gallery-v2 .gallery-arrow {
+      position: static;
+      transform: none;
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      flex: none;
+    }
+
+    .gallery-v2 .gallery-arrow:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .gallery-v2-caption {
+      min-width: 0;
+      text-align: center;
+    }
+
+    .gallery-v2-caption strong {
+      display: block;
+      color: var(--deep);
+      font-size: 1rem;
+      font-weight: 950;
+      overflow-wrap: anywhere;
+    }
+
+    .gallery-v2-caption span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .gallery-v2-status {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      text-align: center;
+      color: var(--deep);
+      font-weight: 900;
+    }
+
+    @media (max-width: 700px) {
+      .gallery-modal.gallery-v2 {
+        width: calc(100% - 12px);
+        height: calc(100dvh - 12px);
+        padding: 10px;
+        border-radius: 22px;
+      }
+
+      .gallery-v2-layout {
+        gap: 9px;
+      }
+
+      .gallery-v2-heading {
+        padding: 4px 44px 0;
+      }
+
+      .gallery-v2-heading p {
+        display: none;
+      }
+
+      .comparison-stage {
+        min-height: 220px;
+        border-radius: 18px;
+      }
+
+      .comparison-label {
+        top: 10px;
+        padding: 7px 10px;
+        font-size: 0.66rem;
+      }
+
+      .comparison-label.before { left: 10px; }
+      .comparison-label.after { right: 10px; }
+
+      .comparison-handle {
+        width: 48px;
+        height: 48px;
+        font-size: 1.05rem;
+      }
+
+      .gallery-v2-footer {
+        grid-template-columns: 44px minmax(0, 1fr) 44px;
+        gap: 8px;
+      }
+
+      .gallery-v2 .gallery-arrow {
+        width: 42px;
+        height: 42px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .gallery-modal.gallery-v2 *,
+      .gallery-modal.gallery-v2 *::before,
+      .gallery-modal.gallery-v2 *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
 const galleryModal = document.getElementById("galleryModal");
-const galleryViewer = document.getElementById("galleryViewer");
+
+function installGalleryV2Markup() {
+  if (!galleryModal || galleryModal.dataset.galleryV2Ready === "true") return;
+
+  galleryModal.dataset.galleryV2Ready = "true";
+  galleryModal.classList.add("gallery-v2");
+
+  galleryModal.innerHTML = `
+    <button class="modal-close" type="button" aria-label="Close gallery">×</button>
+
+    <div class="gallery-v2-layout">
+      <div class="gallery-v2-heading">
+        <h2 id="galleryTitle">Before & After Gallery</h2>
+        <p>Drag the divider to reveal the transformation.</p>
+      </div>
+
+      <div
+        id="comparisonStage"
+        class="comparison-stage"
+        role="slider"
+        tabindex="0"
+        aria-label="Before and after image comparison"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="50"
+      >
+        <div class="comparison-layer comparison-before">
+          <img id="galleryBeforeImage" src="" alt="" draggable="false" />
+        </div>
+
+        <div class="comparison-layer comparison-after">
+          <img id="galleryAfterImage" src="" alt="" draggable="false" />
+        </div>
+
+        <span class="comparison-label before">Before</span>
+        <span class="comparison-label after">After</span>
+        <span class="comparison-divider" aria-hidden="true"></span>
+        <span class="comparison-handle" aria-hidden="true">↔</span>
+
+        <div id="galleryStatus" class="gallery-v2-status" hidden></div>
+      </div>
+
+      <div class="gallery-v2-footer">
+        <button class="gallery-arrow gallery-prev" type="button" aria-label="Previous gallery item">‹</button>
+
+        <div class="gallery-v2-caption">
+          <strong id="galleryCaption">Tidy by Tabb transformation</strong>
+          <span id="galleryCategory"></span>
+        </div>
+
+        <button class="gallery-arrow gallery-next" type="button" aria-label="Next gallery item">›</button>
+      </div>
+    </div>
+  `;
+
+  galleryModal.querySelector(".modal-close")?.addEventListener("click", () => {
+    galleryModal.close();
+  });
+}
+
+installGalleryV2Styles();
+installGalleryV2Markup();
+
+const comparisonStage = document.getElementById("comparisonStage");
+const galleryBeforeImage = document.getElementById("galleryBeforeImage");
+const galleryAfterImage = document.getElementById("galleryAfterImage");
+const galleryStatus = document.getElementById("galleryStatus");
+const galleryTitle = document.getElementById("galleryTitle");
 const galleryCaption = document.getElementById("galleryCaption");
+const galleryCategory = document.getElementById("galleryCategory");
 const galleryPrev = document.querySelector(".gallery-prev");
 const galleryNext = document.querySelector(".gallery-next");
 
+function setComparisonPosition(position) {
+  comparisonPosition = Math.min(100, Math.max(0, Number(position) || 0));
+
+  comparisonStage?.style.setProperty(
+    "--comparison-position",
+    `${comparisonPosition}%`
+  );
+
+  comparisonStage?.setAttribute(
+    "aria-valuenow",
+    String(Math.round(comparisonPosition))
+  );
+}
+
+function setGalleryStatus(message = "") {
+  if (!galleryStatus || !comparisonStage) return;
+
+  const hasMessage = Boolean(message);
+  galleryStatus.hidden = !hasMessage;
+  galleryStatus.textContent = message;
+
+  comparisonStage
+    .querySelectorAll(
+      ".comparison-layer, .comparison-label, .comparison-divider, .comparison-handle"
+    )
+    .forEach((element) => {
+      element.style.visibility = hasMessage ? "hidden" : "visible";
+    });
+}
+
+function updateGalleryControls() {
+  const disabled = galleryImages.length < 2;
+
+  if (galleryPrev) galleryPrev.disabled = disabled;
+  if (galleryNext) galleryNext.disabled = disabled;
+}
+
 function updateGallery() {
-  if (!galleryViewer || !galleryCaption) return;
+  if (
+    !galleryBeforeImage ||
+    !galleryAfterImage ||
+    !galleryCaption ||
+    !galleryCategory
+  ) {
+    return;
+  }
 
   if (!galleryImages.length) {
-    galleryViewer.removeAttribute("src");
-    galleryViewer.alt = "";
-    galleryCaption.textContent = galleryState === "error"
-      ? "We couldn’t load the Gallery right now. Please try again later."
-      : galleryState === "empty"
-        ? "No Gallery transformations are available yet."
-        : "Loading Gallery transformations…";
+    galleryBeforeImage.removeAttribute("src");
+    galleryAfterImage.removeAttribute("src");
+    galleryBeforeImage.alt = "";
+    galleryAfterImage.alt = "";
+
+    const message =
+      galleryState === "error"
+        ? "We couldn’t load the Gallery right now. Please try again later."
+        : galleryState === "empty"
+          ? "No Gallery transformations are available yet."
+          : "Loading Gallery transformations…";
+
+    galleryCaption.textContent = "Before & After Gallery";
+    galleryCategory.textContent = "";
+    setGalleryStatus(message);
     updateGalleryControls();
     return;
   }
@@ -172,31 +555,33 @@ function updateGallery() {
   galleryIndex = Math.min(galleryIndex, galleryImages.length - 1);
   const image = galleryImages[galleryIndex];
 
-  galleryViewer.onerror = handleGalleryImageError;
-  galleryViewer.src = image.src;
-  galleryViewer.alt = image.caption || "Cleaning transformation";
+  setGalleryStatus("");
+  setComparisonPosition(50);
+
+  galleryBeforeImage.onerror = handleGalleryImageError;
+  galleryAfterImage.onerror = handleGalleryImageError;
+
+  galleryBeforeImage.src = image.beforeSrc;
+  galleryAfterImage.src = image.afterSrc;
+
+  galleryBeforeImage.alt = `Before: ${image.caption || "cleaning transformation"}`;
+  galleryAfterImage.alt = `After: ${image.caption || "cleaning transformation"}`;
+
+  galleryTitle.textContent = image.caption || "Before & After Gallery";
   galleryCaption.textContent = image.caption || "Tidy by Tabb transformation";
+  galleryCategory.textContent = image.category || "";
+
   updateGalleryControls();
 }
 
-function handleGalleryImageError() {
-  if (!galleryViewer) return;
-
-  const failedSource = galleryViewer.currentSrc || galleryViewer.src;
+function handleGalleryImageError(event) {
+  const failedSource = event?.currentTarget?.currentSrc || event?.currentTarget?.src;
   console.error("Unable to display public Gallery image.", failedSource);
 
-  galleryViewer.onerror = null;
-  galleryViewer.removeAttribute("src");
   galleryImages = [];
   galleryIndex = 0;
   galleryState = "error";
   updateGallery();
-}
-
-function updateGalleryControls() {
-  const disabled = galleryImages.length < 2;
-  if (galleryPrev) galleryPrev.disabled = disabled;
-  if (galleryNext) galleryNext.disabled = disabled;
 }
 
 async function loadGalleryImages() {
@@ -205,6 +590,7 @@ async function loadGalleryImages() {
 
   try {
     const response = await fetch(GALLERY_API_URL);
+
     if (!response.ok) {
       throw new Error(`Gallery request failed (${response.status}).`);
     }
@@ -213,25 +599,20 @@ async function loadGalleryImages() {
     const records = Array.isArray(payload.data) ? payload.data : [];
 
     galleryImages = records
-      .filter((record) =>
-        record?.published === true &&
-        record?.showInGallery === true
+      .filter(
+        (record) =>
+          record?.published === true &&
+          record?.showInGallery === true
       )
-      .map((record) => {
-        const selectedImageUrl =
-          record.comparisonImage ||
-          record.afterImage ||
-          record.beforeImage ||
-          "";
-
-        return {
-          src: getGalleryImageUrl(selectedImageUrl),
-          caption: record.title,
-          category: record.category,
-          id: record.id,
-        };
-      })
-      .filter((image) => Boolean(image.src));
+      .map((record) => ({
+        beforeSrc: getGalleryImageUrl(record.beforeImage),
+        afterSrc: getGalleryImageUrl(record.afterImage),
+        comparisonSrc: getGalleryImageUrl(record.comparisonImage),
+        caption: record.title,
+        category: record.category,
+        id: record.id,
+      }))
+      .filter((image) => Boolean(image.beforeSrc && image.afterSrc));
 
     galleryIndex = 0;
     galleryState = galleryImages.length ? "ready" : "empty";
@@ -245,16 +626,72 @@ async function loadGalleryImages() {
   updateGallery();
 }
 
+function updateComparisonFromPointer(event) {
+  if (!comparisonStage) return;
+
+  const rect = comparisonStage.getBoundingClientRect();
+  const x = Math.min(rect.right, Math.max(rect.left, event.clientX));
+  const percentage = ((x - rect.left) / rect.width) * 100;
+
+  setComparisonPosition(percentage);
+}
+
+comparisonStage?.addEventListener("pointerdown", (event) => {
+  isDraggingComparison = true;
+  comparisonStage.setPointerCapture?.(event.pointerId);
+  updateComparisonFromPointer(event);
+});
+
+comparisonStage?.addEventListener("pointermove", (event) => {
+  if (!isDraggingComparison) return;
+  updateComparisonFromPointer(event);
+});
+
+comparisonStage?.addEventListener("pointerup", (event) => {
+  isDraggingComparison = false;
+  comparisonStage.releasePointerCapture?.(event.pointerId);
+});
+
+comparisonStage?.addEventListener("pointercancel", () => {
+  isDraggingComparison = false;
+});
+
+comparisonStage?.addEventListener("keydown", (event) => {
+  const steps = event.shiftKey ? 10 : 2;
+
+  if (event.key === "ArrowLeft") {
+    event.preventDefault();
+    setComparisonPosition(comparisonPosition - steps);
+  }
+
+  if (event.key === "ArrowRight") {
+    event.preventDefault();
+    setComparisonPosition(comparisonPosition + steps);
+  }
+
+  if (event.key === "Home") {
+    event.preventDefault();
+    setComparisonPosition(0);
+  }
+
+  if (event.key === "End") {
+    event.preventDefault();
+    setComparisonPosition(100);
+  }
+});
+
 document.querySelectorAll("[data-gallery-open]").forEach((button) => {
   button.addEventListener("click", () => {
     galleryIndex = 0;
     updateGallery();
     galleryModal?.showModal();
+    window.setTimeout(() => comparisonStage?.focus(), 50);
   });
 });
 
 galleryPrev?.addEventListener("click", () => {
   if (galleryImages.length < 2) return;
+
   galleryIndex =
     (galleryIndex - 1 + galleryImages.length) %
     galleryImages.length;
@@ -264,11 +701,37 @@ galleryPrev?.addEventListener("click", () => {
 
 galleryNext?.addEventListener("click", () => {
   if (galleryImages.length < 2) return;
+
   galleryIndex =
     (galleryIndex + 1) %
     galleryImages.length;
 
   updateGallery();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (!galleryModal?.open) return;
+
+  if (event.key === "Escape") {
+    galleryModal.close();
+    return;
+  }
+
+  if (document.activeElement === comparisonStage) return;
+
+  if (event.key === "ArrowLeft" && galleryImages.length > 1) {
+    galleryIndex =
+      (galleryIndex - 1 + galleryImages.length) %
+      galleryImages.length;
+    updateGallery();
+  }
+
+  if (event.key === "ArrowRight" && galleryImages.length > 1) {
+    galleryIndex =
+      (galleryIndex + 1) %
+      galleryImages.length;
+    updateGallery();
+  }
 });
 
 loadGalleryImages();
@@ -289,7 +752,6 @@ const priceNext =
 let activePriceIndex = 1; // Deep Cleaning first
 
 function updatePriceCoverflow() {
-
   coverflowCards.forEach((card) => {
     card.classList.remove(
       "active",
@@ -328,11 +790,9 @@ function updatePriceCoverflow() {
 }
 
 if (coverflowCards.length) {
-
   updatePriceCoverflow();
 
   pricePrev?.addEventListener("click", () => {
-
     activePriceIndex =
       (activePriceIndex - 1 + coverflowCards.length) %
       coverflowCards.length;
@@ -341,7 +801,6 @@ if (coverflowCards.length) {
   });
 
   priceNext?.addEventListener("click", () => {
-
     activePriceIndex =
       (activePriceIndex + 1) %
       coverflowCards.length;
@@ -361,7 +820,6 @@ const socialToggle =
   document.querySelector(".social-toggle");
 
 if (socialBubble && socialToggle) {
-
   socialToggle.addEventListener("click", (event) => {
     event.stopPropagation();
     socialBubble.classList.toggle("open");
