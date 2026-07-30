@@ -76,6 +76,18 @@ export default {
       }
 
       if (
+        request.method === "POST" &&
+        url.pathname === "/admin/api/services"
+      ) {
+        return await handleServiceCreateRequest(
+          request,
+          env,
+          actorEmail,
+          origin
+        );
+      }
+
+      if (
         request.method === "GET" &&
         url.pathname === "/admin/api/clients"
       ) {
@@ -448,6 +460,262 @@ async function handleServiceDetailRequest(
       timestamp: new Date().toISOString(),
     },
     200,
+    origin
+  );
+}
+
+async function handleServiceCreateRequest(
+  request,
+  env,
+  actorEmail,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const body = await readJsonObject(
+    request,
+    MAX_CLIENT_BODY_BYTES
+  );
+
+  const allowedFields = new Set([
+    "clientId",
+    "serviceType",
+    "status",
+    "scheduledStart",
+    "scheduledEnd",
+    "completedAt",
+    "priceCents",
+    "notes",
+  ]);
+
+  const unexpectedFields = Object.keys(body).filter(
+    (field) => !allowedFields.has(field)
+  );
+
+  if (unexpectedFields.length) {
+    throw new HttpError(
+      400,
+      `Unexpected field${unexpectedFields.length === 1 ? "" : "s"}: ${unexpectedFields.join(", ")}.`
+    );
+  }
+
+  const clientId = requireIdentifier(
+    body.clientId,
+    "clientId"
+  );
+
+  const serviceType = requireText(
+    body.serviceType,
+    "serviceType",
+    150
+  );
+
+  const status =
+    normalizeOptionalServiceStatus(body.status) ||
+    "scheduled";
+
+  const scheduledStart = normalizeOptionalDateTime(
+    body.scheduledStart,
+    "scheduledStart"
+  ) || null;
+
+  const scheduledEnd = normalizeOptionalDateTime(
+    body.scheduledEnd,
+    "scheduledEnd"
+  ) || null;
+
+  let completedAt = normalizeOptionalDateTime(
+    body.completedAt,
+    "completedAt"
+  ) || null;
+
+  const priceCents = parseOptionalNonNegativeInteger(
+    body.priceCents,
+    "priceCents"
+  );
+
+  const notes = optionalText(
+    body.notes,
+    "notes",
+    5000
+  );
+
+  if (
+    scheduledEnd &&
+    !scheduledStart
+  ) {
+    throw new HttpError(
+      400,
+      "scheduledStart is required when scheduledEnd is provided."
+    );
+  }
+
+  if (
+    scheduledStart &&
+    scheduledEnd &&
+    Date.parse(scheduledEnd) <= Date.parse(scheduledStart)
+  ) {
+    throw new HttpError(
+      400,
+      "scheduledEnd must be later than scheduledStart."
+    );
+  }
+
+  if (
+    ["scheduled", "in_progress"].includes(status) &&
+    !scheduledStart
+  ) {
+    throw new HttpError(
+      400,
+      `scheduledStart is required when status is ${status}.`
+    );
+  }
+
+  if (status === "completed") {
+    completedAt ||= new Date().toISOString();
+  } else if (completedAt) {
+    throw new HttpError(
+      400,
+      "completedAt may only be provided for a completed service."
+    );
+  }
+
+  const client = await env.DB.prepare(
+    `
+      SELECT
+        id,
+        first_name,
+        last_name
+      FROM clients
+      WHERE id = ?
+        AND deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(clientId)
+    .first();
+
+  if (!client) {
+    throw new HttpError(
+      400,
+      "clientId must reference an active client."
+    );
+  }
+
+  if (scheduledStart) {
+    const possibleDuplicate = await env.DB.prepare(
+      `
+        SELECT id
+        FROM services
+        WHERE client_id = ?
+          AND deleted_at IS NULL
+          AND status <> 'cancelled'
+          AND lower(service_type) = lower(?)
+          AND scheduled_start = ?
+        LIMIT 1
+      `
+    )
+      .bind(
+        clientId,
+        serviceType,
+        scheduledStart
+      )
+      .first();
+
+    if (possibleDuplicate) {
+      throw new HttpError(
+        409,
+        `A possible duplicate service already exists with ID ${possibleDuplicate.id}.`
+      );
+    }
+  }
+
+  const serviceId = `svc_${crypto.randomUUID()}`;
+
+  await env.DB.prepare(
+    `
+      INSERT INTO services (
+        id,
+        client_id,
+        service_type,
+        status,
+        scheduled_start,
+        scheduled_end,
+        completed_at,
+        price_cents,
+        notes,
+        created_by,
+        updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      serviceId,
+      clientId,
+      serviceType,
+      status,
+      scheduledStart,
+      scheduledEnd,
+      completedAt,
+      priceCents,
+      notes,
+      actorEmail,
+      actorEmail
+    )
+    .run();
+
+  const service = await env.DB.prepare(
+    `
+      SELECT
+        s.id,
+        s.client_id,
+        s.service_type,
+        s.status,
+        s.scheduled_start,
+        s.scheduled_end,
+        s.completed_at,
+        s.price_cents,
+        s.notes,
+        s.created_at,
+        s.updated_at,
+        s.created_by,
+        s.updated_by,
+        s.version,
+        c.first_name AS client_first_name,
+        c.last_name AS client_last_name,
+        c.email AS client_email,
+        c.phone AS client_phone
+      FROM services AS s
+      INNER JOIN clients AS c
+        ON c.id = s.client_id
+      WHERE s.id = ?
+        AND s.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(serviceId)
+    .first();
+
+  if (!service) {
+    throw new Error(
+      "Service was created but could not be retrieved."
+    );
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Service created successfully.",
+      data: {
+        service,
+      },
+      metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    201,
     origin
   );
 }
@@ -1703,6 +1971,30 @@ function getClientIdFromPath(pathname) {
   return clientId;
 }
 
+function requireIdentifier(value, fieldName) {
+  if (typeof value !== "string") {
+    throw new HttpError(
+      400,
+      `${fieldName} is required.`
+    );
+  }
+
+  const normalized = value.trim();
+
+  if (
+    !normalized ||
+    normalized.length > 100 ||
+    !/^[A-Za-z0-9_-]+$/.test(normalized)
+  ) {
+    throw new HttpError(
+      400,
+      `${fieldName} is invalid.`
+    );
+  }
+
+  return normalized;
+}
+
 function optionalIdentifier(value, fieldName) {
   if (
     value === null ||
@@ -1823,6 +2115,31 @@ function parseRequiredVersion(value) {
     throw new HttpError(
       400,
       "version must be a positive whole number."
+    );
+  }
+
+  return value;
+}
+
+function parseOptionalNonNegativeInteger(
+  value,
+  fieldName
+) {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  if (
+    !Number.isSafeInteger(value) ||
+    value < 0
+  ) {
+    throw new HttpError(
+      400,
+      `${fieldName} must be a non-negative whole number.`
     );
   }
 
