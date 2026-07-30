@@ -1,0 +1,17 @@
+{
+  "name": "tidy-by-tabb-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "dev": "wrangler dev",
+    "deploy": "npm run check && wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply tidy-by-tabb-cms --local",
+    "db:migrate:remote": "wrangler d1 migrations apply tidy-by-tabb-cms --remote"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260730.1",
+    "typescript": "^5.9.2",
+    "wrangler": "^4.27.0"
+  }
+}

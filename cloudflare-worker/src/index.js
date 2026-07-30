@@ -1,3 +1,6 @@
+import { clients } from "./modules/clients";
+import { services } from "./modules/services";
+
 const ALLOWED_ORIGIN = "https://www.tidybytabb.com";
 const ALLOWED_ACTIONS = new Set([
   "create",
@@ -33,10 +36,6 @@ export default {
         });
       }
 
-      if (request.method !== "POST") {
-        throw new HttpError(405, "Only POST requests are supported.");
-      }
-
       if (origin !== ALLOWED_ORIGIN) {
         throw new HttpError(403, "Origin is not allowed.");
       }
@@ -55,6 +54,22 @@ export default {
       const allowedEmails = parseAllowedEmails(env.ALLOWED_ADMIN_EMAILS);
       if (!allowedEmails.has(actorEmail)) {
         throw new HttpError(403, "Administrator access is denied.");
+      }
+
+      const url = new URL(request.url);
+      const clientMatch = url.pathname.match(/^\/api\/clients(?:\/([^/]+))?$/);
+      const serviceMatch = url.pathname.match(/^\/api\/services(?:\/([^/]+))?$/);
+      if (clientMatch || serviceMatch) {
+        const response = clientMatch
+          ? await clients(request, env, actorEmail, clientMatch[1] && decodeURIComponent(clientMatch[1]))
+          : await services(request, env, actorEmail, serviceMatch[1] && decodeURIComponent(serviceMatch[1]));
+        const headers = new Headers(response.headers);
+        for (const [key, value] of corsHeaders(origin)) headers.set(key, value);
+        return new Response(response.body, { status: response.status, headers });
+      }
+
+      if (request.method !== "POST") {
+        throw new HttpError(405, "Only POST requests are supported.");
       }
 
       const contentLength = Number(request.headers.get("Content-Length") || 0);
@@ -147,6 +162,7 @@ class HttpError extends Error {
 
 function validateConfiguration(env) {
   const required = [
+    "DB",
     "APPS_SCRIPT_URL",
     "TEAM_DOMAIN",
     "POLICY_AUD",
@@ -359,7 +375,7 @@ function decodeBase64UrlBytes(value) {
 
 function corsHeaders(origin) {
   const headers = new Headers({
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "600",
     "X-Content-Type-Options": "nosniff",

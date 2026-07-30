@@ -4,5 +4,12 @@ compatibility_date = "2026-07-29"
 workers_dev = false
 
 routes = [
-  { pattern = "www.tidybytabb.com/admin/api*", zone_name = "tidybytabb.com" }
+  { pattern = "www.tidybytabb.com/admin/api*", zone_name = "tidybytabb.com" },
+  { pattern = "www.tidybytabb.com/api/*", zone_name = "tidybytabb.com" }
 ]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tidy-by-tabb-cms"
+database_id = "e0c5e80b-2105-4353-b0d3-bc408e9dbef8"
+migrations_dir = "../database/migrations"
