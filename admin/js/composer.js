@@ -44,19 +44,23 @@ export class ComparisonComposer {
   reset(comparisonUrl = "") {
     this.generatedDataUrl = "";
     this.swapped = false;
-    if (this.saveButton) this.saveButton.disabled = true;
+
+    if (this.saveButton) {
+      this.saveButton.disabled = true;
+    }
 
     if (comparisonUrl) {
       this.preview.innerHTML = `
         <img src="${getPreviewUrl(comparisonUrl, 900)}" alt="Combined photo preview">
       `;
-    } else {
-      this.preview.innerHTML = `
-        <div class="preview-empty">
-          Create a combined photo after adding Before and After images.
-        </div>
-      `;
+      return;
     }
+
+    this.preview.innerHTML = `
+      <div class="preview-empty">
+        Create a clean combined photo after adding Before and After images.
+      </div>
+    `;
   }
 
   async generate() {
@@ -64,18 +68,11 @@ export class ComparisonComposer {
     const originalAfter = this.getAfterUrl?.() || "";
 
     if (!originalBefore || !originalAfter) {
-      toast(
-        "Add both the Before and After photos first.",
-        "error"
-      );
+      toast("Add both the Before and After photos first.", "error");
       return;
     }
 
-    loading(
-      this.generateButton,
-      true,
-      "Creating…"
-    );
+    loading(this.generateButton, true, "Creating…");
 
     try {
       const beforeUrl = this.swapped ? originalAfter : originalBefore;
@@ -100,20 +97,16 @@ export class ComparisonComposer {
       );
 
       this.preview.innerHTML = `
-        <img src="${this.generatedDataUrl}" alt="Combined Before and After preview">
+        <img src="${this.generatedDataUrl}" alt="Clean combined photo preview">
       `;
 
       if (this.saveButton) {
         this.saveButton.disabled = false;
       }
 
-      toast("Combined photo created.");
+      toast("Clean combined photo created.");
     } catch (error) {
-      toast(
-        error.message,
-        "error",
-        6000
-      );
+      toast(error.message, "error", 6000);
     } finally {
       loading(this.generateButton, false);
     }
@@ -128,7 +121,6 @@ export class ComparisonComposer {
     const footerHeight = 170;
     const imageHeight = height - footerHeight;
     const columnWidth = width / 2;
-    const labelHeight = 64;
 
     canvas.width = width;
     canvas.height = height;
@@ -141,44 +133,26 @@ export class ComparisonComposer {
       context,
       beforeImage,
       0,
-      labelHeight,
+      0,
       columnWidth,
-      imageHeight - labelHeight
+      imageHeight
     );
 
     this.drawCover(
       context,
       afterImage,
       columnWidth,
-      labelHeight,
+      0,
       columnWidth,
-      imageHeight - labelHeight
+      imageHeight
     );
 
-    context.fillStyle = "rgba(255,255,255,0.94)";
-    context.fillRect(0, 0, width, labelHeight);
-
-    context.strokeStyle = "rgba(25,50,74,0.22)";
-    context.lineWidth = 2;
+    context.strokeStyle = "rgba(255,255,255,0.92)";
+    context.lineWidth = 4;
     context.beginPath();
     context.moveTo(columnWidth, 0);
     context.lineTo(columnWidth, imageHeight);
     context.stroke();
-
-    context.fillStyle = "#19324a";
-    context.font = "700 28px Arial, sans-serif";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText(
-      "Before We Arrived",
-      columnWidth / 2,
-      labelHeight / 2
-    );
-    context.fillText(
-      "After Tidy by Tabb",
-      columnWidth + columnWidth / 2,
-      labelHeight / 2
-    );
 
     const gradient = context.createLinearGradient(
       0,
@@ -193,6 +167,7 @@ export class ComparisonComposer {
     context.fillRect(0, imageHeight, width, footerHeight);
 
     context.strokeStyle = "rgba(25,50,74,0.18)";
+    context.lineWidth = 2;
     context.beginPath();
     context.moveTo(0, imageHeight);
     context.lineTo(width, imageHeight);
@@ -201,6 +176,7 @@ export class ComparisonComposer {
     context.fillStyle = "#19324a";
     context.font = "800 46px Arial, sans-serif";
     context.textAlign = "center";
+    context.textBaseline = "middle";
     context.fillText(
       "🫧 Tidy by Tabb",
       width / 2,
@@ -252,27 +228,19 @@ export class ComparisonComposer {
       "Untitled";
 
     const category =
-      String(
-        this.getCategory?.() || "Uncategorized"
-      ).trim() || "Uncategorized";
+      String(this.getCategory?.() || "Uncategorized").trim() ||
+      "Uncategorized";
 
     return `${title}-${category}-Comparison.jpg`;
   }
 
   async save() {
     if (!this.generatedDataUrl) {
-      toast(
-        "Create the combined photo before saving it.",
-        "error"
-      );
+      toast("Create the combined photo before saving it.", "error");
       return;
     }
 
-    loading(
-      this.saveButton,
-      true,
-      "Uploading…"
-    );
+    loading(this.saveButton, true, "Uploading…");
 
     try {
       const response = await this.api.uploadImage({
