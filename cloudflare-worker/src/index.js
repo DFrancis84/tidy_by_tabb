@@ -67,6 +67,13 @@ export default {
         return await handleHealthRequest(env, origin);
       }
 
+      if (
+        request.method === "GET" &&
+        url.pathname === "/admin/api/clients"
+      ) {
+        return await handleClientsListRequest(url, env, origin);
+      }
+      
       if (request.method !== "POST") {
         throw new HttpError(405, "Method is not supported for this endpoint.");
       }
@@ -129,6 +136,120 @@ async function handleHealthRequest(env, origin) {
         serviceCount: Number(result?.service_count || 0),
       },
       metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    200,
+    origin
+  );
+}
+
+async function handleClientsListRequest(url, env, origin) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const search = String(url.searchParams.get("search") || "").trim();
+  const limit = parseBoundedInteger(
+    url.searchParams.get("limit"),
+    25,
+    1,
+    100,
+    "limit"
+  );
+  const offset = parseBoundedInteger(
+    url.searchParams.get("offset"),
+    0,
+    0,
+    100000,
+    "offset"
+  );
+
+  let whereClause = "deleted_at IS NULL";
+  const queryParameters = [];
+  const countParameters = [];
+
+  if (search) {
+    const searchPattern = `%${escapeLikePattern(search)}%`;
+
+    whereClause += `
+      AND (
+        first_name LIKE ? ESCAPE '\\' COLLATE NOCASE
+        OR last_name LIKE ? ESCAPE '\\' COLLATE NOCASE
+        OR email LIKE ? ESCAPE '\\' COLLATE NOCASE
+        OR phone LIKE ? ESCAPE '\\' COLLATE NOCASE
+        OR city LIKE ? ESCAPE '\\' COLLATE NOCASE
+        OR state LIKE ? ESCAPE '\\' COLLATE NOCASE
+      )
+    `;
+
+    const searchValues = Array(6).fill(searchPattern);
+    queryParameters.push(...searchValues);
+    countParameters.push(...searchValues);
+  }
+
+  queryParameters.push(limit, offset);
+
+  const clientsStatement = env.DB.prepare(
+    `
+      SELECT
+        id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        address_line1,
+        address_line2,
+        city,
+        state,
+        postal_code,
+        created_at,
+        updated_at,
+        version
+      FROM clients
+      WHERE ${whereClause}
+      ORDER BY
+        last_name COLLATE NOCASE ASC,
+        first_name COLLATE NOCASE ASC,
+        created_at DESC
+      LIMIT ?
+      OFFSET ?
+    `
+  ).bind(...queryParameters);
+
+  const countStatement = env.DB.prepare(
+    `
+      SELECT COUNT(*) AS total
+      FROM clients
+      WHERE ${whereClause}
+    `
+  ).bind(...countParameters);
+
+  const [clientsResult, countResult] = await Promise.all([
+    clientsStatement.all(),
+    countStatement.first(),
+  ]);
+
+  const clients = Array.isArray(clientsResult.results)
+    ? clientsResult.results
+    : [];
+
+  const total = Number(countResult?.total || 0);
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Clients retrieved successfully.",
+      data: {
+        clients,
+      },
+      metadata: {
+        search,
+        limit,
+        offset,
+        returned: clients.length,
+        total,
+        hasMore: offset + clients.length < total,
+      },
       timestamp: new Date().toISOString(),
     },
     200,
@@ -428,6 +549,47 @@ function decodeBase64UrlBytes(value) {
   );
   const binary = atob(padded);
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+function parseBoundedInteger(
+  rawValue,
+  defaultValue,
+  minimum,
+  maximum,
+  fieldName
+) {
+  if (rawValue === null || rawValue === "") {
+    return defaultValue;
+  }
+
+  if (!/^\d+$/.test(rawValue)) {
+    throw new HttpError(
+      400,
+      `${fieldName} must be a whole number between ${minimum} and ${maximum}.`
+    );
+  }
+
+  const value = Number(rawValue);
+
+  if (
+    !Number.isSafeInteger(value) ||
+    value < minimum ||
+    value > maximum
+  ) {
+    throw new HttpError(
+      400,
+      `${fieldName} must be between ${minimum} and ${maximum}.`
+    );
+  }
+
+  return value;
+}
+
+function escapeLikePattern(value) {
+  return String(value)
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_");
 }
 
 function corsHeaders(origin) {
