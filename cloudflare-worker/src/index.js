@@ -118,7 +118,20 @@ export default {
           origin
         );
       }
-      
+
+      if (
+        request.method === "PATCH" &&
+          serviceId
+        ) {
+          return await handleServiceUpdateRequest(
+            request,
+            serviceId,
+            env,
+            actorEmail,
+            origin
+        );
+      }  
+
       const clientId = getClientIdFromPath(url.pathname);
 
       if (
@@ -716,6 +729,405 @@ async function handleServiceCreateRequest(
       timestamp: new Date().toISOString(),
     },
     201,
+    origin
+  );
+}
+
+async function handleServiceUpdateRequest(
+  request,
+  serviceId,
+  env,
+  actorEmail,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const body = await readJsonObject(
+    request,
+    MAX_CLIENT_BODY_BYTES
+  );
+
+  const allowedFields = new Set([
+    "version",
+    "clientId",
+    "serviceType",
+    "status",
+    "scheduledStart",
+    "scheduledEnd",
+    "completedAt",
+    "priceCents",
+    "notes",
+  ]);
+
+  const unexpectedFields = Object.keys(body).filter(
+    (field) => !allowedFields.has(field)
+  );
+
+  if (unexpectedFields.length) {
+    throw new HttpError(
+      400,
+      `Unexpected field${unexpectedFields.length === 1 ? "" : "s"}: ${unexpectedFields.join(", ")}.`
+    );
+  }
+
+  const expectedVersion = parseRequiredVersion(
+    body.version
+  );
+
+  const existingService = await env.DB.prepare(
+    `
+      SELECT
+        id,
+        client_id,
+        service_type,
+        status,
+        scheduled_start,
+        scheduled_end,
+        completed_at,
+        price_cents,
+        notes,
+        version
+      FROM services
+      WHERE id = ?
+        AND deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(serviceId)
+    .first();
+
+  if (!existingService) {
+    throw new HttpError(
+      404,
+      "Service was not found."
+    );
+  }
+
+  const editableFields = [
+    "clientId",
+    "serviceType",
+    "status",
+    "scheduledStart",
+    "scheduledEnd",
+    "completedAt",
+    "priceCents",
+    "notes",
+  ];
+
+  const hasEditableField = editableFields.some(
+    (field) =>
+      Object.prototype.hasOwnProperty.call(
+        body,
+        field
+      )
+  );
+
+  if (!hasEditableField) {
+    throw new HttpError(
+      400,
+      "At least one service field must be provided."
+    );
+  }
+
+  const hasField = (field) =>
+    Object.prototype.hasOwnProperty.call(
+      body,
+      field
+    );
+
+  const updatedService = {
+    clientId: hasField("clientId")
+      ? requireIdentifier(
+          body.clientId,
+          "clientId"
+        )
+      : existingService.client_id,
+
+    serviceType: hasField("serviceType")
+      ? requireText(
+          body.serviceType,
+          "serviceType",
+          150
+        )
+      : existingService.service_type,
+
+    status: hasField("status")
+      ? normalizeOptionalServiceStatus(
+          body.status
+        )
+      : existingService.status,
+
+    scheduledStart: hasField("scheduledStart")
+      ? (
+          normalizeOptionalDateTime(
+            body.scheduledStart,
+            "scheduledStart"
+          ) || null
+        )
+      : existingService.scheduled_start,
+
+    scheduledEnd: hasField("scheduledEnd")
+      ? (
+          normalizeOptionalDateTime(
+            body.scheduledEnd,
+            "scheduledEnd"
+          ) || null
+        )
+      : existingService.scheduled_end,
+
+    completedAt: hasField("completedAt")
+      ? (
+          normalizeOptionalDateTime(
+            body.completedAt,
+            "completedAt"
+          ) || null
+        )
+      : existingService.completed_at,
+
+    priceCents: hasField("priceCents")
+      ? parseOptionalNonNegativeInteger(
+          body.priceCents,
+          "priceCents"
+        )
+      : existingService.price_cents,
+
+    notes: hasField("notes")
+      ? optionalText(
+          body.notes,
+          "notes",
+          5000
+        )
+      : existingService.notes,
+  };
+
+  if (!updatedService.status) {
+    throw new HttpError(
+      400,
+      "status is required."
+    );
+  }
+
+  if (
+    updatedService.scheduledEnd &&
+    !updatedService.scheduledStart
+  ) {
+    throw new HttpError(
+      400,
+      "scheduledStart is required when scheduledEnd is provided."
+    );
+  }
+
+  if (
+    updatedService.scheduledStart &&
+    updatedService.scheduledEnd &&
+    Date.parse(updatedService.scheduledEnd) <=
+      Date.parse(updatedService.scheduledStart)
+  ) {
+    throw new HttpError(
+      400,
+      "scheduledEnd must be later than scheduledStart."
+    );
+  }
+
+  if (
+    ["scheduled", "in_progress"].includes(
+      updatedService.status
+    ) &&
+    !updatedService.scheduledStart
+  ) {
+    throw new HttpError(
+      400,
+      `scheduledStart is required when status is ${updatedService.status}.`
+    );
+  }
+
+  if (updatedService.status === "completed") {
+    updatedService.completedAt ||=
+      new Date().toISOString();
+  } else {
+    if (
+      hasField("completedAt") &&
+      updatedService.completedAt
+    ) {
+      throw new HttpError(
+        400,
+        "completedAt may only be provided for a completed service."
+      );
+    }
+
+    updatedService.completedAt = null;
+  }
+
+  const client = await env.DB.prepare(
+    `
+      SELECT id
+      FROM clients
+      WHERE id = ?
+        AND deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(updatedService.clientId)
+    .first();
+
+  if (!client) {
+    throw new HttpError(
+      400,
+      "clientId must reference an active client."
+    );
+  }
+
+  if (updatedService.scheduledStart) {
+    const possibleDuplicate =
+      await env.DB.prepare(
+        `
+          SELECT id
+          FROM services
+          WHERE id <> ?
+            AND client_id = ?
+            AND deleted_at IS NULL
+            AND status <> 'cancelled'
+            AND lower(service_type) = lower(?)
+            AND scheduled_start = ?
+          LIMIT 1
+        `
+      )
+        .bind(
+          serviceId,
+          updatedService.clientId,
+          updatedService.serviceType,
+          updatedService.scheduledStart
+        )
+        .first();
+
+    if (possibleDuplicate) {
+      throw new HttpError(
+        409,
+        `A possible duplicate service already exists with ID ${possibleDuplicate.id}.`
+      );
+    }
+  }
+
+  const updateResult = await env.DB.prepare(
+    `
+      UPDATE services
+      SET
+        client_id = ?,
+        service_type = ?,
+        status = ?,
+        scheduled_start = ?,
+        scheduled_end = ?,
+        completed_at = ?,
+        price_cents = ?,
+        notes = ?,
+        updated_at = datetime('now'),
+        updated_by = ?,
+        version = version + 1
+      WHERE id = ?
+        AND deleted_at IS NULL
+        AND version = ?
+    `
+  )
+    .bind(
+      updatedService.clientId,
+      updatedService.serviceType,
+      updatedService.status,
+      updatedService.scheduledStart,
+      updatedService.scheduledEnd,
+      updatedService.completedAt,
+      updatedService.priceCents,
+      updatedService.notes,
+      actorEmail,
+      serviceId,
+      expectedVersion
+    )
+    .run();
+
+  if (
+    Number(updateResult.meta?.changes || 0) !== 1
+  ) {
+    const current = await env.DB.prepare(
+      `
+        SELECT version
+        FROM services
+        WHERE id = ?
+          AND deleted_at IS NULL
+        LIMIT 1
+      `
+    )
+      .bind(serviceId)
+      .first();
+
+    if (!current) {
+      throw new HttpError(
+        404,
+        "Service was not found."
+      );
+    }
+
+    throw new HttpError(
+      409,
+      `Service has changed since it was loaded. Current version is ${current.version}.`
+    );
+  }
+
+  const service = await env.DB.prepare(
+    `
+      SELECT
+        s.id,
+        s.client_id,
+        s.service_type,
+        s.status,
+        s.scheduled_start,
+        s.scheduled_end,
+        s.completed_at,
+        s.price_cents,
+        s.notes,
+        s.created_at,
+        s.updated_at,
+        s.created_by,
+        s.updated_by,
+        s.version,
+        c.first_name AS client_first_name,
+        c.last_name AS client_last_name,
+        c.email AS client_email,
+        c.phone AS client_phone,
+        c.address_line1 AS client_address_line1,
+        c.address_line2 AS client_address_line2,
+        c.city AS client_city,
+        c.state AS client_state,
+        c.postal_code AS client_postal_code
+      FROM services AS s
+      INNER JOIN clients AS c
+        ON c.id = s.client_id
+      WHERE s.id = ?
+        AND s.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(serviceId)
+    .first();
+
+  if (!service) {
+    throw new Error(
+      "Service was updated but could not be retrieved."
+    );
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Service updated successfully.",
+      data: {
+        service,
+      },
+      metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    200,
     origin
   );
 }
