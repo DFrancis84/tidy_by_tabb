@@ -33,10 +33,6 @@ export default {
         });
       }
 
-      if (request.method !== "POST") {
-        throw new HttpError(405, "Only POST requests are supported.");
-      }
-
       if (origin !== ALLOWED_ORIGIN) {
         throw new HttpError(403, "Origin is not allowed.");
       }
@@ -48,6 +44,7 @@ export default {
 
       const claims = await verifyAccessJwt(jwt, env);
       const actorEmail = normalizeEmail(claims.email);
+
       if (!actorEmail) {
         throw new HttpError(401, "Authenticated email is required.");
       }
@@ -57,69 +54,37 @@ export default {
         throw new HttpError(403, "Administrator access is denied.");
       }
 
-      const contentLength = Number(request.headers.get("Content-Length") || 0);
-      if (contentLength > MAX_BODY_BYTES) {
-        throw new HttpError(413, "Request body is too large.");
+      const url = new URL(request.url);
+
+      if (
+        request.method === "GET" &&
+        url.pathname === "/admin/api/health"
+      ) {
+        return await handleHealthRequest(env, origin);
       }
 
-      const bodyBytes = await request.arrayBuffer();
-      if (bodyBytes.byteLength > MAX_BODY_BYTES) {
-        throw new HttpError(413, "Request body is too large.");
+      if (request.method !== "POST") {
+        throw new HttpError(405, "Method is not supported for this endpoint.");
       }
 
-      let body;
-      try {
-        body = JSON.parse(new TextDecoder().decode(bodyBytes));
-      } catch (_error) {
-        throw new HttpError(400, "Request body must be valid JSON.");
-      }
-
-      if (!body || Array.isArray(body) || typeof body !== "object") {
-        throw new HttpError(400, "Request body must be a JSON object.");
-      }
-
-      const action = String(body.action || "").trim().toLowerCase();
-      if (!ALLOWED_ACTIONS.has(action)) {
-        throw new HttpError(400, "Unsupported admin action.");
-      }
-
-      const upstreamUrl = validateAppsScriptUrl(env.APPS_SCRIPT_URL);
-      const forwardedBody = {
-        ...body,
+      return await handleGalleryRequest(
+        request,
+        env,
         actorEmail,
-        gatewaySecret: env.APPS_SCRIPT_SHARED_SECRET,
-      };
-
-      const upstreamResponse = await fetch(upstreamUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8",
-        },
-        body: JSON.stringify(forwardedBody),
-        redirect: "follow",
-      });
-
-      const responseBody = await upstreamResponse.text();
-      const headers = corsHeaders(origin);
-      headers.set(
-        "Content-Type",
-        upstreamResponse.headers.get("Content-Type") ||
-          "application/json;charset=utf-8"
+        origin
       );
-      headers.set("Cache-Control", "no-store");
-
-      return new Response(responseBody, {
-        status: upstreamResponse.status,
-        headers,
-      });
     } catch (error) {
       const status = error instanceof HttpError ? error.status : 500;
-      const message = error instanceof HttpError
-        ? error.message
-        : "The admin gateway could not process this request.";
+      const message =
+        error instanceof HttpError
+          ? error.message
+          : "The admin gateway could not process this request.";
 
       if (!(error instanceof HttpError)) {
-        console.error("Admin gateway failure:", error?.message || "Unknown error");
+        console.error(
+          "Admin gateway failure:",
+          error?.message || "Unknown error"
+        );
       }
 
       return jsonResponse(
@@ -136,6 +101,110 @@ export default {
     }
   },
 };
+
+async function handleHealthRequest(env, origin) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const result = await env.DB.prepare(
+    `
+      SELECT
+        (SELECT COUNT(*) FROM clients WHERE deleted_at IS NULL) AS client_count,
+        (SELECT COUNT(*) FROM services WHERE deleted_at IS NULL) AS service_count
+    `
+  ).first();
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Admin API is healthy.",
+      data: {
+        database: "connected",
+        clientCount: Number(result?.client_count || 0),
+        serviceCount: Number(result?.service_count || 0),
+      },
+      metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    200,
+    origin
+  );
+}
+
+async function handleGalleryRequest(
+  request,
+  env,
+  actorEmail,
+  origin
+) {
+  const contentLength = Number(
+    request.headers.get("Content-Length") || 0
+  );
+
+  if (contentLength > MAX_BODY_BYTES) {
+    throw new HttpError(413, "Request body is too large.");
+  }
+
+  const bodyBytes = await request.arrayBuffer();
+
+  if (bodyBytes.byteLength > MAX_BODY_BYTES) {
+    throw new HttpError(413, "Request body is too large.");
+  }
+
+  let body;
+
+  try {
+    body = JSON.parse(new TextDecoder().decode(bodyBytes));
+  } catch (_error) {
+    throw new HttpError(400, "Request body must be valid JSON.");
+  }
+
+  if (!body || Array.isArray(body) || typeof body !== "object") {
+    throw new HttpError(400, "Request body must be a JSON object.");
+  }
+
+  const action = String(body.action || "")
+    .trim()
+    .toLowerCase();
+
+  if (!ALLOWED_ACTIONS.has(action)) {
+    throw new HttpError(400, "Unsupported admin action.");
+  }
+
+  const upstreamUrl = validateAppsScriptUrl(env.APPS_SCRIPT_URL);
+
+  const forwardedBody = {
+    ...body,
+    actorEmail,
+    gatewaySecret: env.APPS_SCRIPT_SHARED_SECRET,
+  };
+
+  const upstreamResponse = await fetch(upstreamUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8",
+    },
+    body: JSON.stringify(forwardedBody),
+    redirect: "follow",
+  });
+
+  const responseBody = await upstreamResponse.text();
+  const headers = corsHeaders(origin);
+
+  headers.set(
+    "Content-Type",
+    upstreamResponse.headers.get("Content-Type") ||
+      "application/json;charset=utf-8"
+  );
+
+  headers.set("Cache-Control", "no-store");
+
+  return new Response(responseBody, {
+    status: upstreamResponse.status,
+    headers,
+  });
+}
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -359,7 +428,7 @@ function decodeBase64UrlBytes(value) {
 
 function corsHeaders(origin) {
   const headers = new Headers({
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "600",
     "X-Content-Type-Options": "nosniff",
