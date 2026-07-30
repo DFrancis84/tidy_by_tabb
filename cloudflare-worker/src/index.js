@@ -33,7 +33,11 @@ export default {
         });
       }
 
-      if (origin !== ALLOWED_ORIGIN) {
+      const isAllowedOrigin =
+        origin === "" ||
+        origin === ALLOWED_ORIGIN;
+
+      if (!isAllowedOrigin) {
         throw new HttpError(403, "Origin is not allowed.");
       }
 
