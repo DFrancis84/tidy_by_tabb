@@ -1,21 +1,40 @@
-Tidy by Tabb - Gallery V8 Badge Refinement
-=========================================
+Tidy by Tabb - Gallery V10 Clean Comparison
+=============================================
 
-Replace the root-level script.js with the included script.js.
+Files included
+--------------
+script.js
+admin/js/composer.js
+ADMIN_INDEX_CHANGES.txt
 
-Changes
--------
-- Reduces Before/After badge size on desktop and mobile.
-- Keeps both badges perfectly mirrored and aligned.
-- Uses a softer glass-style navy background.
-- Reduces the pill effect with an 18px corner radius.
-- Slightly tightens the letter spacing and lowers the font weight.
-- Moves badges down slightly for better spacing from image corners.
-- Preserves the sponge slider, centered SVG arrows, wipe animation,
-  responsive modal, touch controls, keyboard controls, and navigation.
+Public gallery changes
+----------------------
+- Removes the Before and After overlay badges entirely.
+- Keeps the sponge, divider, wipe animation, touch controls, keyboard controls,
+  responsive sizing, navigation, title, and category.
+- Removes unused badge CSS and visibility logic.
 
-Also update index.html:
-<script src="script.js?v=9"></script>
+Admin image generator changes
+-----------------------------
+- Removes the baked-in Before and After header strip.
+- Uses the full image area for the two photos.
+- Keeps a clean center divider.
+- Keeps the branded footer.
+- Produces a more reusable comparison image for the website and social media.
 
-Suggested commit message:
-style: refine gallery before and after badges
+Installation
+------------
+1. Replace root-level script.js.
+2. Replace admin/js/composer.js.
+3. Apply the small text changes listed in ADMIN_INDEX_CHANGES.txt.
+4. Update the public script cache version in index.html:
+
+   <script src="script.js?v=11"></script>
+
+5. Because the admin uses ES modules, hard refresh the admin page after deployment.
+   If needed, append a temporary query string to the admin URL, such as:
+   /admin/?v=2
+
+Suggested commit message
+------------------------
+feat: remove before after labels from gallery and comparison generator

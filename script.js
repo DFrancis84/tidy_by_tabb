@@ -202,8 +202,23 @@ function installGalleryV2Styles() {
     }
 
     .gallery-v2-heading {
-      padding: 2px 54px 0;
+      min-height: 72px;
+      padding: 6px 76px 4px;
+      display: grid;
+      align-content: center;
       text-align: center;
+    }
+
+    .gallery-modal.gallery-v2 .modal-close {
+      top: 14px;
+      right: 16px;
+      z-index: 20;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      line-height: 1;
     }
 
     .gallery-v2-heading h2 {
@@ -221,6 +236,7 @@ function installGalleryV2Styles() {
 
     .comparison-stage {
       position: relative;
+      margin-top: 4px;
       width: 100%;
       max-height: calc(100dvh - 190px);
       aspect-ratio: var(--gallery-aspect-ratio, 16 / 9);
@@ -296,8 +312,7 @@ function installGalleryV2Styles() {
       width: 58px;
       height: 58px;
       transform: translate(-50%, -50%);
-      display: grid;
-      place-items: center;
+      display: block;
       border-radius: 50%;
       color: white;
       background: linear-gradient(135deg, var(--pink), var(--teal));
@@ -312,9 +327,14 @@ function installGalleryV2Styles() {
     }
 
     .comparison-sponge {
-      display: block;
-      transform: translateY(-2px);
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 1px;
       line-height: 1;
+      transform: none;
       pointer-events: none;
     }
 
@@ -344,31 +364,6 @@ function installGalleryV2Styles() {
         transform: translate(calc(-50% + 8px), -50%);
       }
     }
-
-    .comparison-label {
-      position: absolute;
-      z-index: 6;
-      top: 20px;
-      width: 88px;
-      height: 38px;
-      padding: 0;
-      display: grid;
-      place-items: center;
-      border-radius: 18px;
-      color: white;
-      background: rgba(24, 33, 52, 0.88);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 8px 22px rgba(21, 45, 75, 0.18);
-      backdrop-filter: blur(10px);
-      font-size: 0.78rem;
-      font-weight: 800;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      pointer-events: none;
-    }
-
-    .comparison-label.before { left: 18px; }
-    .comparison-label.after { right: 18px; }
 
     .gallery-v2-footer {
       display: grid;
@@ -464,7 +459,15 @@ function installGalleryV2Styles() {
       }
 
       .gallery-v2-heading {
-        padding: 4px 44px 0;
+        min-height: 62px;
+        padding: 4px 62px 2px;
+      }
+
+      .gallery-modal.gallery-v2 .modal-close {
+        top: 10px;
+        right: 12px;
+        width: 40px;
+        height: 40px;
       }
 
       .gallery-v2-heading p {
@@ -488,17 +491,6 @@ function installGalleryV2Styles() {
       .gallery-modal.gallery-v2.is-portrait .comparison-stage {
         max-height: calc(100dvh - 155px);
       }
-
-      .comparison-label {
-        top: 14px;
-        width: 82px;
-        height: 34px;
-        padding: 0;
-        font-size: 0.7rem;
-      }
-
-      .comparison-label.before { left: 12px; }
-      .comparison-label.after { right: 12px; }
 
       .comparison-handle {
         width: 40px;
@@ -577,8 +569,6 @@ function installGalleryV2Markup() {
           <img id="galleryAfterImage" src="" alt="" draggable="false" />
         </div>
 
-        <span class="comparison-label before">Before</span>
-        <span class="comparison-label after">After</span>
         <span class="comparison-divider" aria-hidden="true"></span>
         <span class="comparison-handle" aria-hidden="true">
           <span class="comparison-sponge">🧽</span>
