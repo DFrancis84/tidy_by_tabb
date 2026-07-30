@@ -6,6 +6,7 @@ const ALLOWED_ACTIONS = new Set([
   "uploadimage",
 ]);
 const MAX_BODY_BYTES = 15 * 1024 * 1024;
+const MAX_CLIENT_BODY_BYTES = 64 * 1024;
 const JWT_CLOCK_SKEW_SECONDS = 60;
 const JWKS_CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -72,6 +73,18 @@ export default {
         url.pathname === "/admin/api/clients"
       ) {
         return await handleClientsListRequest(url, env, origin);
+      }
+
+      if (
+        request.method === "POST" &&
+        url.pathname === "/admin/api/clients"
+      ) {
+        return await handleClientCreateRequest(
+          request,
+          env,
+          actorEmail,
+          origin
+        );
       }
 
       const clientId = getClientIdFromPath(url.pathname);
@@ -322,6 +335,191 @@ async function handleClientDetailRequest(
       timestamp: new Date().toISOString(),
     },
     200,
+    origin
+  );
+}
+
+async function handleClientCreateRequest(
+  request,
+  env,
+  actorEmail,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const body = await readJsonObject(
+    request,
+    MAX_CLIENT_BODY_BYTES
+  );
+
+  const allowedFields = new Set([
+    "firstName",
+    "lastName",
+    "email",
+    "phone",
+    "addressLine1",
+    "addressLine2",
+    "city",
+    "state",
+    "postalCode",
+    "notes",
+  ]);
+
+  const unexpectedFields = Object.keys(body).filter(
+    (field) => !allowedFields.has(field)
+  );
+
+  if (unexpectedFields.length) {
+    throw new HttpError(
+      400,
+      `Unexpected field${unexpectedFields.length === 1 ? "" : "s"}: ${unexpectedFields.join(", ")}.`
+    );
+  }
+
+  const clientInput = {
+    firstName: requireText(body.firstName, "firstName", 100),
+    lastName: requireText(body.lastName, "lastName", 100),
+    email: normalizeOptionalEmail(body.email),
+    phone: optionalText(body.phone, "phone", 30),
+    addressLine1: optionalText(
+      body.addressLine1,
+      "addressLine1",
+      200
+    ),
+    addressLine2: optionalText(
+      body.addressLine2,
+      "addressLine2",
+      200
+    ),
+    city: optionalText(body.city, "city", 100),
+    state: optionalText(body.state, "state", 50),
+    postalCode: optionalText(
+      body.postalCode,
+      "postalCode",
+      20
+    ),
+    notes: optionalText(body.notes, "notes", 5000),
+  };
+
+  const possibleDuplicate = await env.DB.prepare(
+    `
+      SELECT
+        id,
+        first_name,
+        last_name,
+        email,
+        phone
+      FROM clients
+      WHERE deleted_at IS NULL
+        AND lower(first_name) = lower(?)
+        AND lower(last_name) = lower(?)
+        AND (
+          (? IS NOT NULL AND lower(email) = lower(?))
+          OR
+          (? IS NOT NULL AND phone = ?)
+        )
+      LIMIT 1
+    `
+  )
+    .bind(
+      clientInput.firstName,
+      clientInput.lastName,
+      clientInput.email,
+      clientInput.email,
+      clientInput.phone,
+      clientInput.phone
+    )
+    .first();
+
+  if (possibleDuplicate) {
+    throw new HttpError(
+      409,
+      `A possible duplicate client already exists with ID ${possibleDuplicate.id}.`
+    );
+  }
+
+  const clientId = `cli_${crypto.randomUUID()}`;
+
+  await env.DB.prepare(
+    `
+      INSERT INTO clients (
+        id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        address_line1,
+        address_line2,
+        city,
+        state,
+        postal_code,
+        notes,
+        created_by,
+        updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      clientId,
+      clientInput.firstName,
+      clientInput.lastName,
+      clientInput.email,
+      clientInput.phone,
+      clientInput.addressLine1,
+      clientInput.addressLine2,
+      clientInput.city,
+      clientInput.state,
+      clientInput.postalCode,
+      clientInput.notes,
+      actorEmail,
+      actorEmail
+    )
+    .run();
+
+  const client = await env.DB.prepare(
+    `
+      SELECT
+        id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        address_line1,
+        address_line2,
+        city,
+        state,
+        postal_code,
+        notes,
+        created_at,
+        updated_at,
+        created_by,
+        updated_by,
+        version
+      FROM clients
+      WHERE id = ?
+      LIMIT 1
+    `
+  )
+    .bind(clientId)
+    .first();
+
+  if (!client) {
+    throw new Error("Client was created but could not be retrieved.");
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Client created successfully.",
+      data: {
+        client,
+      },
+      metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    201,
     origin
   );
 }
@@ -618,6 +816,106 @@ function decodeBase64UrlBytes(value) {
   );
   const binary = atob(padded);
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+async function readJsonObject(request, maximumBytes) {
+  const contentLength = Number(
+    request.headers.get("Content-Length") || 0
+  );
+
+  if (
+    !Number.isFinite(contentLength) ||
+    contentLength < 0 ||
+    contentLength > maximumBytes
+  ) {
+    throw new HttpError(413, "Request body is too large.");
+  }
+
+  const bodyBytes = await request.arrayBuffer();
+
+  if (bodyBytes.byteLength > maximumBytes) {
+    throw new HttpError(413, "Request body is too large.");
+  }
+
+  let body;
+
+  try {
+    body = JSON.parse(new TextDecoder().decode(bodyBytes));
+  } catch (_error) {
+    throw new HttpError(400, "Request body must be valid JSON.");
+  }
+
+  if (!body || Array.isArray(body) || typeof body !== "object") {
+    throw new HttpError(400, "Request body must be a JSON object.");
+  }
+
+  return body;
+}
+
+function requireText(value, fieldName, maximumLength) {
+  if (typeof value !== "string") {
+    throw new HttpError(400, `${fieldName} is required.`);
+  }
+
+  const normalized = value.trim();
+
+  if (!normalized) {
+    throw new HttpError(400, `${fieldName} is required.`);
+  }
+
+  if (normalized.length > maximumLength) {
+    throw new HttpError(
+      400,
+      `${fieldName} cannot exceed ${maximumLength} characters.`
+    );
+  }
+
+  return normalized;
+}
+
+function optionalText(value, fieldName, maximumLength) {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    throw new HttpError(400, `${fieldName} must be text.`);
+  }
+
+  const normalized = value.trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized.length > maximumLength) {
+    throw new HttpError(
+      400,
+      `${fieldName} cannot exceed ${maximumLength} characters.`
+    );
+  }
+
+  return normalized;
+}
+
+function normalizeOptionalEmail(value) {
+  const email = optionalText(value, "email", 254);
+
+  if (email === null) {
+    return null;
+  }
+
+  const normalized = email.toLowerCase();
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+    throw new HttpError(400, "email must be a valid email address.");
+  }
+
+  return normalized;
 }
 
 function getClientIdFromPath(pathname) {
