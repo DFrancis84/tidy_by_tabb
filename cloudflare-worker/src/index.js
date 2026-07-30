@@ -73,6 +73,19 @@ export default {
       ) {
         return await handleClientsListRequest(url, env, origin);
       }
+
+      const clientId = getClientIdFromPath(url.pathname);
+
+      if (
+        request.method === "GET" &&
+        clientId
+      ) {
+        return await handleClientDetailRequest(
+          clientId,
+          env,
+          origin
+        );
+      }
       
       if (request.method !== "POST") {
         throw new HttpError(405, "Method is not supported for this endpoint.");
@@ -250,6 +263,62 @@ async function handleClientsListRequest(url, env, origin) {
         total,
         hasMore: offset + clients.length < total,
       },
+      timestamp: new Date().toISOString(),
+    },
+    200,
+    origin
+  );
+}
+
+async function handleClientDetailRequest(
+  clientId,
+  env,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const client = await env.DB.prepare(
+    `
+      SELECT
+        id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        address_line1,
+        address_line2,
+        city,
+        state,
+        postal_code,
+        notes,
+        created_at,
+        updated_at,
+        created_by,
+        updated_by,
+        version
+      FROM clients
+      WHERE id = ?
+        AND deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(clientId)
+    .first();
+
+  if (!client) {
+    throw new HttpError(404, "Client was not found.");
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Client retrieved successfully.",
+      data: {
+        client,
+      },
+      metadata: {},
       timestamp: new Date().toISOString(),
     },
     200,
@@ -549,6 +618,34 @@ function decodeBase64UrlBytes(value) {
   );
   const binary = atob(padded);
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+function getClientIdFromPath(pathname) {
+  const match = String(pathname || "").match(
+    /^\/admin\/api\/clients\/([^/]+)$/
+  );
+
+  if (!match) {
+    return "";
+  }
+
+  let clientId;
+
+  try {
+    clientId = decodeURIComponent(match[1]).trim();
+  } catch (_error) {
+    throw new HttpError(400, "Client ID is invalid.");
+  }
+
+  if (
+    !clientId ||
+    clientId.length > 100 ||
+    !/^[A-Za-z0-9_-]+$/.test(clientId)
+  ) {
+    throw new HttpError(400, "Client ID is invalid.");
+  }
+
+  return clientId;
 }
 
 function parseBoundedInteger(
