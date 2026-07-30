@@ -112,6 +112,19 @@ export default {
           origin
         );
       }
+
+      if (
+        request.method === "DELETE" &&
+        clientId
+      ) {
+        return await handleClientDeleteRequest(
+          request,
+          clientId,
+          env,
+          actorEmail,
+          origin
+        );
+      }
       
       if (request.method !== "POST") {
         throw new HttpError(405, "Method is not supported for this endpoint.");
@@ -815,6 +828,174 @@ async function handleClientUpdateRequest(
   );
 }
 
+async function handleClientDeleteRequest(
+  request,
+  clientId,
+  env,
+  actorEmail,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const body = await readJsonObject(
+    request,
+    MAX_CLIENT_BODY_BYTES
+  );
+
+  const allowedFields = new Set(["version"]);
+
+  const unexpectedFields = Object.keys(body).filter(
+    (field) => !allowedFields.has(field)
+  );
+
+  if (unexpectedFields.length) {
+    throw new HttpError(
+      400,
+      `Unexpected field${unexpectedFields.length === 1 ? "" : "s"}: ${unexpectedFields.join(", ")}.`
+    );
+  }
+
+  const expectedVersion = parseRequiredVersion(body.version);
+
+  const existingClient = await env.DB.prepare(
+    `
+      SELECT
+        id,
+        first_name,
+        last_name,
+        version
+      FROM clients
+      WHERE id = ?
+        AND deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(clientId)
+    .first();
+
+  if (!existingClient) {
+    throw new HttpError(404, "Client was not found.");
+  }
+
+  const activeService = await env.DB.prepare(
+    `
+      SELECT
+        id,
+        service_type,
+        status,
+        scheduled_start
+      FROM services
+      WHERE client_id = ?
+        AND deleted_at IS NULL
+        AND status IN ('scheduled', 'in_progress')
+      ORDER BY scheduled_start ASC
+      LIMIT 1
+    `
+  )
+    .bind(clientId)
+    .first();
+
+  if (activeService) {
+    throw new HttpError(
+      409,
+      `Client cannot be deleted while service ${activeService.id} is ${activeService.status}.`
+    );
+  }
+
+  const deleteResult = await env.DB.prepare(
+    `
+      UPDATE clients
+      SET
+        deleted_at = datetime('now'),
+        updated_at = datetime('now'),
+        updated_by = ?,
+        version = version + 1
+      WHERE id = ?
+        AND deleted_at IS NULL
+        AND version = ?
+        AND NOT EXISTS (
+          SELECT 1
+          FROM services
+          WHERE client_id = ?
+            AND deleted_at IS NULL
+            AND status IN ('scheduled', 'in_progress')
+        )
+    `
+  )
+    .bind(
+      actorEmail,
+      clientId,
+      expectedVersion,
+      clientId
+    )
+    .run();
+
+  if (Number(deleteResult.meta?.changes || 0) !== 1) {
+    const currentClient = await env.DB.prepare(
+      `
+        SELECT version
+        FROM clients
+        WHERE id = ?
+          AND deleted_at IS NULL
+        LIMIT 1
+      `
+    )
+      .bind(clientId)
+      .first();
+
+    if (!currentClient) {
+      throw new HttpError(404, "Client was not found.");
+    }
+
+    const currentActiveService = await env.DB.prepare(
+      `
+        SELECT id, status
+        FROM services
+        WHERE client_id = ?
+          AND deleted_at IS NULL
+          AND status IN ('scheduled', 'in_progress')
+        LIMIT 1
+      `
+    )
+      .bind(clientId)
+      .first();
+
+    if (currentActiveService) {
+      throw new HttpError(
+        409,
+        `Client cannot be deleted while service ${currentActiveService.id} is ${currentActiveService.status}.`
+      );
+    }
+
+    throw new HttpError(
+      409,
+      `Client has changed since it was loaded. Current version is ${currentClient.version}.`
+    );
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Client deleted successfully.",
+      data: {
+        client: {
+          id: clientId,
+          first_name: existingClient.first_name,
+          last_name: existingClient.last_name,
+          deleted: true,
+          version: expectedVersion + 1,
+        },
+      },
+      metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    200,
+    origin
+  );
+}
+
 async function handleGalleryRequest(
   request,
   env,
@@ -1294,7 +1475,7 @@ function escapeLikePattern(value) {
 
 function corsHeaders(origin) {
   const headers = new Headers({
-    "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "600",
     "X-Content-Type-Options": "nosniff",
