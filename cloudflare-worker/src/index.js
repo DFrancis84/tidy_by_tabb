@@ -99,6 +99,19 @@ export default {
           origin
         );
       }
+
+      if (
+        request.method === "PATCH" &&
+        clientId
+      ) {
+        return await handleClientUpdateRequest(
+          request,
+          clientId,
+          env,
+          actorEmail,
+          origin
+        );
+      }
       
       if (request.method !== "POST") {
         throw new HttpError(405, "Method is not supported for this endpoint.");
@@ -520,6 +533,284 @@ async function handleClientCreateRequest(
       timestamp: new Date().toISOString(),
     },
     201,
+    origin
+  );
+}
+
+async function handleClientUpdateRequest(
+  request,
+  clientId,
+  env,
+  actorEmail,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const body = await readJsonObject(
+    request,
+    MAX_CLIENT_BODY_BYTES
+  );
+
+  const allowedFields = new Set([
+    "version",
+    "firstName",
+    "lastName",
+    "email",
+    "phone",
+    "addressLine1",
+    "addressLine2",
+    "city",
+    "state",
+    "postalCode",
+    "notes",
+  ]);
+
+  const unexpectedFields = Object.keys(body).filter(
+    (field) => !allowedFields.has(field)
+  );
+
+  if (unexpectedFields.length) {
+    throw new HttpError(
+      400,
+      `Unexpected field${unexpectedFields.length === 1 ? "" : "s"}: ${unexpectedFields.join(", ")}.`
+    );
+  }
+
+  const expectedVersion = parseRequiredVersion(body.version);
+
+  const existingClient = await env.DB.prepare(
+    `
+      SELECT
+        id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        address_line1,
+        address_line2,
+        city,
+        state,
+        postal_code,
+        notes,
+        version
+      FROM clients
+      WHERE id = ?
+        AND deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(clientId)
+    .first();
+
+  if (!existingClient) {
+    throw new HttpError(404, "Client was not found.");
+  }
+
+  const hasEditableField = [
+    "firstName",
+    "lastName",
+    "email",
+    "phone",
+    "addressLine1",
+    "addressLine2",
+    "city",
+    "state",
+    "postalCode",
+    "notes",
+  ].some((field) =>
+    Object.prototype.hasOwnProperty.call(body, field)
+  );
+
+  if (!hasEditableField) {
+    throw new HttpError(
+      400,
+      "At least one client field must be provided."
+    );
+  }
+
+  const updatedClient = {
+    firstName: Object.prototype.hasOwnProperty.call(body, "firstName")
+      ? requireText(body.firstName, "firstName", 100)
+      : existingClient.first_name,
+
+    lastName: Object.prototype.hasOwnProperty.call(body, "lastName")
+      ? requireText(body.lastName, "lastName", 100)
+      : existingClient.last_name,
+
+    email: Object.prototype.hasOwnProperty.call(body, "email")
+      ? normalizeOptionalEmail(body.email)
+      : existingClient.email,
+
+    phone: Object.prototype.hasOwnProperty.call(body, "phone")
+      ? optionalText(body.phone, "phone", 30)
+      : existingClient.phone,
+
+    addressLine1: Object.prototype.hasOwnProperty.call(body, "addressLine1")
+      ? optionalText(body.addressLine1, "addressLine1", 200)
+      : existingClient.address_line1,
+
+    addressLine2: Object.prototype.hasOwnProperty.call(body, "addressLine2")
+      ? optionalText(body.addressLine2, "addressLine2", 200)
+      : existingClient.address_line2,
+
+    city: Object.prototype.hasOwnProperty.call(body, "city")
+      ? optionalText(body.city, "city", 100)
+      : existingClient.city,
+
+    state: Object.prototype.hasOwnProperty.call(body, "state")
+      ? optionalText(body.state, "state", 50)
+      : existingClient.state,
+
+    postalCode: Object.prototype.hasOwnProperty.call(body, "postalCode")
+      ? optionalText(body.postalCode, "postalCode", 20)
+      : existingClient.postal_code,
+
+    notes: Object.prototype.hasOwnProperty.call(body, "notes")
+      ? optionalText(body.notes, "notes", 5000)
+      : existingClient.notes,
+  };
+
+  const possibleDuplicate = await env.DB.prepare(
+    `
+      SELECT id
+      FROM clients
+      WHERE id <> ?
+        AND deleted_at IS NULL
+        AND lower(first_name) = lower(?)
+        AND lower(last_name) = lower(?)
+        AND (
+          (? IS NOT NULL AND lower(email) = lower(?))
+          OR
+          (? IS NOT NULL AND phone = ?)
+        )
+      LIMIT 1
+    `
+  )
+    .bind(
+      clientId,
+      updatedClient.firstName,
+      updatedClient.lastName,
+      updatedClient.email,
+      updatedClient.email,
+      updatedClient.phone,
+      updatedClient.phone
+    )
+    .first();
+
+  if (possibleDuplicate) {
+    throw new HttpError(
+      409,
+      `A possible duplicate client already exists with ID ${possibleDuplicate.id}.`
+    );
+  }
+
+  const updateResult = await env.DB.prepare(
+    `
+      UPDATE clients
+      SET
+        first_name = ?,
+        last_name = ?,
+        email = ?,
+        phone = ?,
+        address_line1 = ?,
+        address_line2 = ?,
+        city = ?,
+        state = ?,
+        postal_code = ?,
+        notes = ?,
+        updated_at = datetime('now'),
+        updated_by = ?,
+        version = version + 1
+      WHERE id = ?
+        AND deleted_at IS NULL
+        AND version = ?
+    `
+  )
+    .bind(
+      updatedClient.firstName,
+      updatedClient.lastName,
+      updatedClient.email,
+      updatedClient.phone,
+      updatedClient.addressLine1,
+      updatedClient.addressLine2,
+      updatedClient.city,
+      updatedClient.state,
+      updatedClient.postalCode,
+      updatedClient.notes,
+      actorEmail,
+      clientId,
+      expectedVersion
+    )
+    .run();
+
+  if (Number(updateResult.meta?.changes || 0) !== 1) {
+    const current = await env.DB.prepare(
+      `
+        SELECT version
+        FROM clients
+        WHERE id = ?
+          AND deleted_at IS NULL
+        LIMIT 1
+      `
+    )
+      .bind(clientId)
+      .first();
+
+    if (!current) {
+      throw new HttpError(404, "Client was not found.");
+    }
+
+    throw new HttpError(
+      409,
+      `Client has changed since it was loaded. Current version is ${current.version}.`
+    );
+  }
+
+  const client = await env.DB.prepare(
+    `
+      SELECT
+        id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        address_line1,
+        address_line2,
+        city,
+        state,
+        postal_code,
+        notes,
+        created_at,
+        updated_at,
+        created_by,
+        updated_by,
+        version
+      FROM clients
+      WHERE id = ?
+        AND deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(clientId)
+    .first();
+
+  if (!client) {
+    throw new Error("Client was updated but could not be retrieved.");
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Client updated successfully.",
+      data: {
+        client,
+      },
+      metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    200,
     origin
   );
 }
@@ -980,6 +1271,20 @@ function parseBoundedInteger(
   return value;
 }
 
+function parseRequiredVersion(value) {
+  if (
+    !Number.isSafeInteger(value) ||
+    value < 1
+  ) {
+    throw new HttpError(
+      400,
+      "version must be a positive whole number."
+    );
+  }
+
+  return value;
+}
+
 function escapeLikePattern(value) {
   return String(value)
     .replace(/\\/g, "\\\\")
@@ -989,7 +1294,7 @@ function escapeLikePattern(value) {
 
 function corsHeaders(origin) {
   const headers = new Headers({
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "600",
     "X-Content-Type-Options": "nosniff",
