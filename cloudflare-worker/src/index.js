@@ -70,6 +70,13 @@ export default {
 
       if (
         request.method === "GET" &&
+        url.pathname === "/admin/api/services"
+      ) {
+        return await handleServicesListRequest(url, env, origin);
+      }
+
+      if (
+        request.method === "GET" &&
         url.pathname === "/admin/api/clients"
       ) {
         return await handleClientsListRequest(url, env, origin);
@@ -87,6 +94,19 @@ export default {
         );
       }
 
+      const serviceId = getServiceIdFromPath(url.pathname);
+
+      if (
+        request.method === "GET" &&
+        serviceId
+      ) {
+        return await handleServiceDetailRequest(
+          serviceId,
+          env,
+          origin
+        );
+      }
+      
       const clientId = getClientIdFromPath(url.pathname);
 
       if (
@@ -186,6 +206,243 @@ async function handleHealthRequest(env, origin) {
         database: "connected",
         clientCount: Number(result?.client_count || 0),
         serviceCount: Number(result?.service_count || 0),
+      },
+      metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    200,
+    origin
+  );
+}
+
+async function handleServicesListRequest(
+  url,
+  env,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const clientId = optionalIdentifier(
+    url.searchParams.get("clientId"),
+    "clientId"
+  );
+
+  const status = normalizeOptionalServiceStatus(
+    url.searchParams.get("status")
+  );
+
+  const from = normalizeOptionalDateTime(
+    url.searchParams.get("from"),
+    "from"
+  );
+
+  const to = normalizeOptionalDateTime(
+    url.searchParams.get("to"),
+    "to"
+  );
+
+  if (
+    from &&
+    to &&
+    new Date(from).getTime() > new Date(to).getTime()
+  ) {
+    throw new HttpError(
+      400,
+      "from cannot be later than to."
+    );
+  }
+
+  const limit = parseBoundedInteger(
+    url.searchParams.get("limit"),
+    25,
+    1,
+    100,
+    "limit"
+  );
+
+  const offset = parseBoundedInteger(
+    url.searchParams.get("offset"),
+    0,
+    0,
+    100000,
+    "offset"
+  );
+
+  const conditions = [
+    "s.deleted_at IS NULL",
+    "c.deleted_at IS NULL",
+  ];
+
+  const parameters = [];
+
+  if (clientId) {
+    conditions.push("s.client_id = ?");
+    parameters.push(clientId);
+  }
+
+  if (status) {
+    conditions.push("s.status = ?");
+    parameters.push(status);
+  }
+
+  if (from) {
+    conditions.push("s.scheduled_start >= ?");
+    parameters.push(from);
+  }
+
+  if (to) {
+    conditions.push("s.scheduled_start <= ?");
+    parameters.push(to);
+  }
+
+  const whereClause = conditions.join("\nAND ");
+
+  const servicesParameters = [
+    ...parameters,
+    limit,
+    offset,
+  ];
+
+  const servicesStatement = env.DB.prepare(
+    `
+      SELECT
+        s.id,
+        s.client_id,
+        s.service_type,
+        s.status,
+        s.scheduled_start,
+        s.scheduled_end,
+        s.completed_at,
+        s.price_cents,
+        s.created_at,
+        s.updated_at,
+        s.version,
+        c.first_name AS client_first_name,
+        c.last_name AS client_last_name
+      FROM services AS s
+      INNER JOIN clients AS c
+        ON c.id = s.client_id
+      WHERE ${whereClause}
+      ORDER BY
+        CASE
+          WHEN s.scheduled_start IS NULL THEN 1
+          ELSE 0
+        END ASC,
+        s.scheduled_start ASC,
+        s.created_at DESC
+      LIMIT ?
+      OFFSET ?
+    `
+  ).bind(...servicesParameters);
+
+  const countStatement = env.DB.prepare(
+    `
+      SELECT COUNT(*) AS total
+      FROM services AS s
+      INNER JOIN clients AS c
+        ON c.id = s.client_id
+      WHERE ${whereClause}
+    `
+  ).bind(...parameters);
+
+  const [servicesResult, countResult] =
+    await Promise.all([
+      servicesStatement.all(),
+      countStatement.first(),
+    ]);
+
+  const services = Array.isArray(
+    servicesResult.results
+  )
+    ? servicesResult.results
+    : [];
+
+  const total = Number(countResult?.total || 0);
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Services retrieved successfully.",
+      data: {
+        services,
+      },
+      metadata: {
+        clientId,
+        status,
+        from,
+        to,
+        limit,
+        offset,
+        returned: services.length,
+        total,
+        hasMore: offset + services.length < total,
+      },
+      timestamp: new Date().toISOString(),
+    },
+    200,
+    origin
+  );
+}
+
+async function handleServiceDetailRequest(
+  serviceId,
+  env,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const service = await env.DB.prepare(
+    `
+      SELECT
+        s.id,
+        s.client_id,
+        s.service_type,
+        s.status,
+        s.scheduled_start,
+        s.scheduled_end,
+        s.completed_at,
+        s.price_cents,
+        s.notes,
+        s.created_at,
+        s.updated_at,
+        s.created_by,
+        s.updated_by,
+        s.version,
+        c.first_name AS client_first_name,
+        c.last_name AS client_last_name,
+        c.email AS client_email,
+        c.phone AS client_phone,
+        c.address_line1 AS client_address_line1,
+        c.address_line2 AS client_address_line2,
+        c.city AS client_city,
+        c.state AS client_state,
+        c.postal_code AS client_postal_code
+      FROM services AS s
+      INNER JOIN clients AS c
+        ON c.id = s.client_id
+      WHERE s.id = ?
+        AND s.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(serviceId)
+    .first();
+
+  if (!service) {
+    throw new HttpError(404, "Service was not found.");
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Service retrieved successfully.",
+      data: {
+        service,
       },
       metadata: {},
       timestamp: new Date().toISOString(),
@@ -1390,6 +1647,34 @@ function normalizeOptionalEmail(value) {
   return normalized;
 }
 
+function getServiceIdFromPath(pathname) {
+  const match = String(pathname || "").match(
+    /^\/admin\/api\/services\/([^/]+)$/
+  );
+
+  if (!match) {
+    return "";
+  }
+
+  let serviceId;
+
+  try {
+    serviceId = decodeURIComponent(match[1]).trim();
+  } catch (_error) {
+    throw new HttpError(400, "Service ID is invalid.");
+  }
+
+  if (
+    !serviceId ||
+    serviceId.length > 100 ||
+    !/^[A-Za-z0-9_-]+$/.test(serviceId)
+  ) {
+    throw new HttpError(400, "Service ID is invalid.");
+  }
+
+  return serviceId;
+}
+
 function getClientIdFromPath(pathname) {
   const match = String(pathname || "").match(
     /^\/admin\/api\/clients\/([^/]+)$/
@@ -1416,6 +1701,84 @@ function getClientIdFromPath(pathname) {
   }
 
   return clientId;
+}
+
+function optionalIdentifier(value, fieldName) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "";
+  }
+
+  const normalized = String(value).trim();
+
+  if (
+    !normalized ||
+    normalized.length > 100 ||
+    !/^[A-Za-z0-9_-]+$/.test(normalized)
+  ) {
+    throw new HttpError(
+      400,
+      `${fieldName} is invalid.`
+    );
+  }
+
+  return normalized;
+}
+
+function normalizeOptionalServiceStatus(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "";
+  }
+
+  const normalized = String(value)
+    .trim()
+    .toLowerCase();
+
+  const allowedStatuses = new Set([
+    "scheduled",
+    "in_progress",
+    "completed",
+    "cancelled",
+  ]);
+
+  if (!allowedStatuses.has(normalized)) {
+    throw new HttpError(
+      400,
+      "status must be scheduled, in_progress, completed, or cancelled."
+    );
+  }
+
+  return normalized;
+}
+
+function normalizeOptionalDateTime(value, fieldName) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "";
+  }
+
+  const normalized = String(value).trim();
+
+  const timestamp = Date.parse(normalized);
+
+  if (!Number.isFinite(timestamp)) {
+    throw new HttpError(
+      400,
+      `${fieldName} must be a valid date or date-time.`
+    );
+  }
+
+  return new Date(timestamp).toISOString();
 }
 
 function parseBoundedInteger(
