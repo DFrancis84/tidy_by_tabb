@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Tidy by Tabb CMS</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/clients.css">
 </head>
 <body>
   <div class="app-shell">
@@ -15,18 +16,26 @@
       </div>
       <nav class="sidebar-nav">
         <button class="nav-item is-active" data-view="dashboard">Dashboard</button>
+        <button class="nav-item" data-view="clients">Clients</button>
         <button class="nav-item" data-view="gallery">Gallery</button>
         <button class="nav-item" data-view="reviews">Reviews</button>
         <button class="nav-item" data-view="pipeline">Media Pipeline</button>
         <button class="nav-item" data-view="settings">Settings</button>
       </nav>
-      <div class="sidebar-footer"><span class="connection-dot"></span>Google Sheets backend</div>
+      <div class="sidebar-footer"><span class="connection-dot"></span>Cloudflare + Google backend</div>
     </aside>
 
     <main class="main-content">
       <header class="topbar">
         <div><p class="eyebrow">Tidy by Tabb</p><h1 id="pageTitle">Dashboard</h1></div>
-        <button id="addTransformation" class="button button-primary">Add transformation</button>
+        <button
+          id="primaryAction"
+          class="button button-primary"
+          type="button"
+          hidden
+        >
+          Add
+        </button>
       </header>
 
       <section class="view is-active" data-view-panel="dashboard">
@@ -43,8 +52,109 @@
           </div>
           <div id="dashboardRecent" class="recent-list"></div>
         </section>
-      </section>
+      </section>      
 
+      <section class="view" data-view-panel="clients">
+        <section class="panel">
+          <div class="panel-heading panel-heading-wrap">
+            <div>
+              <p class="eyebrow">Customer directory</p>
+              <h2>Clients</h2>
+              <p class="panel-description">
+                Manage customer details, contact information,
+                services, and future review requests.
+              </p>
+            </div>
+      
+            <div class="filters client-filters">
+              <label class="search-field">
+                <span class="sr-only">Search clients</span>
+                <input
+                  id="clientSearch"
+                  type="search"
+                  placeholder="Search name, email, or phone"
+                  autocomplete="off"
+                >
+              </label>
+      
+              <button
+                id="clientSearchClear"
+                class="button button-secondary"
+                type="button"
+                hidden
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+      
+          <div id="clientsLoading" class="loading-state">
+            Loading clients…
+          </div>
+      
+          <div id="clientsError" class="empty-state" hidden>
+            <h3>Clients could not be loaded</h3>
+            <p id="clientsErrorMessage">
+              Something prevented the client directory from loading.
+            </p>
+            <button
+              id="clientsRetry"
+              class="button button-secondary"
+              type="button"
+            >
+              Try again
+            </button>
+          </div>
+      
+          <div id="clientsEmpty" class="empty-state" hidden>
+            <h3>No clients found</h3>
+            <p>Add the first client or adjust your search.</p>
+          </div>
+      
+          <div id="clientsTableWrap" class="table-wrap" hidden>
+            <table class="data-table clients-table">
+              <thead>
+                <tr>
+                  <th scope="col">Client</th>
+                  <th scope="col">Contact</th>
+                  <th scope="col">Location</th>
+                  <th scope="col">Updated</th>
+                  <th scope="col" class="table-action-heading">
+                    <span class="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="clientsTableBody"></tbody>
+            </table>
+          </div>
+      
+          <div id="clientsPagination" class="pagination" hidden>
+            <div class="pagination-summary">
+              <span id="clientsRange">Showing 0 clients</span>
+              <span id="clientsTotal">0 total</span>
+            </div>
+            <div class="pagination-actions">
+              <button
+                id="clientsPrevious"
+                class="button button-secondary"
+                type="button"
+                disabled
+              >
+                Previous
+              </button>
+              <button
+                id="clientsNext"
+                class="button button-secondary"
+                type="button"
+                disabled
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </section>
+      </section>
+      
       <section class="view" data-view-panel="gallery">
         <section class="panel">
           <div class="panel-heading panel-heading-wrap">
