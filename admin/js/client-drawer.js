@@ -2,10 +2,12 @@ export class ClientDrawer {
   constructor({
     api,
     onSaved = () => {},
+    onDeleted = () => {},
     onError = () => {},
   }) {
     this.api = api;
     this.onSaved = onSaved;
+    this.onDeleted = onDeleted;
     this.onError = onError;
     this.isSaving = false;
     this.mode = "create";
@@ -23,6 +25,11 @@ export class ClientDrawer {
       close: document.getElementById("clientDrawerClose"),
       cancel: document.getElementById("clientDrawerCancel"),
       save: document.getElementById("saveClient"),
+      deleteButton: document.getElementById("deleteClient"),
+      deleteModal: document.getElementById("clientDeleteModal"),
+      deleteMessage: document.getElementById("clientDeleteMessage"),
+      deleteCancel: document.getElementById("clientDeleteCancel"),
+      deleteConfirm: document.getElementById("clientDeleteConfirm"),
       error: document.getElementById("clientFormError"),
       loading: document.getElementById("clientFormLoading"),
       content: document.getElementById("clientFormContent"),
@@ -225,6 +232,15 @@ export class ClientDrawer {
           </div>
 
           <div class="drawer-actions">
+            <button
+              id="deleteClient"
+              class="button button-danger"
+              type="button"
+              hidden
+            >
+              Delete client
+            </button>
+
             <div class="drawer-actions-right">
               <button id="clientDrawerCancel" class="button button-secondary" type="button">
                 Cancel
@@ -236,6 +252,51 @@ export class ClientDrawer {
           </div>
         </form>
       </aside>
+
+      <div id="clientDeleteModal" class="modal-shell" hidden>
+        <div class="modal-backdrop"></div>
+        <section
+          class="modal-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="clientDeleteTitle"
+        >
+          <div class="modal-header">
+            <div>
+              <p class="eyebrow">Permanent action</p>
+              <h2 id="clientDeleteTitle">Delete client?</h2>
+            </div>
+          </div>
+
+          <p id="clientDeleteMessage">
+            This client will be removed from the active directory.
+          </p>
+
+          <div class="delete-warning">
+            This is a soft delete. The record remains in the database
+            for audit history but disappears from normal CMS views.
+          </div>
+
+          <div class="modal-actions">
+            <button
+              id="clientDeleteCancel"
+              class="button button-secondary"
+              type="button"
+            >
+              Keep client
+            </button>
+
+            <button
+              id="clientDeleteConfirm"
+              class="button button-danger"
+              type="button"
+            >
+              Delete client
+            </button>
+          </div>
+        </section>
+      </div>
+
     `;
 
     document.body.append(...wrapper.children);
@@ -246,10 +307,36 @@ export class ClientDrawer {
     this.elements.close.addEventListener("click", () => this.close());
     this.elements.cancel.addEventListener("click", () => this.close());
     this.elements.backdrop.addEventListener("click", () => this.close());
+    this.elements.deleteButton.addEventListener(
+      "click",
+      () => this.openDeleteModal()
+    );
+    this.elements.deleteCancel.addEventListener(
+      "click",
+      () => this.closeDeleteModal()
+    );
+    this.elements.deleteModal
+      .querySelector(".modal-backdrop")
+      ?.addEventListener(
+        "click",
+        () => this.closeDeleteModal()
+      );
+    this.elements.deleteConfirm.addEventListener(
+      "click",
+      () => this.confirmDelete()
+    );
 
     document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      if (!this.elements.deleteModal.hidden) {
+        this.closeDeleteModal();
+        return;
+      }
+
       if (
-        event.key === "Escape" &&
         this.elements.drawer.classList.contains("is-open")
       ) {
         this.close();
@@ -273,6 +360,8 @@ export class ClientDrawer {
         : "Create the customer record used by services and review requests.";
     this.elements.save.textContent =
       this.mode === "edit" ? "Save changes" : "Save client";
+    this.elements.deleteButton.hidden =
+      this.mode !== "edit";
 
     this.elements.backdrop.hidden = false;
     this.elements.drawer.classList.add("is-open");
@@ -315,6 +404,7 @@ export class ClientDrawer {
     this.elements.drawer.setAttribute("aria-hidden", "true");
     this.elements.backdrop.hidden = true;
     document.body.classList.remove("drawer-open");
+    this.closeDeleteModal();
     this.hideError();
   }
 
@@ -388,6 +478,87 @@ export class ClientDrawer {
     };
   }
 
+  openDeleteModal() {
+    if (
+      this.mode !== "edit" ||
+      !this.clientId ||
+      !Number.isInteger(Number(this.version))
+    ) {
+      this.showError(
+        "The client must finish loading before it can be deleted."
+      );
+      return;
+    }
+
+    const clientName = [
+      this.elements.firstName.value.trim(),
+      this.elements.lastName.value.trim(),
+    ].filter(Boolean).join(" ");
+
+    this.elements.deleteMessage.textContent =
+      `Delete ${clientName || "this client"}? ` +
+      "They will disappear from the active client directory.";
+
+    this.elements.deleteModal.hidden = false;
+    requestAnimationFrame(() => {
+      this.elements.deleteConfirm.focus();
+    });
+  }
+
+  closeDeleteModal() {
+    if (this.isSaving) {
+      return;
+    }
+
+    this.elements.deleteModal.hidden = true;
+    this.elements.deleteConfirm.disabled = false;
+    this.elements.deleteConfirm.textContent = "Delete client";
+  }
+
+  async confirmDelete() {
+    if (this.isSaving) {
+      return;
+    }
+
+    const clientName = [
+      this.elements.firstName.value.trim(),
+      this.elements.lastName.value.trim(),
+    ].filter(Boolean).join(" ");
+
+    this.isSaving = true;
+    this.elements.deleteConfirm.disabled = true;
+    this.elements.deleteCancel.disabled = true;
+    this.elements.deleteConfirm.textContent = "Deleting…";
+    this.elements.save.disabled = true;
+    this.elements.deleteButton.disabled = true;
+
+    try {
+      await this.api.delete(
+        this.clientId,
+        Number(this.version)
+      );
+
+      this.isSaving = false;
+      this.elements.deleteCancel.disabled = false;
+      this.elements.deleteButton.disabled = false;
+      this.closeDeleteModal();
+      this.close();
+      await this.onDeleted(clientName);
+    } catch (error) {
+      this.isSaving = false;
+      this.elements.deleteConfirm.disabled = false;
+      this.elements.deleteCancel.disabled = false;
+      this.elements.deleteButton.disabled = false;
+      this.elements.save.disabled = false;
+      this.elements.deleteConfirm.textContent = "Delete client";
+      this.closeDeleteModal();
+      this.showError(
+        error.message || "The client could not be deleted."
+      );
+      this.onError(error);
+    }
+  }
+
   setLoading(isLoading) {
     this.elements.loading.hidden = !isLoading;
     this.elements.content.hidden = isLoading;
@@ -399,6 +570,7 @@ export class ClientDrawer {
     this.elements.save.disabled = isSaving;
     this.elements.cancel.disabled = isSaving;
     this.elements.close.disabled = isSaving;
+    this.elements.deleteButton.disabled = isSaving;
     this.elements.save.textContent = isSaving
       ? "Saving…"
       : this.mode === "edit"

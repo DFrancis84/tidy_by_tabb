@@ -1,11 +1,11 @@
-import { GalleryApi } from "./api.js?v=20260803-6";
-import { ClientApi } from "./client-api.js?v=20260803-6";
-import { ClientsController } from "./clients.js?v=20260803-6";
-import { ClientDrawer } from "./client-drawer.js?v=20260803-6";
-import { DeveloperPanel } from "./developer.js?v=20260803-6";
-import { GalleryDrawer } from "./drawer.js?v=20260803-6";
-import { GalleryController } from "./gallery.js?v=20260803-6";
-import { toast, switchView } from "./ui.js?v=20260803-6";
+import { GalleryApi } from "./api.js?v=20260803-7";
+import { ClientApi } from "./client-api.js?v=20260803-7";
+import { ClientsController } from "./clients.js?v=20260803-7";
+import { ClientDrawer } from "./client-drawer.js?v=20260803-7";
+import { DeveloperPanel } from "./developer.js?v=20260803-7";
+import { GalleryDrawer } from "./drawer.js?v=20260803-7";
+import { GalleryController } from "./gallery.js?v=20260803-7";
+import { toast, switchView } from "./ui.js?v=20260803-7";
 
 const developer = new DeveloperPanel();
 
@@ -50,6 +50,15 @@ clientDrawer = new ClientDrawer({
       mode === "create"
         ? `${name} was added.`
         : `${name} was updated.`,
+      "success"
+    );
+
+    clients.resetToFirstPage();
+    await clients.load();
+  },
+  onDeleted: async (clientName) => {
+    toast(
+      `${clientName || "Client"} was deleted.`,
       "success"
     );
 
