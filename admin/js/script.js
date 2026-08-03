@@ -1,4 +1,6 @@
 import { GalleryApi } from "./api.js";
+import { ClientApi } from "./client-api.js";
+import { ClientsController } from "./clients.js";
 import { DeveloperPanel } from "./developer.js";
 import { GalleryDrawer } from "./drawer.js";
 import { GalleryController } from "./gallery.js";
@@ -6,7 +8,11 @@ import { toast, switchView } from "./ui.js";
 
 const developer = new DeveloperPanel();
 
-const api = new GalleryApi((entry) => {
+const galleryApi = new GalleryApi((entry) => {
+  developer.add(entry);
+});
+
+const clientApi = new ClientApi((entry) => {
   developer.add(entry);
 });
 
@@ -16,11 +22,30 @@ const gallery = new GalleryController((record) => {
   drawer.open(record);
 });
 
+const clients = new ClientsController({
+  api: clientApi,
+  onAdd: () => {
+    toast(
+      "Client creation is coming in the next UI slice.",
+      "success"
+    );
+  },
+  onOpen: () => {
+    toast(
+      "Client detail is coming in the next UI slice.",
+      "success"
+    );
+  },
+  onError: (error) => {
+    toast(error.message, "error");
+  },
+});
+
 async function loadGallery() {
   gallery.setLoading(true);
 
   try {
-    const response = await api.list();
+    const response = await galleryApi.list();
     const records = Array.isArray(response.data)
       ? response.data
       : [];
@@ -39,7 +64,7 @@ async function loadGallery() {
 }
 
 drawer = new GalleryDrawer({
-  api,
+  api: galleryApi,
   onSaved: loadGallery,
   onDeleted: loadGallery,
 });
@@ -61,18 +86,50 @@ document
   });
 
 document
-  .getElementById("addTransformation")
+  .getElementById("primaryAction")
   ?.addEventListener("click", () => {
-    drawer.open();
+    const view =
+      document.getElementById("primaryAction")
+        ?.dataset.actionView;
+
+    if (view === "gallery") {
+      drawer.open();
+      return;
+    }
+
+    if (view === "clients") {
+      clients.onAdd();
+      return;
+    }
+
+    if (view === "reviews") {
+      toast(
+        "Review creation will be wired after Clients.",
+        "success"
+      );
+    }
   });
+
+document.addEventListener(
+  "cms:viewchange",
+  (event) => {
+    if (event.detail?.view === "clients") {
+      clients.ensureLoaded();
+    }
+  }
+);
 
 gallery.bind();
 drawer.bind();
+clients.bind();
 
 developer.bind(() =>
-  api
+  galleryApi
     .diagnostics()
-    .catch((error) => toast(error.message, "error"))
+    .catch((error) =>
+      toast(error.message, "error")
+    )
 );
 
+switchView("dashboard");
 loadGallery();
