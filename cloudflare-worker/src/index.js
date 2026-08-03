@@ -142,6 +142,19 @@ export default {
         );
       }
       
+      if (
+        request.method === "PATCH" &&
+        reviewId
+      ) {
+        return await handleReviewUpdateRequest(
+          request,
+          reviewId,
+          env,
+          actorEmail,
+          origin
+        );
+      }
+      
       const serviceId = getServiceIdFromPath(url.pathname);
 
       if (
@@ -773,6 +786,368 @@ async function handleReviewCreateRequest(
       timestamp: new Date().toISOString(),
     },
     201,
+    origin
+  );
+}
+
+async function handleReviewUpdateRequest(
+  request,
+  reviewId,
+  env,
+  actorEmail,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const body = await readJsonObject(
+    request,
+    MAX_CLIENT_BODY_BYTES
+  );
+
+  const allowedFields = new Set([
+    "version",
+    "clientId",
+    "serviceId",
+    "reviewerName",
+    "rating",
+    "reviewText",
+    "source",
+    "reviewDate",
+    "status",
+  ]);
+
+  const unexpectedFields = Object.keys(body).filter(
+    (field) => !allowedFields.has(field)
+  );
+
+  if (unexpectedFields.length) {
+    throw new HttpError(
+      400,
+      `Unexpected field${unexpectedFields.length === 1 ? "" : "s"}: ${unexpectedFields.join(", ")}.`
+    );
+  }
+
+  const expectedVersion = parseRequiredVersion(
+    body.version
+  );
+
+  const existingReview = await env.DB.prepare(
+    `
+      SELECT
+        id,
+        client_id,
+        service_id,
+        reviewer_name,
+        rating,
+        review_text,
+        source,
+        review_date,
+        status,
+        version
+      FROM reviews
+      WHERE id = ?
+        AND deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(reviewId)
+    .first();
+
+  if (!existingReview) {
+    throw new HttpError(
+      404,
+      "Review was not found."
+    );
+  }
+
+  const editableFields = [
+    "clientId",
+    "serviceId",
+    "reviewerName",
+    "rating",
+    "reviewText",
+    "source",
+    "reviewDate",
+    "status",
+  ];
+
+  const hasEditableField = editableFields.some(
+    (field) =>
+      Object.prototype.hasOwnProperty.call(
+        body,
+        field
+      )
+  );
+
+  if (!hasEditableField) {
+    throw new HttpError(
+      400,
+      "At least one review field must be provided."
+    );
+  }
+
+  const hasField = (field) =>
+    Object.prototype.hasOwnProperty.call(
+      body,
+      field
+    );
+
+  const updatedReview = {
+    clientId: hasField("clientId")
+      ? (
+          optionalIdentifier(
+            body.clientId,
+            "clientId"
+          ) || null
+        )
+      : existingReview.client_id,
+
+    serviceId: hasField("serviceId")
+      ? (
+          optionalIdentifier(
+            body.serviceId,
+            "serviceId"
+          ) || null
+        )
+      : existingReview.service_id,
+
+    reviewerName: hasField("reviewerName")
+      ? requireText(
+          body.reviewerName,
+          "reviewerName",
+          200
+        )
+      : existingReview.reviewer_name,
+
+    rating: hasField("rating")
+      ? parseRequiredRating(body.rating)
+      : existingReview.rating,
+
+    reviewText: hasField("reviewText")
+      ? requireText(
+          body.reviewText,
+          "reviewText",
+          10000
+        )
+      : existingReview.review_text,
+
+    source: hasField("source")
+      ? optionalText(
+          body.source,
+          "source",
+          100
+        )
+      : existingReview.source,
+
+    reviewDate: hasField("reviewDate")
+      ? (
+          normalizeOptionalDateTime(
+            body.reviewDate,
+            "reviewDate"
+          ) || null
+        )
+      : existingReview.review_date,
+
+    status: hasField("status")
+      ? normalizeOptionalReviewStatus(
+          body.status
+        )
+      : existingReview.status,
+  };
+
+  if (!updatedReview.status) {
+    throw new HttpError(
+      400,
+      "status is required."
+    );
+  }
+
+  if (updatedReview.clientId) {
+    const client = await env.DB.prepare(
+      `
+        SELECT id
+        FROM clients
+        WHERE id = ?
+          AND deleted_at IS NULL
+        LIMIT 1
+      `
+    )
+      .bind(updatedReview.clientId)
+      .first();
+
+    if (!client) {
+      throw new HttpError(
+        400,
+        "clientId must reference an active client."
+      );
+    }
+  }
+
+  if (updatedReview.serviceId) {
+    const service = await env.DB.prepare(
+      `
+        SELECT
+          id,
+          client_id
+        FROM services
+        WHERE id = ?
+          AND deleted_at IS NULL
+        LIMIT 1
+      `
+    )
+      .bind(updatedReview.serviceId)
+      .first();
+
+    if (!service) {
+      throw new HttpError(
+        400,
+        "serviceId must reference an active service."
+      );
+    }
+
+    if (
+      updatedReview.clientId &&
+      updatedReview.clientId !== service.client_id
+    ) {
+      throw new HttpError(
+        400,
+        "clientId must match the client associated with serviceId."
+      );
+    }
+
+    updatedReview.clientId ||= service.client_id;
+  }
+
+  const updateResult = await env.DB.prepare(
+    `
+      UPDATE reviews
+      SET
+        client_id = ?,
+        service_id = ?,
+        reviewer_name = ?,
+        rating = ?,
+        review_text = ?,
+        source = ?,
+        review_date = ?,
+        status = ?,
+        updated_at = datetime('now'),
+        updated_by = ?,
+        version = version + 1
+      WHERE id = ?
+        AND deleted_at IS NULL
+        AND version = ?
+    `
+  )
+    .bind(
+      updatedReview.clientId,
+      updatedReview.serviceId,
+      updatedReview.reviewerName,
+      updatedReview.rating,
+      updatedReview.reviewText,
+      updatedReview.source,
+      updatedReview.reviewDate,
+      updatedReview.status,
+      actorEmail,
+      reviewId,
+      expectedVersion
+    )
+    .run();
+
+  if (
+    Number(updateResult.meta?.changes || 0) !== 1
+  ) {
+    const current = await env.DB.prepare(
+      `
+        SELECT version
+        FROM reviews
+        WHERE id = ?
+          AND deleted_at IS NULL
+        LIMIT 1
+      `
+    )
+      .bind(reviewId)
+      .first();
+
+    if (!current) {
+      throw new HttpError(
+        404,
+        "Review was not found."
+      );
+    }
+
+    throw new HttpError(
+      409,
+      `Review has changed since it was loaded. Current version is ${current.version}.`
+    );
+  }
+
+  const review = await env.DB.prepare(
+    `
+      SELECT
+        r.id,
+        r.client_id,
+        r.service_id,
+        r.reviewer_name,
+        r.rating,
+        r.review_text,
+        r.source,
+        r.review_date,
+        r.status,
+        r.created_at,
+        r.updated_at,
+        r.created_by,
+        r.updated_by,
+        r.version,
+
+        c.first_name AS client_first_name,
+        c.last_name AS client_last_name,
+        c.email AS client_email,
+        c.phone AS client_phone,
+
+        s.service_type,
+        s.status AS service_status,
+        s.scheduled_start AS service_scheduled_start,
+        s.completed_at AS service_completed_at,
+        s.price_cents AS service_price_cents
+
+      FROM reviews AS r
+
+      LEFT JOIN clients AS c
+        ON c.id = r.client_id
+        AND c.deleted_at IS NULL
+
+      LEFT JOIN services AS s
+        ON s.id = r.service_id
+        AND s.deleted_at IS NULL
+
+      WHERE r.id = ?
+        AND r.deleted_at IS NULL
+
+      LIMIT 1
+    `
+  )
+    .bind(reviewId)
+    .first();
+
+  if (!review) {
+    throw new Error(
+      "Review was updated but could not be retrieved."
+    );
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Review updated successfully.",
+      data: {
+        review,
+      },
+      metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    200,
     origin
   );
 }
