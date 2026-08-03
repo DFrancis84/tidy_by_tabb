@@ -259,3 +259,17 @@
     padding: 13px;
   }
 }
+
+
+/* Client edit state */
+#clientFormContent[hidden] {
+  display: none !important;
+}
+
+.client-drawer .loading-state {
+  padding: 64px 20px;
+}
+
+.client-drawer .form-error + #clientFormLoading {
+  margin-top: 8px;
+}

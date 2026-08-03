@@ -22,25 +22,70 @@ export class ClientApi {
     url.searchParams.set("limit", String(limit));
     url.searchParams.set("offset", String(offset));
 
+    return this.request(
+      "clients.list",
+      url,
+      { method: "GET" }
+    );
+  }
+
+  async detail(clientId) {
+    const id = requireClientId(clientId);
+
+    return this.request(
+      "clients.detail",
+      `${CLIENTS_API_URL}/${encodeURIComponent(id)}`,
+      { method: "GET" }
+    );
+  }
+
+  async create(client) {
+    return this.request(
+      "clients.create",
+      CLIENTS_API_URL,
+      {
+        method: "POST",
+        body: JSON.stringify(client),
+      }
+    );
+  }
+
+  async update(clientId, client) {
+    const id = requireClientId(clientId);
+
+    return this.request(
+      "clients.update",
+      `${CLIENTS_API_URL}/${encodeURIComponent(id)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(client),
+      }
+    );
+  }
+
+  async request(action, url, options) {
     const started = performance.now();
     let response;
     let payload;
 
     try {
       response = await fetch(url, {
-        method: "GET",
         credentials: "same-origin",
+        cache: "no-store",
         headers: {
           Accept: "application/json",
+          ...(options.body
+            ? { "Content-Type": "application/json" }
+            : {}),
         },
-        cache: "no-store",
+        ...options,
       });
 
       payload = await response.json();
 
       this.onRequest({
-        action: "clients.list",
-        method: "GET",
+        action,
+        method: options.method,
         duration: Math.round(
           performance.now() - started
         ),
@@ -59,8 +104,8 @@ export class ClientApi {
       return payload;
     } catch (error) {
       this.onRequest({
-        action: "clients.list",
-        method: "GET",
+        action,
+        method: options.method,
         duration: Math.round(
           performance.now() - started
         ),
@@ -73,58 +118,14 @@ export class ClientApi {
       throw error;
     }
   }
+}
 
-  async create(client) {
-    const started = performance.now();
-    let response;
-    let payload;
+function requireClientId(value) {
+  const clientId = String(value || "").trim();
 
-    try {
-      response = await fetch(CLIENTS_API_URL, {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(client),
-      });
-
-      payload = await response.json();
-
-      this.onRequest({
-        action: "clients.create",
-        method: "POST",
-        duration: Math.round(
-          performance.now() - started
-        ),
-        status: response.status,
-        success: Boolean(payload?.success),
-        response: payload,
-      });
-
-      if (!response.ok || !payload?.success) {
-        throw new Error(
-          payload?.message ||
-            `Client creation failed (${response.status}).`
-        );
-      }
-
-      return payload;
-    } catch (error) {
-      this.onRequest({
-        action: "clients.create",
-        method: "POST",
-        duration: Math.round(
-          performance.now() - started
-        ),
-        status: response?.status || 0,
-        success: false,
-        error: error.message,
-        response: payload,
-      });
-
-      throw error;
-    }
+  if (!clientId) {
+    throw new Error("A client ID is required.");
   }
+
+  return clientId;
 }
