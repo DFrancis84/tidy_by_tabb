@@ -132,6 +132,19 @@ export default {
         );
       }  
 
+      if (
+        request.method === "DELETE" &&
+          serviceId
+        ) {
+          return await handleServiceDeleteRequest(
+            request,
+            serviceId,
+            env,
+            actorEmail,
+            origin
+        );
+      }
+
       const clientId = getClientIdFromPath(url.pathname);
 
       if (
@@ -1123,6 +1136,136 @@ async function handleServiceUpdateRequest(
       message: "Service updated successfully.",
       data: {
         service,
+      },
+      metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    200,
+    origin
+  );
+}
+
+async function handleServiceDeleteRequest(
+  request,
+  serviceId,
+  env,
+  actorEmail,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const body = await readJsonObject(
+    request,
+    MAX_CLIENT_BODY_BYTES
+  );
+
+  const allowedFields = new Set(["version"]);
+
+  const unexpectedFields = Object.keys(body).filter(
+    (field) => !allowedFields.has(field)
+  );
+
+  if (unexpectedFields.length) {
+    throw new HttpError(
+      400,
+      `Unexpected field${unexpectedFields.length === 1 ? "" : "s"}: ${unexpectedFields.join(", ")}.`
+    );
+  }
+
+  const expectedVersion = parseRequiredVersion(
+    body.version
+  );
+
+  const existingService = await env.DB.prepare(
+    `
+      SELECT
+        id,
+        client_id,
+        service_type,
+        status,
+        scheduled_start,
+        version
+      FROM services
+      WHERE id = ?
+        AND deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(serviceId)
+    .first();
+
+  if (!existingService) {
+    throw new HttpError(
+      404,
+      "Service was not found."
+    );
+  }
+
+  const deleteResult = await env.DB.prepare(
+    `
+      UPDATE services
+      SET
+        deleted_at = datetime('now'),
+        updated_at = datetime('now'),
+        updated_by = ?,
+        version = version + 1
+      WHERE id = ?
+        AND deleted_at IS NULL
+        AND version = ?
+    `
+  )
+    .bind(
+      actorEmail,
+      serviceId,
+      expectedVersion
+    )
+    .run();
+
+  if (
+    Number(deleteResult.meta?.changes || 0) !== 1
+  ) {
+    const currentService = await env.DB.prepare(
+      `
+        SELECT version
+        FROM services
+        WHERE id = ?
+          AND deleted_at IS NULL
+        LIMIT 1
+      `
+    )
+      .bind(serviceId)
+      .first();
+
+    if (!currentService) {
+      throw new HttpError(
+        404,
+        "Service was not found."
+      );
+    }
+
+    throw new HttpError(
+      409,
+      `Service has changed since it was loaded. Current version is ${currentService.version}.`
+    );
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Service deleted successfully.",
+      data: {
+        service: {
+          id: serviceId,
+          client_id: existingService.client_id,
+          service_type: existingService.service_type,
+          status: existingService.status,
+          scheduled_start:
+            existingService.scheduled_start,
+          deleted: true,
+          version: expectedVersion + 1,
+        },
       },
       metadata: {},
       timestamp: new Date().toISOString(),
