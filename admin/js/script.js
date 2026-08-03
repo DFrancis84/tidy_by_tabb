@@ -1,11 +1,11 @@
-import { GalleryApi } from "./api.js?v=20260803-4";
-import { ClientApi } from "./client-api.js?v=20260803-4";
-import { ClientsController } from "./clients.js?v=20260803-4";
-import { ClientDrawer } from "./client-drawer.js?v=20260803-5";
-import { DeveloperPanel } from "./developer.js?v=20260803-4";
-import { GalleryDrawer } from "./drawer.js?v=20260803-4";
-import { GalleryController } from "./gallery.js?v=20260803-4";
-import { toast, switchView } from "./ui.js?v=20260803-4";
+import { GalleryApi } from "./api.js?v=20260803-6";
+import { ClientApi } from "./client-api.js?v=20260803-6";
+import { ClientsController } from "./clients.js?v=20260803-6";
+import { ClientDrawer } from "./client-drawer.js?v=20260803-6";
+import { DeveloperPanel } from "./developer.js?v=20260803-6";
+import { GalleryDrawer } from "./drawer.js?v=20260803-6";
+import { GalleryController } from "./gallery.js?v=20260803-6";
+import { toast, switchView } from "./ui.js?v=20260803-6";
 
 const developer = new DeveloperPanel();
 
@@ -30,11 +30,8 @@ const clients = new ClientsController({
   onAdd: () => {
     clientDrawer.open();
   },
-  onOpen: () => {
-    toast(
-      "Client detail is coming in the next UI slice.",
-      "success"
-    );
+  onOpen: async (clientId) => {
+    await clientDrawer.open(clientId);
   },
   onError: (error) => {
     toast(error.message, "error");
@@ -43,11 +40,19 @@ const clients = new ClientsController({
 
 clientDrawer = new ClientDrawer({
   api: clientApi,
-  onCreated: async (client) => {
+  onSaved: async (client, mode) => {
+    const name = [
+      client.first_name,
+      client.last_name,
+    ].filter(Boolean).join(" ");
+
     toast(
-      `${client.first_name} ${client.last_name} was added.`,
+      mode === "create"
+        ? `${name} was added.`
+        : `${name} was updated.`,
       "success"
     );
+
     clients.resetToFirstPage();
     await clients.load();
   },

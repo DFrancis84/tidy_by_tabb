@@ -1,68 +1,41 @@
 export class ClientDrawer {
   constructor({
     api,
-    onCreated = () => {},
+    onSaved = () => {},
     onError = () => {},
   }) {
     this.api = api;
-    this.onCreated = onCreated;
+    this.onSaved = onSaved;
     this.onError = onError;
     this.isSaving = false;
+    this.mode = "create";
+    this.clientId = "";
+    this.version = null;
 
     this.injectMarkup();
 
     this.elements = {
-      backdrop: document.getElementById(
-        "clientDrawerBackdrop"
-      ),
-      drawer: document.getElementById(
-        "clientDrawer"
-      ),
-      form: document.getElementById(
-        "clientForm"
-      ),
-      close: document.getElementById(
-        "clientDrawerClose"
-      ),
-      cancel: document.getElementById(
-        "clientDrawerCancel"
-      ),
-      save: document.getElementById(
-        "saveClient"
-      ),
-      error: document.getElementById(
-        "clientFormError"
-      ),
-      firstName: document.getElementById(
-        "clientFirstName"
-      ),
-      lastName: document.getElementById(
-        "clientLastName"
-      ),
-      email: document.getElementById(
-        "clientEmail"
-      ),
-      phone: document.getElementById(
-        "clientPhone"
-      ),
-      addressLine1: document.getElementById(
-        "clientAddressLine1"
-      ),
-      addressLine2: document.getElementById(
-        "clientAddressLine2"
-      ),
-      city: document.getElementById(
-        "clientCity"
-      ),
-      state: document.getElementById(
-        "clientState"
-      ),
-      postalCode: document.getElementById(
-        "clientPostalCode"
-      ),
-      notes: document.getElementById(
-        "clientNotes"
-      ),
+      backdrop: document.getElementById("clientDrawerBackdrop"),
+      drawer: document.getElementById("clientDrawer"),
+      form: document.getElementById("clientForm"),
+      title: document.getElementById("clientDrawerTitle"),
+      subtitle: document.getElementById("clientDrawerSubtitle"),
+      close: document.getElementById("clientDrawerClose"),
+      cancel: document.getElementById("clientDrawerCancel"),
+      save: document.getElementById("saveClient"),
+      error: document.getElementById("clientFormError"),
+      loading: document.getElementById("clientFormLoading"),
+      content: document.getElementById("clientFormContent"),
+      firstName: document.getElementById("clientFirstName"),
+      lastName: document.getElementById("clientLastName"),
+      email: document.getElementById("clientEmail"),
+      phone: document.getElementById("clientPhone"),
+      addressLine1: document.getElementById("clientAddressLine1"),
+      addressLine2: document.getElementById("clientAddressLine2"),
+      city: document.getElementById("clientCity"),
+      state: document.getElementById("clientState"),
+      postalCode: document.getElementById("clientPostalCode"),
+      notes: document.getElementById("clientNotes"),
     };
   }
 
@@ -74,11 +47,7 @@ export class ClientDrawer {
     const wrapper = document.createElement("div");
 
     wrapper.innerHTML = `
-      <div
-        id="clientDrawerBackdrop"
-        class="drawer-backdrop"
-        hidden
-      ></div>
+      <div id="clientDrawerBackdrop" class="drawer-backdrop" hidden></div>
 
       <aside
         id="clientDrawer"
@@ -91,9 +60,8 @@ export class ClientDrawer {
             <div>
               <p class="eyebrow">Customer directory</p>
               <h2 id="clientDrawerTitle">Add client</h2>
-              <small class="drawer-subtitle">
-                Create the customer record used by
-                services and review requests.
+              <small id="clientDrawerSubtitle" class="drawer-subtitle">
+                Create the customer record used by services and review requests.
               </small>
             </div>
 
@@ -102,128 +70,80 @@ export class ClientDrawer {
               class="icon-button"
               type="button"
               aria-label="Close client form"
-            >
-              ×
-            </button>
+            >×</button>
           </div>
 
           <div class="drawer-body">
-            <div
-              id="clientFormError"
-              class="form-error"
-              role="alert"
-              hidden
-            ></div>
+            <div id="clientFormError" class="form-error" role="alert" hidden></div>
+            <div id="clientFormLoading" class="loading-state" hidden>
+              Loading client…
+            </div>
 
-            <section class="client-form-section">
-              <div class="client-form-heading">
-                <p class="eyebrow">Required</p>
-                <h3>Client name</h3>
-              </div>
+            <div id="clientFormContent">
+              <section class="client-form-section">
+                <div class="client-form-heading">
+                  <p class="eyebrow">Required</p>
+                  <h3>Client name</h3>
+                </div>
 
-              <div class="form-grid">
-                <label class="field">
-                  <span>First name</span>
-                  <input
-                    id="clientFirstName"
-                    name="firstName"
-                    required
-                    maxlength="100"
-                    autocomplete="given-name"
-                  >
-                </label>
+                <div class="form-grid">
+                  <label class="field">
+                    <span>First name</span>
+                    <input id="clientFirstName" required maxlength="100" autocomplete="given-name">
+                  </label>
 
-                <label class="field">
-                  <span>Last name</span>
-                  <input
-                    id="clientLastName"
-                    name="lastName"
-                    required
-                    maxlength="100"
-                    autocomplete="family-name"
-                  >
-                </label>
-              </div>
-            </section>
+                  <label class="field">
+                    <span>Last name</span>
+                    <input id="clientLastName" required maxlength="100" autocomplete="family-name">
+                  </label>
+                </div>
+              </section>
 
-            <section class="client-form-section">
-              <div class="client-form-heading">
-                <p class="eyebrow">Contact</p>
-                <h3>Email and phone</h3>
-              </div>
+              <section class="client-form-section">
+                <div class="client-form-heading">
+                  <p class="eyebrow">Contact</p>
+                  <h3>Email and phone</h3>
+                </div>
 
-              <div class="form-grid">
-                <label class="field">
-                  <span>Email</span>
-                  <input
-                    id="clientEmail"
-                    name="email"
-                    type="email"
-                    maxlength="254"
-                    autocomplete="email"
-                    placeholder="name@example.com"
-                  >
-                </label>
+                <div class="form-grid">
+                  <label class="field">
+                    <span>Email</span>
+                    <input id="clientEmail" type="email" maxlength="254" autocomplete="email" placeholder="name@example.com">
+                  </label>
 
-                <label class="field">
-                  <span>Phone</span>
-                  <input
-                    id="clientPhone"
-                    name="phone"
-                    type="tel"
-                    maxlength="30"
-                    autocomplete="tel"
-                    placeholder="555-555-5555"
-                  >
-                </label>
-              </div>
-            </section>
+                  <label class="field">
+                    <span>Phone</span>
+                    <input id="clientPhone" type="tel" maxlength="30" autocomplete="tel" placeholder="555-555-5555">
+                  </label>
+                </div>
+              </section>
 
-            <section class="client-form-section">
-              <div class="client-form-heading">
-                <p class="eyebrow">Location</p>
-                <h3>Service address</h3>
-              </div>
+              <section class="client-form-section">
+                <div class="client-form-heading">
+                  <p class="eyebrow">Location</p>
+                  <h3>Service address</h3>
+                </div>
 
-              <div class="form-grid">
-                <label class="field field-full">
-                  <span>Address line 1</span>
-                  <input
-                    id="clientAddressLine1"
-                    name="addressLine1"
-                    maxlength="200"
-                    autocomplete="address-line1"
-                  >
-                </label>
+                <div class="form-grid">
+                  <label class="field field-full">
+                    <span>Address line 1</span>
+                    <input id="clientAddressLine1" maxlength="200" autocomplete="address-line1">
+                  </label>
 
-                <label class="field field-full">
-                  <span>Address line 2</span>
-                  <input
-                    id="clientAddressLine2"
-                    name="addressLine2"
-                    maxlength="200"
-                    autocomplete="address-line2"
-                  >
-                </label>
+                  <label class="field field-full">
+                    <span>Address line 2</span>
+                    <input id="clientAddressLine2" maxlength="200" autocomplete="address-line2">
+                  </label>
 
-                <label class="field">
-                  <span>City</span>
-                  <input
-                    id="clientCity"
-                    name="city"
-                    maxlength="100"
-                    autocomplete="address-level2"
-                  >
-                </label>
+                  <label class="field">
+                    <span>City</span>
+                    <input id="clientCity" maxlength="100" autocomplete="address-level2">
+                  </label>
 
-                <label class="field">
-                  <span>State</span>
-                  <select
-                    id="clientState"
-                    name="state"
-                    autocomplete="address-level1"
-                  >
-                    <option value="">Select a state</option>
+                  <label class="field">
+                    <span>State</span>
+                    <select id="clientState" autocomplete="address-level1">
+                      <option value="">Select a state</option>
                     <option value="AL">AL · Alabama</option>
                     <option value="AK">AK · Alaska</option>
                     <option value="AZ">AZ · Arizona</option>
@@ -275,55 +195,41 @@ export class ClientDrawer {
                     <option value="WI">WI · Wisconsin</option>
                     <option value="WY">WY · Wyoming</option>
                     <option value="DC">DC · District of Columbia</option>
-                  </select>
-                </label>
+                    </select>
+                  </label>
+
+                  <label class="field">
+                    <span>Postal code</span>
+                    <input id="clientPostalCode" maxlength="20" autocomplete="postal-code">
+                  </label>
+                </div>
+              </section>
+
+              <section class="client-form-section">
+                <div class="client-form-heading">
+                  <p class="eyebrow">Internal</p>
+                  <h3>Notes</h3>
+                </div>
 
                 <label class="field">
-                  <span>Postal code</span>
-                  <input
-                    id="clientPostalCode"
-                    name="postalCode"
-                    maxlength="20"
-                    autocomplete="postal-code"
-                  >
+                  <span class="sr-only">Client notes</span>
+                  <textarea
+                    id="clientNotes"
+                    maxlength="5000"
+                    rows="5"
+                    placeholder="Access instructions, preferences, or other internal notes"
+                  ></textarea>
                 </label>
-              </div>
-            </section>
-
-            <section class="client-form-section">
-              <div class="client-form-heading">
-                <p class="eyebrow">Internal</p>
-                <h3>Notes</h3>
-              </div>
-
-              <label class="field">
-                <span class="sr-only">Client notes</span>
-                <textarea
-                  id="clientNotes"
-                  name="notes"
-                  maxlength="5000"
-                  rows="5"
-                  placeholder="Access instructions, preferences, or other internal notes"
-                ></textarea>
-              </label>
-            </section>
+              </section>
+            </div>
           </div>
 
           <div class="drawer-actions">
             <div class="drawer-actions-right">
-              <button
-                id="clientDrawerCancel"
-                class="button button-secondary"
-                type="button"
-              >
+              <button id="clientDrawerCancel" class="button button-secondary" type="button">
                 Cancel
               </button>
-
-              <button
-                id="saveClient"
-                class="button button-primary"
-                type="submit"
-              >
+              <button id="saveClient" class="button button-primary" type="submit">
                 Save client
               </button>
             </div>
@@ -336,56 +242,68 @@ export class ClientDrawer {
   }
 
   bind() {
-    this.elements.form.addEventListener(
-      "submit",
-      (event) => this.submit(event)
-    );
+    this.elements.form.addEventListener("submit", (event) => this.submit(event));
+    this.elements.close.addEventListener("click", () => this.close());
+    this.elements.cancel.addEventListener("click", () => this.close());
+    this.elements.backdrop.addEventListener("click", () => this.close());
 
-    this.elements.close.addEventListener(
-      "click",
-      () => this.close()
-    );
-
-    this.elements.cancel.addEventListener(
-      "click",
-      () => this.close()
-    );
-
-    this.elements.backdrop.addEventListener(
-      "click",
-      () => this.close()
-    );
-
-    document.addEventListener(
-      "keydown",
-      (event) => {
-        if (
-          event.key === "Escape" &&
-          this.elements.drawer.classList.contains(
-            "is-open"
-          )
-        ) {
-          this.close();
-        }
+    document.addEventListener("keydown", (event) => {
+      if (
+        event.key === "Escape" &&
+        this.elements.drawer.classList.contains("is-open")
+      ) {
+        this.close();
       }
-    );
+    });
   }
 
-  open() {
+  async open(clientId = "") {
     this.elements.form.reset();
     this.hideError();
 
+    this.clientId = String(clientId || "").trim();
+    this.mode = this.clientId ? "edit" : "create";
+    this.version = null;
+
+    this.elements.title.textContent =
+      this.mode === "edit" ? "Edit client" : "Add client";
+    this.elements.subtitle.textContent =
+      this.mode === "edit"
+        ? "Update customer details using version-safe editing."
+        : "Create the customer record used by services and review requests.";
+    this.elements.save.textContent =
+      this.mode === "edit" ? "Save changes" : "Save client";
+
     this.elements.backdrop.hidden = false;
     this.elements.drawer.classList.add("is-open");
-    this.elements.drawer.setAttribute(
-      "aria-hidden",
-      "false"
-    );
+    this.elements.drawer.setAttribute("aria-hidden", "false");
     document.body.classList.add("drawer-open");
 
-    requestAnimationFrame(() => {
-      this.elements.firstName.focus();
-    });
+    if (this.mode === "create") {
+      this.setLoading(false);
+      requestAnimationFrame(() => this.elements.firstName.focus());
+      return;
+    }
+
+    this.setLoading(true);
+
+    try {
+      const response = await this.api.detail(this.clientId);
+      const client = response?.data?.client;
+
+      if (!client) {
+        throw new Error("The client record could not be loaded.");
+      }
+
+      this.populate(client);
+      this.version = client.version;
+      this.setLoading(false);
+      requestAnimationFrame(() => this.elements.firstName.focus());
+    } catch (error) {
+      this.setLoading(false);
+      this.showError(error.message || "The client could not be loaded.");
+      this.onError(error);
+    }
   }
 
   close() {
@@ -394,86 +312,86 @@ export class ClientDrawer {
     }
 
     this.elements.drawer.classList.remove("is-open");
-    this.elements.drawer.setAttribute(
-      "aria-hidden",
-      "true"
-    );
+    this.elements.drawer.setAttribute("aria-hidden", "true");
     this.elements.backdrop.hidden = true;
     document.body.classList.remove("drawer-open");
     this.hideError();
   }
 
+  populate(client) {
+    this.elements.firstName.value = client.first_name || "";
+    this.elements.lastName.value = client.last_name || "";
+    this.elements.email.value = client.email || "";
+    this.elements.phone.value = client.phone || "";
+    this.elements.addressLine1.value = client.address_line1 || "";
+    this.elements.addressLine2.value = client.address_line2 || "";
+    this.elements.city.value = client.city || "";
+    this.elements.state.value = client.state || "";
+    this.elements.postalCode.value = client.postal_code || "";
+    this.elements.notes.value = client.notes || "";
+  }
+
   async submit(event) {
     event.preventDefault();
 
-    if (this.isSaving) {
+    if (this.isSaving || !this.elements.form.reportValidity()) {
       return;
     }
 
     this.hideError();
-
-    if (!this.elements.form.reportValidity()) {
-      return;
-    }
-
     const payload = this.buildPayload();
+
+    if (this.mode === "edit") {
+      if (!Number.isInteger(Number(this.version)) || Number(this.version) < 1) {
+        this.showError("The client version is missing. Close and reopen the record.");
+        return;
+      }
+      payload.version = Number(this.version);
+    }
 
     this.setSaving(true);
 
     try {
-      const response = await this.api.create(payload);
+      const response = this.mode === "edit"
+        ? await this.api.update(this.clientId, payload)
+        : await this.api.create(payload);
+
       const client = response?.data?.client;
 
       if (!client) {
-        throw new Error(
-          "The client was created but no client record was returned."
-        );
+        throw new Error("The client was saved but no client record was returned.");
       }
 
+      const savedMode = this.mode;
       this.setSaving(false);
       this.close();
-      await this.onCreated(client);
+      await this.onSaved(client, savedMode);
     } catch (error) {
       this.setSaving(false);
-      this.showError(
-        error.message ||
-          "The client could not be created."
-      );
+      this.showError(error.message || "The client could not be saved.");
       this.onError(error);
     }
   }
 
   buildPayload() {
-    const payload = {
+    return {
       firstName: this.elements.firstName.value.trim(),
       lastName: this.elements.lastName.value.trim(),
+      email: nullableValue(this.elements.email.value),
+      phone: nullableValue(this.elements.phone.value),
+      addressLine1: nullableValue(this.elements.addressLine1.value),
+      addressLine2: nullableValue(this.elements.addressLine2.value),
+      city: nullableValue(this.elements.city.value),
+      state: nullableValue(this.elements.state.value),
+      postalCode: nullableValue(this.elements.postalCode.value),
+      notes: nullableValue(this.elements.notes.value),
     };
+  }
 
-    const optionalFields = {
-      email: this.elements.email.value,
-      phone: this.elements.phone.value,
-      addressLine1:
-        this.elements.addressLine1.value,
-      addressLine2:
-        this.elements.addressLine2.value,
-      city: this.elements.city.value,
-      state: this.elements.state.value,
-      postalCode:
-        this.elements.postalCode.value,
-      notes: this.elements.notes.value,
-    };
-
-    Object.entries(optionalFields).forEach(
-      ([key, value]) => {
-        const trimmed = value.trim();
-
-        if (trimmed) {
-          payload[key] = trimmed;
-        }
-      }
-    );
-
-    return payload;
+  setLoading(isLoading) {
+    this.elements.loading.hidden = !isLoading;
+    this.elements.content.hidden = isLoading;
+    this.elements.save.disabled = isLoading;
   }
 
   setSaving(isSaving) {
@@ -483,7 +401,9 @@ export class ClientDrawer {
     this.elements.close.disabled = isSaving;
     this.elements.save.textContent = isSaving
       ? "Saving…"
-      : "Save client";
+      : this.mode === "edit"
+        ? "Save changes"
+        : "Save client";
   }
 
   showError(message) {
@@ -499,4 +419,9 @@ export class ClientDrawer {
     this.elements.error.hidden = true;
     this.elements.error.textContent = "";
   }
+}
+
+function nullableValue(value) {
+  const trimmed = String(value || "").trim();
+  return trimmed || null;
 }
