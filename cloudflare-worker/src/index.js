@@ -154,6 +154,19 @@ export default {
           origin
         );
       }
+
+      if (
+        request.method === "DELETE" &&
+        reviewId
+      ) {
+        return await handleReviewDeleteRequest(
+          request,
+          reviewId,
+          env,
+          actorEmail,
+          origin
+        );
+      }
       
       const serviceId = getServiceIdFromPath(url.pathname);
 
@@ -1143,6 +1156,139 @@ async function handleReviewUpdateRequest(
       message: "Review updated successfully.",
       data: {
         review,
+      },
+      metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    200,
+    origin
+  );
+}
+
+async function handleReviewDeleteRequest(
+  request,
+  reviewId,
+  env,
+  actorEmail,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const body = await readJsonObject(
+    request,
+    MAX_CLIENT_BODY_BYTES
+  );
+
+  const allowedFields = new Set([
+    "version",
+  ]);
+
+  const unexpectedFields = Object.keys(body).filter(
+    (field) => !allowedFields.has(field)
+  );
+
+  if (unexpectedFields.length) {
+    throw new HttpError(
+      400,
+      `Unexpected field${unexpectedFields.length === 1 ? "" : "s"}: ${unexpectedFields.join(", ")}.`
+    );
+  }
+
+  const expectedVersion = parseRequiredVersion(
+    body.version
+  );
+
+  const existingReview = await env.DB.prepare(
+    `
+      SELECT
+        id,
+        reviewer_name,
+        rating,
+        status,
+        version
+      FROM reviews
+      WHERE id = ?
+        AND deleted_at IS NULL
+      LIMIT 1
+    `
+  )
+    .bind(reviewId)
+    .first();
+
+  if (!existingReview) {
+    throw new HttpError(
+      404,
+      "Review was not found."
+    );
+  }
+
+  const deleteResult = await env.DB.prepare(
+    `
+      UPDATE reviews
+      SET
+        deleted_at = datetime('now'),
+        updated_at = datetime('now'),
+        updated_by = ?,
+        version = version + 1
+      WHERE id = ?
+        AND deleted_at IS NULL
+        AND version = ?
+    `
+  )
+    .bind(
+      actorEmail,
+      reviewId,
+      expectedVersion
+    )
+    .run();
+
+  if (
+    Number(deleteResult.meta?.changes || 0) !== 1
+  ) {
+    const current = await env.DB.prepare(
+      `
+        SELECT version
+        FROM reviews
+        WHERE id = ?
+          AND deleted_at IS NULL
+        LIMIT 1
+      `
+    )
+      .bind(reviewId)
+      .first();
+
+    if (!current) {
+      throw new HttpError(
+        404,
+        "Review was not found."
+      );
+    }
+
+    throw new HttpError(
+      409,
+      `Review has changed since it was loaded. Current version is ${current.version}.`
+    );
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Review deleted successfully.",
+      data: {
+        review: {
+          id: reviewId,
+          reviewer_name:
+            existingReview.reviewer_name,
+          rating:
+            existingReview.rating,
+          status:
+            existingReview.status,
+          deleted: true,
+          version:
+            expectedVersion + 1,
+        },
       },
       metadata: {},
       timestamp: new Date().toISOString(),
