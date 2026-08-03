@@ -1,10 +1,11 @@
-import { GalleryApi } from "./api.js?v=20260803-3";
-import { ClientApi } from "./client-api.js?v=20260803-3";
-import { ClientsController } from "./clients.js?v=20260803-3";
-import { DeveloperPanel } from "./developer.js?v=20260803-3";
-import { GalleryDrawer } from "./drawer.js?v=20260803-3";
-import { GalleryController } from "./gallery.js?v=20260803-3";
-import { toast, switchView } from "./ui.js?v=20260803-3";
+import { GalleryApi } from "./api.js?v=20260803-4";
+import { ClientApi } from "./client-api.js?v=20260803-4";
+import { ClientsController } from "./clients.js?v=20260803-4";
+import { ClientDrawer } from "./client-drawer.js?v=20260803-4";
+import { DeveloperPanel } from "./developer.js?v=20260803-4";
+import { GalleryDrawer } from "./drawer.js?v=20260803-4";
+import { GalleryController } from "./gallery.js?v=20260803-4";
+import { toast, switchView } from "./ui.js?v=20260803-4";
 
 const developer = new DeveloperPanel();
 
@@ -22,19 +23,33 @@ const gallery = new GalleryController((record) => {
   drawer.open(record);
 });
 
+let clientDrawer;
+
 const clients = new ClientsController({
   api: clientApi,
   onAdd: () => {
-    toast(
-      "Client creation is coming in the next UI slice.",
-      "success"
-    );
+    clientDrawer.open();
   },
   onOpen: () => {
     toast(
       "Client detail is coming in the next UI slice.",
       "success"
     );
+  },
+  onError: (error) => {
+    toast(error.message, "error");
+  },
+});
+
+clientDrawer = new ClientDrawer({
+  api: clientApi,
+  onCreated: async (client) => {
+    toast(
+      `${client.first_name} ${client.last_name} was added.`,
+      "success"
+    );
+    clients.resetToFirstPage();
+    await clients.load();
   },
   onError: (error) => {
     toast(error.message, "error");
@@ -122,6 +137,7 @@ document.addEventListener(
 gallery.bind();
 drawer.bind();
 clients.bind();
+clientDrawer.bind();
 
 developer.bind(() =>
   galleryApi
