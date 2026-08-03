@@ -67,6 +67,7 @@ export default {
       ) {
         return await handleHealthRequest(env, origin);
       }
+      
       if (
         request.method === "GET" &&
         url.pathname === "/admin/api/reviews"
@@ -77,7 +78,7 @@ export default {
           origin
         );
       }
-
+      
       if (
         request.method === "POST" &&
         url.pathname === "/admin/api/reviews"
