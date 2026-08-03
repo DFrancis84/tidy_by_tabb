@@ -1,7 +1,7 @@
 import { GalleryApi } from "./api.js?v=20260803-4";
 import { ClientApi } from "./client-api.js?v=20260803-4";
 import { ClientsController } from "./clients.js?v=20260803-4";
-import { ClientDrawer } from "./client-drawer.js?v=20260803-4";
+import { ClientDrawer } from "./client-drawer.js?v=20260803-5";
 import { DeveloperPanel } from "./developer.js?v=20260803-4";
 import { GalleryDrawer } from "./drawer.js?v=20260803-4";
 import { GalleryController } from "./gallery.js?v=20260803-4";
