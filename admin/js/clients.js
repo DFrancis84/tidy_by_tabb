@@ -146,6 +146,11 @@ export class ClientsController {
     }
   }
 
+  resetToFirstPage() {
+    this.offset = 0;
+    this.hasLoaded = false;
+  }
+
   async load() {
     if (this.isLoading) {
       return;

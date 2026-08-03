@@ -73,4 +73,58 @@ export class ClientApi {
       throw error;
     }
   }
+
+  async create(client) {
+    const started = performance.now();
+    let response;
+    let payload;
+
+    try {
+      response = await fetch(CLIENTS_API_URL, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(client),
+      });
+
+      payload = await response.json();
+
+      this.onRequest({
+        action: "clients.create",
+        method: "POST",
+        duration: Math.round(
+          performance.now() - started
+        ),
+        status: response.status,
+        success: Boolean(payload?.success),
+        response: payload,
+      });
+
+      if (!response.ok || !payload?.success) {
+        throw new Error(
+          payload?.message ||
+            `Client creation failed (${response.status}).`
+        );
+      }
+
+      return payload;
+    } catch (error) {
+      this.onRequest({
+        action: "clients.create",
+        method: "POST",
+        duration: Math.round(
+          performance.now() - started
+        ),
+        status: response?.status || 0,
+        success: false,
+        error: error.message,
+        response: payload,
+      });
+
+      throw error;
+    }
+  }
 }

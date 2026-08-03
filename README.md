@@ -1,21 +1,34 @@
-# Client UI cache fix
+# Tidy by Tabb Client Create UI
 
-Replace these four files in your repository:
+Replace/add these files exactly:
 
-- `admin/js/script.js`
-- `admin/js/ui.js`
-- `admin/js/client-api.js`
-- `admin/js/clients.js`
+- Replace `admin/js/script.js`
+- Replace `admin/js/client-api.js`
+- Replace `admin/js/clients.js`
+- Replace `admin/css/clients.css`
+- Add `admin/js/client-drawer.js`
 
-The replacement `script.js` imports every module with cache version `20260803-3`.
-No manual code editing is required.
+No `index.html` changes are required. The Client drawer injects its own markup.
 
-After replacing the files:
+The module version is `20260803-4` to avoid the stale-cache issue from the prior slice.
+
+## Commit and merge
 
 ```bash
-git add admin/js
-git commit -m "Fix client UI module loading"
+git add admin
+git commit -m "Add client creation UI"
 git push
 ```
 
-Merge the fix to `main`, wait for GitHub Pages to publish, and refresh the admin page.
+Open the PR, merge it into `main`, wait for GitHub Pages, then test live.
+
+## Live test
+
+1. Open Clients.
+2. Click Add client.
+3. Submit only first and last name.
+4. Confirm the drawer closes and the new client appears.
+5. Create another client with email, phone, address, and notes.
+6. Confirm invalid email is blocked.
+7. Confirm a possible duplicate shows the API error without closing the drawer.
+8. Confirm Add Transformation still opens the Gallery drawer.
