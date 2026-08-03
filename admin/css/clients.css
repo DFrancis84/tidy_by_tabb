@@ -273,3 +273,33 @@
 .client-drawer .form-error + #clientFormLoading {
   margin-top: 8px;
 }
+
+
+/* Client delete */
+.client-drawer .drawer-actions {
+  justify-content: space-between;
+}
+
+#clientDeleteModal .modal-card {
+  max-width: 520px;
+}
+
+#clientDeleteModal .delete-warning {
+  margin-top: 16px;
+}
+
+@media (max-width: 640px) {
+  .client-drawer .drawer-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .client-drawer .drawer-actions-right {
+    width: 100%;
+  }
+
+  .client-drawer .drawer-actions-right .button,
+  .client-drawer #deleteClient {
+    width: 100%;
+  }
+}

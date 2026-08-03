@@ -63,6 +63,19 @@ export class ClientApi {
     );
   }
 
+  async delete(clientId, version) {
+    const id = requireClientId(clientId);
+
+    return this.request(
+      "clients.delete",
+      `${CLIENTS_API_URL}/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+        body: JSON.stringify({ version }),
+      }
+    );
+  }
+
   async request(action, url, options) {
     const started = performance.now();
     let response;
