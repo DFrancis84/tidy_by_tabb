@@ -67,6 +67,16 @@ export default {
       ) {
         return await handleHealthRequest(env, origin);
       }
+      if (
+        request.method === "GET" &&
+        url.pathname === "/admin/api/reviews"
+      ) {
+        return await handleReviewsListRequest(
+          url,
+          env,
+          origin
+        );
+      }
 
       if (
         request.method === "GET" &&
@@ -106,6 +116,19 @@ export default {
         );
       }
 
+      const reviewId = getReviewIdFromPath(url.pathname);
+
+      if (
+        request.method === "GET" &&
+        reviewId
+      ) {
+        return await handleReviewDetailRequest(
+          reviewId,
+          env,
+          origin
+        );
+      }
+      
       const serviceId = getServiceIdFromPath(url.pathname);
 
       if (
@@ -229,12 +252,21 @@ async function handleHealthRequest(env, origin) {
   }
 
   const result = await env.DB.prepare(
-    `
-      SELECT
-        (SELECT COUNT(*) FROM clients WHERE deleted_at IS NULL) AS client_count,
-        (SELECT COUNT(*) FROM services WHERE deleted_at IS NULL) AS service_count
-    `
-  ).first();
+  `
+    SELECT
+      (SELECT COUNT(*)
+       FROM clients
+       WHERE deleted_at IS NULL) AS client_count,
+
+      (SELECT COUNT(*)
+       FROM services
+       WHERE deleted_at IS NULL) AS service_count,
+
+      (SELECT COUNT(*)
+       FROM reviews
+       WHERE deleted_at IS NULL) AS review_count
+  `
+).first();
 
   return jsonResponse(
     {
@@ -244,8 +276,247 @@ async function handleHealthRequest(env, origin) {
         database: "connected",
         clientCount: Number(result?.client_count || 0),
         serviceCount: Number(result?.service_count || 0),
-      },
+        reviewCount: Number(result?.review_count || 0),
+        },
       metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    200,
+    origin
+  );
+}
+
+async function handleReviewsListRequest(
+  url,
+  env,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const search = String(
+    url.searchParams.get("search") || ""
+  ).trim();
+
+  const status = normalizeOptionalReviewStatus(
+    url.searchParams.get("status")
+  );
+
+  const rating = parseOptionalRating(
+    url.searchParams.get("rating")
+  );
+
+  const clientId = optionalIdentifier(
+    url.searchParams.get("clientId"),
+    "clientId"
+  );
+
+  const serviceId = optionalIdentifier(
+    url.searchParams.get("serviceId"),
+    "serviceId"
+  );
+
+  const from = normalizeOptionalDateTime(
+    url.searchParams.get("from"),
+    "from"
+  );
+
+  const to = normalizeOptionalDateTime(
+    url.searchParams.get("to"),
+    "to"
+  );
+
+  if (
+    from &&
+    to &&
+    Date.parse(from) > Date.parse(to)
+  ) {
+    throw new HttpError(
+      400,
+      "from cannot be later than to."
+    );
+  }
+
+  const limit = parseBoundedInteger(
+    url.searchParams.get("limit"),
+    25,
+    1,
+    100,
+    "limit"
+  );
+
+  const offset = parseBoundedInteger(
+    url.searchParams.get("offset"),
+    0,
+    0,
+    100000,
+    "offset"
+  );
+
+  const conditions = [
+    "r.deleted_at IS NULL",
+  ];
+
+  const parameters = [];
+
+  if (search) {
+    const searchPattern =
+      `%${escapeLikePattern(search)}%`;
+
+    conditions.push(`
+      (
+        r.reviewer_name
+          LIKE ? ESCAPE '\\' COLLATE NOCASE
+        OR r.review_text
+          LIKE ? ESCAPE '\\' COLLATE NOCASE
+        OR r.source
+          LIKE ? ESCAPE '\\' COLLATE NOCASE
+      )
+    `);
+
+    parameters.push(
+      searchPattern,
+      searchPattern,
+      searchPattern
+    );
+  }
+
+  if (status) {
+    conditions.push("r.status = ?");
+    parameters.push(status);
+  }
+
+  if (rating !== null) {
+    conditions.push("r.rating = ?");
+    parameters.push(rating);
+  }
+
+  if (clientId) {
+    conditions.push("r.client_id = ?");
+    parameters.push(clientId);
+  }
+
+  if (serviceId) {
+    conditions.push("r.service_id = ?");
+    parameters.push(serviceId);
+  }
+
+  if (from) {
+    conditions.push(
+      "datetime(r.review_date) >= datetime(?)"
+    );
+    parameters.push(from);
+  }
+
+  if (to) {
+    conditions.push(
+      "datetime(r.review_date) <= datetime(?)"
+    );
+    parameters.push(to);
+  }
+
+  const whereClause =
+    conditions.join("\nAND ");
+
+  const reviewsStatement = env.DB.prepare(
+    `
+      SELECT
+        r.id,
+        r.client_id,
+        r.service_id,
+        r.reviewer_name,
+        r.rating,
+        r.review_text,
+        r.source,
+        r.review_date,
+        r.status,
+        r.created_at,
+        r.updated_at,
+        r.version,
+
+        c.first_name AS client_first_name,
+        c.last_name AS client_last_name,
+
+        s.service_type,
+        s.status AS service_status,
+        s.scheduled_start AS service_scheduled_start
+
+      FROM reviews AS r
+
+      LEFT JOIN clients AS c
+        ON c.id = r.client_id
+        AND c.deleted_at IS NULL
+
+      LEFT JOIN services AS s
+        ON s.id = r.service_id
+        AND s.deleted_at IS NULL
+
+      WHERE ${whereClause}
+
+      ORDER BY
+        CASE
+          WHEN r.review_date IS NULL THEN 1
+          ELSE 0
+        END ASC,
+        datetime(r.review_date) DESC,
+        r.created_at DESC
+
+      LIMIT ?
+      OFFSET ?
+    `
+  ).bind(
+    ...parameters,
+    limit,
+    offset
+  );
+
+  const countStatement = env.DB.prepare(
+    `
+      SELECT COUNT(*) AS total
+      FROM reviews AS r
+      WHERE ${whereClause}
+    `
+  ).bind(...parameters);
+
+  const [reviewsResult, countResult] =
+    await Promise.all([
+      reviewsStatement.all(),
+      countStatement.first(),
+    ]);
+
+  const reviews = Array.isArray(
+    reviewsResult.results
+  )
+    ? reviewsResult.results
+    : [];
+
+  const total = Number(
+    countResult?.total || 0
+  );
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Reviews retrieved successfully.",
+      data: {
+        reviews,
+      },
+      metadata: {
+        search,
+        status,
+        rating,
+        clientId,
+        serviceId,
+        from,
+        to,
+        limit,
+        offset,
+        returned: reviews.length,
+        total,
+        hasMore:
+          offset + reviews.length < total,
+      },
       timestamp: new Date().toISOString(),
     },
     200,
@@ -417,6 +688,85 @@ async function handleServicesListRequest(
         total,
         hasMore: offset + services.length < total,
       },
+      timestamp: new Date().toISOString(),
+    },
+    200,
+    origin
+  );
+}
+
+async function handleReviewDetailRequest(
+  reviewId,
+  env,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const review = await env.DB.prepare(
+    `
+      SELECT
+        r.id,
+        r.client_id,
+        r.service_id,
+        r.reviewer_name,
+        r.rating,
+        r.review_text,
+        r.source,
+        r.review_date,
+        r.status,
+        r.created_at,
+        r.updated_at,
+        r.created_by,
+        r.updated_by,
+        r.version,
+
+        c.first_name AS client_first_name,
+        c.last_name AS client_last_name,
+        c.email AS client_email,
+        c.phone AS client_phone,
+
+        s.service_type,
+        s.status AS service_status,
+        s.scheduled_start AS service_scheduled_start,
+        s.completed_at AS service_completed_at,
+        s.price_cents AS service_price_cents
+
+      FROM reviews AS r
+
+      LEFT JOIN clients AS c
+        ON c.id = r.client_id
+        AND c.deleted_at IS NULL
+
+      LEFT JOIN services AS s
+        ON s.id = r.service_id
+        AND s.deleted_at IS NULL
+
+      WHERE r.id = ?
+        AND r.deleted_at IS NULL
+
+      LIMIT 1
+    `
+  )
+    .bind(reviewId)
+    .first();
+
+  if (!review) {
+    throw new HttpError(
+      404,
+      "Review was not found."
+    );
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Review retrieved successfully.",
+      data: {
+        review,
+      },
+      metadata: {},
       timestamp: new Date().toISOString(),
     },
     200,
@@ -2470,6 +2820,41 @@ function normalizeOptionalEmail(value) {
   return normalized;
 }
 
+function getReviewIdFromPath(pathname) {
+  const match = String(pathname || "").match(
+    /^\/admin\/api\/reviews\/([^/]+)$/
+  );
+
+  if (!match) {
+    return "";
+  }
+
+  let reviewId;
+
+  try {
+    reviewId =
+      decodeURIComponent(match[1]).trim();
+  } catch (_error) {
+    throw new HttpError(
+      400,
+      "Review ID is invalid."
+    );
+  }
+
+  if (
+    !reviewId ||
+    reviewId.length > 100 ||
+    !/^[A-Za-z0-9_-]+$/.test(reviewId)
+  ) {
+    throw new HttpError(
+      400,
+      "Review ID is invalid."
+    );
+  }
+
+  return reviewId;
+}
+
 function getServiceIdFromPath(pathname) {
   const match = String(pathname || "").match(
     /^\/admin\/api\/services\/([^/]+)$/
@@ -2569,6 +2954,60 @@ function optionalIdentifier(value, fieldName) {
     throw new HttpError(
       400,
       `${fieldName} is invalid.`
+    );
+  }
+
+  return normalized;
+}
+
+function normalizeOptionalReviewStatus(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "";
+  }
+
+  const normalized = String(value)
+    .trim()
+    .toLowerCase();
+
+  const allowedStatuses = new Set([
+    "draft",
+    "published",
+    "hidden",
+  ]);
+
+  if (!allowedStatuses.has(normalized)) {
+    throw new HttpError(
+      400,
+      "status must be draft, published, or hidden."
+    );
+  }
+
+  return normalized;
+}
+
+function parseOptionalRating(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  const normalized = Number(value);
+
+  if (
+    !Number.isInteger(normalized) ||
+    normalized < 1 ||
+    normalized > 5
+  ) {
+    throw new HttpError(
+      400,
+      "rating must be a whole number between 1 and 5."
     );
   }
 
