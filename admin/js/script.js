@@ -1,10 +1,10 @@
-import { GalleryApi } from "./api.js";
-import { ClientApi } from "./client-api.js";
-import { ClientsController } from "./clients.js";
-import { DeveloperPanel } from "./developer.js";
-import { GalleryDrawer } from "./drawer.js";
-import { GalleryController } from "./gallery.js";
-import { toast, switchView } from "./ui.js";
+import { GalleryApi } from "./api.js?v=20260803-3";
+import { ClientApi } from "./client-api.js?v=20260803-3";
+import { ClientsController } from "./clients.js?v=20260803-3";
+import { DeveloperPanel } from "./developer.js?v=20260803-3";
+import { GalleryDrawer } from "./drawer.js?v=20260803-3";
+import { GalleryController } from "./gallery.js?v=20260803-3";
+import { toast, switchView } from "./ui.js?v=20260803-3";
 
 const developer = new DeveloperPanel();
 

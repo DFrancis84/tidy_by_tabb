@@ -177,9 +177,39 @@ export class ClientsController {
       ) {
         this.offset = Math.max(
           0,
-          this.total - PAGE_SIZE
+          Math.floor(
+            Math.max(this.total - 1, 0) /
+              PAGE_SIZE
+          ) * PAGE_SIZE
         );
-        return await this.load();
+
+        const corrected = await this.api.list({
+          search: this.search,
+          limit: PAGE_SIZE,
+          offset: this.offset,
+        });
+
+        const correctedClients = Array.isArray(
+          corrected?.data?.clients
+        )
+          ? corrected.data.clients
+          : [];
+
+        this.total = Number(
+          corrected?.metadata?.total || 0
+        );
+
+        this.render(correctedClients);
+        this.renderPagination(
+          correctedClients.length
+        );
+        this.hasLoaded = true;
+        this.showState(
+          correctedClients.length
+            ? "table"
+            : "empty"
+        );
+        return;
       }
 
       this.render(clients);

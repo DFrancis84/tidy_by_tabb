@@ -1,69 +1,21 @@
-# Tidy by Tabb Client UI List Package
+# Client UI cache fix
 
-This package contains complete replacements for:
+Replace these four files in your repository:
 
 - `admin/js/script.js`
 - `admin/js/ui.js`
-
-And new files to add:
-
 - `admin/js/client-api.js`
 - `admin/js/clients.js`
-- `admin/css/clients.css`
 
-## Small `admin/index.html` edits
+The replacement `script.js` imports every module with cache version `20260803-3`.
+No manual code editing is required.
 
-### 1. Add the stylesheet
+After replacing the files:
 
-Immediately after:
-
-```html
-<link rel="stylesheet" href="css/styles.css">
+```bash
+git add admin/js
+git commit -m "Fix client UI module loading"
+git push
 ```
 
-add:
-
-```html
-<link rel="stylesheet" href="css/clients.css">
-```
-
-### 2. Sidebar
-
-Add this button after Dashboard:
-
-```html
-<button class="nav-item" data-view="clients">Clients</button>
-```
-
-Change the footer text to:
-
-```text
-Cloudflare + Google backend
-```
-
-### 3. Top-right action button
-
-Replace the existing `addTransformation` button with:
-
-```html
-<button
-  id="primaryAction"
-  class="button button-primary"
-  type="button"
-  hidden
->
-  Add
-</button>
-```
-
-### 4. Client view
-
-Copy the contents of `CLIENTS-SECTION.html` immediately after the Dashboard section and before the Gallery section.
-
-## Result
-
-- Clients load only after the Clients tab is opened.
-- Search waits 300ms while typing.
-- Pagination uses 25 clients per page.
-- Add Client and View buttons are placeholders for the next UI branches.
-- Existing Gallery behavior remains intact.
+Merge the fix to `main`, wait for GitHub Pages to publish, and refresh the admin page.
