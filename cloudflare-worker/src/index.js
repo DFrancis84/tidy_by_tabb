@@ -67,6 +67,7 @@ export default {
       ) {
         return await handleHealthRequest(env, origin);
       }
+      
       if (
         request.method === "GET" &&
         url.pathname === "/admin/api/reviews"
@@ -77,7 +78,19 @@ export default {
           origin
         );
       }
-
+      
+      if (
+        request.method === "POST" &&
+        url.pathname === "/admin/api/reviews"
+      ) {
+        return await handleReviewCreateRequest(
+          request,
+          env,
+          actorEmail,
+          origin
+        );
+      }
+      
       if (
         request.method === "GET" &&
         url.pathname === "/admin/api/services"
@@ -520,6 +533,246 @@ async function handleReviewsListRequest(
       timestamp: new Date().toISOString(),
     },
     200,
+    origin
+  );
+}
+
+async function handleReviewCreateRequest(
+  request,
+  env,
+  actorEmail,
+  origin
+) {
+  if (!env.DB) {
+    throw new Error("D1 binding DB is unavailable.");
+  }
+
+  const body = await readJsonObject(
+    request,
+    MAX_CLIENT_BODY_BYTES
+  );
+
+  const allowedFields = new Set([
+    "clientId",
+    "serviceId",
+    "reviewerName",
+    "rating",
+    "reviewText",
+    "source",
+    "reviewDate",
+    "status",
+  ]);
+
+  const unexpectedFields = Object.keys(body).filter(
+    (field) => !allowedFields.has(field)
+  );
+
+  if (unexpectedFields.length) {
+    throw new HttpError(
+      400,
+      `Unexpected field${unexpectedFields.length === 1 ? "" : "s"}: ${unexpectedFields.join(", ")}.`
+    );
+  }
+
+  let clientId = optionalIdentifier(
+    body.clientId,
+    "clientId"
+  ) || null;
+
+  const serviceId = optionalIdentifier(
+    body.serviceId,
+    "serviceId"
+  ) || null;
+
+  const reviewerName = requireText(
+    body.reviewerName,
+    "reviewerName",
+    200
+  );
+
+  const rating = parseRequiredRating(
+    body.rating
+  );
+
+  const reviewText = requireText(
+    body.reviewText,
+    "reviewText",
+    10000
+  );
+
+  const source = optionalText(
+    body.source,
+    "source",
+    100
+  );
+
+  const reviewDate =
+    normalizeOptionalDateTime(
+      body.reviewDate,
+      "reviewDate"
+    ) || null;
+
+  const status =
+    normalizeOptionalReviewStatus(
+      body.status
+    ) || "published";
+
+  if (clientId) {
+    const client = await env.DB.prepare(
+      `
+        SELECT id
+        FROM clients
+        WHERE id = ?
+          AND deleted_at IS NULL
+        LIMIT 1
+      `
+    )
+      .bind(clientId)
+      .first();
+
+    if (!client) {
+      throw new HttpError(
+        400,
+        "clientId must reference an active client."
+      );
+    }
+  }
+
+  if (serviceId) {
+    const service = await env.DB.prepare(
+      `
+        SELECT
+          id,
+          client_id
+        FROM services
+        WHERE id = ?
+          AND deleted_at IS NULL
+        LIMIT 1
+      `
+    )
+      .bind(serviceId)
+      .first();
+
+    if (!service) {
+      throw new HttpError(
+        400,
+        "serviceId must reference an active service."
+      );
+    }
+
+    if (
+      clientId &&
+      clientId !== service.client_id
+    ) {
+      throw new HttpError(
+        400,
+        "clientId must match the client associated with serviceId."
+      );
+    }
+
+    clientId ||= service.client_id;
+  }
+
+  const reviewId =
+    `rev_${crypto.randomUUID()}`;
+
+  await env.DB.prepare(
+    `
+      INSERT INTO reviews (
+        id,
+        client_id,
+        service_id,
+        reviewer_name,
+        rating,
+        review_text,
+        source,
+        review_date,
+        status,
+        created_by,
+        updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      reviewId,
+      clientId,
+      serviceId,
+      reviewerName,
+      rating,
+      reviewText,
+      source,
+      reviewDate,
+      status,
+      actorEmail,
+      actorEmail
+    )
+    .run();
+
+  const review = await env.DB.prepare(
+    `
+      SELECT
+        r.id,
+        r.client_id,
+        r.service_id,
+        r.reviewer_name,
+        r.rating,
+        r.review_text,
+        r.source,
+        r.review_date,
+        r.status,
+        r.created_at,
+        r.updated_at,
+        r.created_by,
+        r.updated_by,
+        r.version,
+
+        c.first_name AS client_first_name,
+        c.last_name AS client_last_name,
+        c.email AS client_email,
+        c.phone AS client_phone,
+
+        s.service_type,
+        s.status AS service_status,
+        s.scheduled_start AS service_scheduled_start,
+        s.completed_at AS service_completed_at,
+        s.price_cents AS service_price_cents
+
+      FROM reviews AS r
+
+      LEFT JOIN clients AS c
+        ON c.id = r.client_id
+        AND c.deleted_at IS NULL
+
+      LEFT JOIN services AS s
+        ON s.id = r.service_id
+        AND s.deleted_at IS NULL
+
+      WHERE r.id = ?
+        AND r.deleted_at IS NULL
+
+      LIMIT 1
+    `
+  )
+    .bind(reviewId)
+    .first();
+
+  if (!review) {
+    throw new Error(
+      "Review was created but could not be retrieved."
+    );
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      message: "Review created successfully.",
+      data: {
+        review,
+      },
+      metadata: {},
+      timestamp: new Date().toISOString(),
+    },
+    201,
     origin
   );
 }
@@ -3012,6 +3265,19 @@ function parseOptionalRating(value) {
   }
 
   return normalized;
+}
+
+function parseRequiredRating(value) {
+  const rating = parseOptionalRating(value);
+
+  if (rating === null) {
+    throw new HttpError(
+      400,
+      "rating is required."
+    );
+  }
+
+  return rating;
 }
 
 function normalizeOptionalServiceStatus(value) {
