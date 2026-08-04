@@ -10,6 +10,10 @@ const VIEW_CONFIG = {
     title: "Clients",
     action: "Add client",
   },
+  services: {
+    title: "Services",
+    action: "Add service",
+  },
   gallery: {
     title: "Gallery",
     action: "Add transformation",

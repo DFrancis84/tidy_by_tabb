@@ -1,22 +1,47 @@
-# Client Delete UI Safe Package
+TIDY BY TABB SERVICES LIST UI
 
-This ZIP contains only HTML-adjacent web assets and no executable scripts.
+Branch: cms-v2-ervice-ui-list
 
-Replace these files in GitHub:
+The missing "s" in the branch name is harmless. Keep using the branch
+you already created.
 
+UPLOAD OR REPLACE THESE FILES IN GITHUB
+
+Replace:
 - admin/js/script.js
-- admin/js/client-api.js
-- admin/js/client-drawer.js
-- admin/css/clients.css
+- admin/js/ui.js
 
-Then manually update admin/index.html:
+Add:
+- admin/js/service-api.js
+- admin/js/services.js
+- admin/css/services.css
 
-1. Change the clients stylesheet reference to:
+THREE SMALL EDITS TO admin/index.html
 
-   css/clients.css?v=20260803-7
+1. Add this immediately after the Clients sidebar button:
 
-2. Change the script reference to:
+<button class="nav-item" data-view="services">Services</button>
 
-   js/script.js?v=20260803-7
+2. Copy SERVICES-SECTION.html after the complete Clients section and
+   before the Gallery section.
 
-Commit the files, merge into main, wait for GitHub Pages, then test live.
+3. In <head>, after clients.css, add:
+
+<link rel="stylesheet" href="css/services.css?v=20260804-1">
+
+At the bottom, change the script reference to:
+
+<script type="module" src="js/script.js?v=20260804-1"></script>
+
+Commit message:
+Add services list UI
+
+Merge into main, wait for GitHub Pages, then test live.
+
+TEST
+- Services appears in the sidebar.
+- Opening Services loads D1 services.
+- Status filters work.
+- Clients CRUD still works.
+- Add Transformation still works.
+- Add Service and View intentionally show placeholders for now.
