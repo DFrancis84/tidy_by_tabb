@@ -1,13 +1,14 @@
-import { GalleryApi } from "./api.js?v=20260804-1";
-import { ClientApi } from "./client-api.js?v=20260804-1";
-import { ClientsController } from "./clients.js?v=20260804-1";
-import { ServiceApi } from "./service-api.js?v=20260804-1";
-import { ServicesController } from "./services.js?v=20260804-1";
-import { ClientDrawer } from "./client-drawer.js?v=20260804-1";
-import { DeveloperPanel } from "./developer.js?v=20260804-1";
-import { GalleryDrawer } from "./drawer.js?v=20260804-1";
-import { GalleryController } from "./gallery.js?v=20260804-1";
-import { toast, switchView } from "./ui.js?v=20260804-1";
+import { GalleryApi } from "./api.js?v=20260804-2";
+import { ClientApi } from "./client-api.js?v=20260804-2";
+import { ClientsController } from "./clients.js?v=20260804-2";
+import { ServiceApi } from "./service-api.js?v=20260804-2";
+import { ServicesController } from "./services.js?v=20260804-2";
+import { ServiceDrawer } from "./service-drawer.js?v=20260804-2";
+import { ClientDrawer } from "./client-drawer.js?v=20260804-2";
+import { DeveloperPanel } from "./developer.js?v=20260804-2";
+import { GalleryDrawer } from "./drawer.js?v=20260804-2";
+import { GalleryController } from "./gallery.js?v=20260804-2";
+import { toast, switchView } from "./ui.js?v=20260804-2";
 
 const developer = new DeveloperPanel();
 
@@ -76,19 +77,41 @@ clientDrawer = new ClientDrawer({
   },
 });
 
+let serviceDrawer;
+
 const services = new ServicesController({
   api: serviceApi,
-  onAdd: () => {
-    toast(
-      "Service creation is coming in the next UI slice.",
-      "success"
-    );
+  onAdd: async () => {
+    await serviceDrawer.open();
   },
   onOpen: () => {
     toast(
       "Service detail is coming in the next UI slice.",
       "success"
     );
+  },
+  onError: (error) => {
+    toast(error.message, "error");
+  },
+});
+
+serviceDrawer = new ServiceDrawer({
+  api: serviceApi,
+  clientApi,
+  onSaved: async (service) => {
+    const clientName = [
+      service.client_first_name,
+      service.client_last_name,
+    ].filter(Boolean).join(" ");
+
+    toast(
+      `${service.service_type} was added` +
+        `${clientName ? ` for ${clientName}` : ""}.`,
+      "success"
+    );
+
+    services.resetToFirstPage();
+    await services.load();
   },
   onError: (error) => {
     toast(error.message, "error");
@@ -187,6 +210,7 @@ drawer.bind();
 clients.bind();
 clientDrawer.bind();
 services.bind();
+serviceDrawer.bind();
 
 developer.bind(() =>
   galleryApi
