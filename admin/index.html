@@ -6,6 +6,7 @@
   <title>Tidy by Tabb CMS</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/clients.css?v=20260803-7">
+  <link rel="stylesheet" href="css/services.css?v=20260804-1">
 </head>
 <body>
   <div class="app-shell">
@@ -17,6 +18,7 @@
       <nav class="sidebar-nav">
         <button class="nav-item is-active" data-view="dashboard">Dashboard</button>
         <button class="nav-item" data-view="clients">Clients</button>
+        <button class="nav-item" data-view="services">Services</button>
         <button class="nav-item" data-view="gallery">Gallery</button>
         <button class="nav-item" data-view="reviews">Reviews</button>
         <button class="nav-item" data-view="pipeline">Media Pipeline</button>
@@ -148,6 +150,90 @@
                 type="button"
                 disabled
               >
+                Next
+              </button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" data-view-panel="services">
+        <section class="panel">
+          <div class="panel-heading panel-heading-wrap">
+            <div>
+              <p class="eyebrow">Cleaning operations</p>
+              <h2>Services</h2>
+              <p class="panel-description">
+                View scheduled, active, completed, and cancelled
+                cleaning services linked to client records.
+              </p>
+            </div>
+      
+            <div class="filters service-filters">
+              <label class="search-field">
+                <span class="sr-only">Filter services by status</span>
+                <select id="serviceStatusFilter">
+                  <option value="">All statuses</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="in_progress">In progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </label>
+            </div>
+          </div>
+      
+          <div id="servicesLoading" class="loading-state">
+            Loading services...
+          </div>
+      
+          <div id="servicesError" class="empty-state" hidden>
+            <h3>Services could not be loaded</h3>
+            <p id="servicesErrorMessage">
+              Something prevented the service list from loading.
+            </p>
+            <button id="servicesRetry" class="button button-secondary" type="button">
+              Try again
+            </button>
+          </div>
+      
+          <div id="servicesEmpty" class="empty-state" hidden>
+            <h3>No services found</h3>
+            <p>
+              Services created in the CMS and migrated from
+              Cleaning_Request will appear here.
+            </p>
+          </div>
+      
+          <div id="servicesTableWrap" class="table-wrap" hidden>
+            <table class="data-table services-table">
+              <thead>
+                <tr>
+                  <th scope="col">Client</th>
+                  <th scope="col">Service</th>
+                  <th scope="col">Schedule</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Price</th>
+                  <th scope="col" class="table-action-heading">
+                    <span class="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="servicesTableBody"></tbody>
+            </table>
+          </div>
+      
+          <div id="servicesPagination" class="pagination" hidden>
+            <div class="pagination-summary">
+              <span id="servicesRange">Showing 0 services</span>
+              <span id="servicesTotal">0 total</span>
+            </div>
+      
+            <div class="pagination-actions">
+              <button id="servicesPrevious" class="button button-secondary" type="button" disabled>
+                Previous
+              </button>
+              <button id="servicesNext" class="button button-secondary" type="button" disabled>
                 Next
               </button>
             </div>
@@ -384,9 +470,6 @@
   </aside>
 
   <div id="toastRegion" class="toast-region"></div>
-  <script
-    type="module"
-    src="js/script.js?v=20260803-7"
-  ></script>
+  <script type="module" src="js/script.js?v=20260804-1"></script>
 </body>
 </html>
