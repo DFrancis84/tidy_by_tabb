@@ -29,6 +29,21 @@ export class ServiceApi {
     );
   }
 
+  async create(service) {
+    return this.request(
+      "services.create",
+      SERVICES_API_URL,
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(service),
+      }
+    );
+  }
+
   async request(action, url, options) {
     const started = performance.now();
     let response;
@@ -38,10 +53,11 @@ export class ServiceApi {
       response = await fetch(url, {
         credentials: "same-origin",
         cache: "no-store",
+        ...options,
         headers: {
           Accept: "application/json",
+          ...(options.headers || {}),
         },
-        ...options,
       });
 
       payload = await response.json();
