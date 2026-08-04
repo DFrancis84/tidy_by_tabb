@@ -1,47 +1,51 @@
-TIDY BY TABB SERVICES LIST UI
+TIDY BY TABB SERVICE CREATE UI
 
-Branch: cms-v2-ervice-ui-list
-
-The missing "s" in the branch name is harmless. Keep using the branch
-you already created.
+Branch:
+cms-v2-service-ui-create
 
 UPLOAD OR REPLACE THESE FILES IN GITHUB
 
 Replace:
 - admin/js/script.js
-- admin/js/ui.js
-
-Add:
 - admin/js/service-api.js
 - admin/js/services.js
 - admin/css/services.css
 
-THREE SMALL EDITS TO admin/index.html
+Add:
+- admin/js/service-drawer.js
 
-1. Add this immediately after the Clients sidebar button:
+admin/js/ui.js is included as a full replacement so all package files
+remain aligned, although its behavior is unchanged.
 
-<button class="nav-item" data-view="services">Services</button>
+IMPORTANT VERSION UPDATE IN admin/index.html
 
-2. Copy SERVICES-SECTION.html after the complete Clients section and
-   before the Gallery section.
+Change the Services stylesheet reference to:
 
-3. In <head>, after clients.css, add:
+<link rel="stylesheet" href="css/services.css?v=20260804-2">
 
-<link rel="stylesheet" href="css/services.css?v=20260804-1">
+Change the bottom module script reference to:
 
-At the bottom, change the script reference to:
+<script type="module" src="js/script.js?v=20260804-2"></script>
 
-<script type="module" src="js/script.js?v=20260804-1"></script>
+No PowerShell, shell, or executable helper files are included.
 
-Commit message:
-Add services list UI
+COMMIT MESSAGE
 
-Merge into main, wait for GitHub Pages, then test live.
+Add service create UI
 
-TEST
-- Services appears in the sidebar.
-- Opening Services loads D1 services.
-- Status filters work.
-- Clients CRUD still works.
-- Add Transformation still works.
-- Add Service and View intentionally show placeholders for now.
+MERGE AND LIVE TEST
+
+1. Merge the branch into main.
+2. Wait for GitHub Pages.
+3. Open CMS > Services.
+4. Click Add service.
+5. Select an active client.
+6. Enter a service type, schedule, status, price, and notes.
+7. Save.
+8. Confirm the drawer closes and the service appears in the list.
+9. Confirm the row shows client, type, schedule, status, and price.
+10. Confirm the row exists in D1.
+11. Confirm the appropriate status filter shows the record.
+12. Confirm attempting the exact same service again returns the
+    duplicate-protection error rather than creating a second row.
+13. Regression test Clients and Add Transformation.
