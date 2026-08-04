@@ -98,3 +98,73 @@
     width: 100%;
   }
 }
+
+
+/* Service create drawer */
+.service-drawer {
+  z-index: 50;
+}
+
+.service-drawer + .drawer-backdrop,
+#serviceDrawerBackdrop {
+  z-index: 49;
+}
+
+.service-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.service-field-wide {
+  grid-column: 1 / -1;
+}
+
+.service-client-loading {
+  margin-bottom: 18px;
+}
+
+.money-input {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.money-input > span {
+  padding-left: 14px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.money-input input {
+  border: 0;
+  border-radius: 0;
+  min-width: 0;
+}
+
+.money-input:focus-within {
+  outline: 2px solid rgba(29, 111, 132, .2);
+  border-color: var(--brand-teal);
+}
+
+@media (max-width: 640px) {
+  .service-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .service-field-wide {
+    grid-column: auto;
+  }
+
+  .service-drawer .drawer-actions-right {
+    width: 100%;
+  }
+
+  .service-drawer .drawer-actions-right .button {
+    flex: 1;
+  }
+}
