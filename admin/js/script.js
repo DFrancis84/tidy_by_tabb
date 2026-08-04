@@ -1,11 +1,13 @@
-import { GalleryApi } from "./api.js?v=20260803-7";
-import { ClientApi } from "./client-api.js?v=20260803-7";
-import { ClientsController } from "./clients.js?v=20260803-7";
-import { ClientDrawer } from "./client-drawer.js?v=20260803-7";
-import { DeveloperPanel } from "./developer.js?v=20260803-7";
-import { GalleryDrawer } from "./drawer.js?v=20260803-7";
-import { GalleryController } from "./gallery.js?v=20260803-7";
-import { toast, switchView } from "./ui.js?v=20260803-7";
+import { GalleryApi } from "./api.js?v=20260804-1";
+import { ClientApi } from "./client-api.js?v=20260804-1";
+import { ClientsController } from "./clients.js?v=20260804-1";
+import { ServiceApi } from "./service-api.js?v=20260804-1";
+import { ServicesController } from "./services.js?v=20260804-1";
+import { ClientDrawer } from "./client-drawer.js?v=20260804-1";
+import { DeveloperPanel } from "./developer.js?v=20260804-1";
+import { GalleryDrawer } from "./drawer.js?v=20260804-1";
+import { GalleryController } from "./gallery.js?v=20260804-1";
+import { toast, switchView } from "./ui.js?v=20260804-1";
 
 const developer = new DeveloperPanel();
 
@@ -14,6 +16,10 @@ const galleryApi = new GalleryApi((entry) => {
 });
 
 const clientApi = new ClientApi((entry) => {
+  developer.add(entry);
+});
+
+const serviceApi = new ServiceApi((entry) => {
   developer.add(entry);
 });
 
@@ -64,6 +70,25 @@ clientDrawer = new ClientDrawer({
 
     clients.resetToFirstPage();
     await clients.load();
+  },
+  onError: (error) => {
+    toast(error.message, "error");
+  },
+});
+
+const services = new ServicesController({
+  api: serviceApi,
+  onAdd: () => {
+    toast(
+      "Service creation is coming in the next UI slice.",
+      "success"
+    );
+  },
+  onOpen: () => {
+    toast(
+      "Service detail is coming in the next UI slice.",
+      "success"
+    );
   },
   onError: (error) => {
     toast(error.message, "error");
@@ -131,6 +156,11 @@ document
       return;
     }
 
+    if (view === "services") {
+      services.onAdd();
+      return;
+    }
+
     if (view === "reviews") {
       toast(
         "Review creation will be wired after Clients.",
@@ -145,6 +175,10 @@ document.addEventListener(
     if (event.detail?.view === "clients") {
       clients.ensureLoaded();
     }
+
+    if (event.detail?.view === "services") {
+      services.ensureLoaded();
+    }
   }
 );
 
@@ -152,6 +186,7 @@ gallery.bind();
 drawer.bind();
 clients.bind();
 clientDrawer.bind();
+services.bind();
 
 developer.bind(() =>
   galleryApi
