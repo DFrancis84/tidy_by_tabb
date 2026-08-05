@@ -1403,7 +1403,8 @@ async function handleServicesListRequest(
         s.updated_at,
         s.version,
         c.first_name AS client_first_name,
-        c.last_name AS client_last_name
+        c.last_name AS client_last_name,
+        c.phone AS client_phone,
       FROM services AS s
       INNER JOIN clients AS c
         ON c.id = s.client_id
