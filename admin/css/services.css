@@ -315,3 +315,41 @@ body.drawer-open .developer-toggle {
   font-size: .82rem;
   line-height: 1.25;
 }
+
+
+/* Service soft-delete controls */
+.service-drawer-actions {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.service-delete-button {
+  margin-right: auto;
+}
+
+.button-danger {
+  border: 1px solid #d94a5f;
+  background: #fff5f6;
+  color: #a82439;
+}
+
+.button-danger:hover,
+.button-danger:focus-visible {
+  background: #ffe7eb;
+  border-color: #bd3047;
+}
+
+@media (max-width: 640px) {
+  .service-drawer-actions {
+    align-items: stretch;
+  }
+
+  .service-delete-button {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .service-drawer-actions .drawer-actions-right {
+    width: 100%;
+  }
+}

@@ -67,6 +67,21 @@ export class ServiceApi {
     );
   }
 
+  async delete(serviceId, version) {
+    return this.request(
+      "services.delete",
+      `${SERVICES_API_URL}/${encodeURIComponent(serviceId)}`,
+      {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ version }),
+      }
+    );
+  }
+
   async request(action, url, options) {
     const started = performance.now();
     let response;
