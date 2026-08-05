@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
+  <title>Cleaning Requests | Tidy by Tabb CMS</title>
+  <link
+    rel="stylesheet"
+    href="css/requests-inbox.css?v=20260805-1"
+  >
+</head>
+<body>
+  <header class="requests-topbar">
+    <div>
+      <p class="eyebrow">Tidy by Tabb CMS</p>
+      <h1>Cleaning Requests</h1>
+    </div>
+    <a class="button secondary" href="index.html">
+      Back to CMS
+    </a>
+  </header>
+
+  <main class="requests-shell">
+    <section class="panel">
+      <div class="toolbar">
+        <label>
+          <span>Search</span>
+          <input
+            id="requestSearch"
+            type="search"
+            placeholder="Name, email, phone, city, or service"
+          >
+        </label>
+
+        <label>
+          <span>Status</span>
+          <select id="requestStatusFilter">
+            <option value="">Active requests</option>
+            <option value="new">New</option>
+            <option value="needs_review">Needs review</option>
+            <option value="contacted">Contacted</option>
+            <option value="accepted">Accepted</option>
+            <option value="declined">Declined</option>
+            <option value="converted">Converted</option>
+            <option value="archived">Archived</option>
+          </select>
+        </label>
+
+        <button
+          id="requestRefresh"
+          class="button secondary"
+          type="button"
+        >
+          Refresh
+        </button>
+      </div>
+
+      <div id="requestLoading" class="state">
+        Loading requests…
+      </div>
+
+      <div id="requestError" class="state error" hidden>
+        <strong>Requests could not be loaded.</strong>
+        <span id="requestErrorMessage"></span>
+      </div>
+
+      <div id="requestEmpty" class="state" hidden>
+        No cleaning requests match this view.
+      </div>
+
+      <div id="requestTableWrap" class="table-wrap" hidden>
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Service</th>
+              <th>Preferred date</th>
+              <th>Contact</th>
+              <th>Status</th>
+              <th>Received</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="requestTableBody"></tbody>
+        </table>
+      </div>
+
+      <footer id="requestPagination" class="pagination" hidden>
+        <span id="requestRange"></span>
+        <div>
+          <button
+            id="requestPrevious"
+            class="button secondary"
+            type="button"
+          >
+            Previous
+          </button>
+          <button
+            id="requestNext"
+            class="button secondary"
+            type="button"
+          >
+            Next
+          </button>
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <div id="drawerBackdrop" class="backdrop" hidden></div>
+
+  <aside
+    id="requestDrawer"
+    class="drawer"
+    aria-hidden="true"
+  >
+    <header class="drawer-header">
+      <div>
+        <p class="eyebrow">Request review</p>
+        <h2 id="drawerTitle">Cleaning request</h2>
+      </div>
+      <button
+        id="drawerClose"
+        class="icon-button"
+        type="button"
+        aria-label="Close request"
+      >
+        ×
+      </button>
+    </header>
+
+    <div id="drawerBody" class="drawer-body"></div>
+  </aside>
+
+  <script src="js/requests-api.js?v=20260805-1"></script>
+  <script src="js/requests-inbox.js?v=20260805-1"></script>
+</body>
+</html>
