@@ -1,91 +1,71 @@
-TIDY BY TABB CLEANING REQUEST FORM DETAILS
+TIDY BY TABB CLEANING REQUESTS ADMIN INBOX
 
 Branch:
-cms-v2-cleaning-request-form-details
+cms-v2-cleaning-requests-admin-inbox
 
-FILES TO UPLOAD OR REPLACE
+ADD THESE FILES
 
-ADD:
-cloudflare-worker/migrations/0005_add_cleaning_request_contact_details.sql
+admin/requests.html
+admin/css/requests-inbox.css
+admin/js/requests-api.js
+admin/js/requests-inbox.js
+cloudflare-worker/src/cleaning-requests-admin.js
 
-REPLACE:
-cloudflare-worker/src/public-cleaning-requests.js
-index.html
-public-request-form.js
+UPDATE
 
-OPTIONAL:
-VERIFY.sql
+cloudflare-worker/src/index.js
+admin/index.html
 
-DEPLOYMENT ORDER
+Use INDEX-CHANGES.txt for the exact small edits.
 
-1. Upload all files to the branch.
-2. Merge the pull request into main.
-3. Apply migration 0005 to the production D1 database.
-4. Deploy the updated Cloudflare Worker.
-5. Wait for GitHub Pages to publish.
-6. Test the live public form.
+FEATURES
 
-IMPORTANT
+- Searchable and filterable request inbox
+- Statuses: new, needs review, contacted, accepted, declined,
+  converted, and archived
+- Full customer, property, request, referral, contact preference,
+  mailing-list, and add-on details
+- Internal notes
+- Client-match conflict warning
+- Optimistic concurrency for request updates
+- Accept & Create Service workflow
+- Converted-service link information
+- Mobile-friendly standalone Requests workspace
 
-The Worker code expects the new D1 columns. Apply migration 0005 before
-testing the updated form against the deployed Worker.
+DEPLOYMENT
 
-CHANGES
+1. Upload all new files and apply INDEX-CHANGES.txt.
+2. Merge the branch.
+3. In the Cloudflare Worker editor, add:
+   cleaning-requests-admin.js
+4. Update index.js with the import and route handler.
+5. Deploy the Worker.
+6. Wait for GitHub Pages.
+7. Open:
+   https://www.tidybytabb.com/admin/requests.html
 
-- Confirmation remains visible for 3 seconds, then the request modal
-  closes automatically.
-- State is now a controlled U.S. state dropdown.
-- States are submitted and stored as two-letter codes such as KY.
-- Preferred contact method is required:
-  email, phone, or either.
-- Choosing email requires an email address.
-- Choosing phone requires a phone number.
-- Adds optional referral source.
-- Adds explicit, unchecked mailing-list consent.
-- Mailing-list consent is stored as 0 or 1.
-- Existing cleaning requests remain valid and default to no mailing-list
-  consent.
-- public-request-form.js asset version is bumped to 20260805-2.
+No new D1 migration is required for this slice.
 
-D1 MIGRATION
+TESTS
 
-From the Cloudflare dashboard, run the contents of:
+1. Open the inbox and verify requests load.
+2. Filter by New and Needs review.
+3. Search by customer email or phone.
+4. Open a request and save internal notes.
+5. Mark a request Contacted.
+6. Open a request with a linked client.
+7. Enter a scheduled start and click Accept & Create Service.
+8. Confirm the request becomes Converted.
+9. Confirm the new service appears in Services.
+10. Open two browser tabs on the same request, save in one, then save
+    in the stale tab. Expect a 409 refresh message.
 
-cloudflare-worker/migrations/0005_add_cleaning_request_contact_details.sql
+IMPORTANT CONVERSION RULE
 
-VERIFY
-
-Run VERIFY.sql after migration and after submitting a live request.
-
-LIVE TESTS
-
-1. Submit with preferred contact = email but no email.
-   Expect a validation error.
-
-2. Submit with preferred contact = phone but no phone.
-   Expect a validation error.
-
-3. Submit with preferred contact = either and one valid contact method.
-   Expect success.
-
-4. Confirm state stores KY, not Kentucky.
-
-5. Enter a referral source and confirm it is stored.
-
-6. Leave mailing-list consent unchecked.
-   Expect mailing_list_opt_in = 0.
-
-7. Submit another request with consent checked.
-   Expect mailing_list_opt_in = 1.
-
-8. Confirm the success message appears and the modal closes after
-   approximately 3 seconds.
-
-CLOUDFLARE WORKER FILE
-
-Because public-cleaning-requests.js is a Worker module, replace that
-module in the Cloudflare web editor and deploy after the migration.
+Requests with a client match conflict cannot be converted until a
+future conflict-resolution workflow links the correct client. The inbox
+shows the conflict clearly and disables conversion.
 
 COMMIT MESSAGE
 
-Add cleaning request contact details
+Add cleaning requests admin inbox
