@@ -1,57 +1,91 @@
-TIDY BY TABB PUBLIC CLEANING REQUEST FORM
+TIDY BY TABB CLEANING REQUEST FORM DETAILS
 
 Branch:
-cms-v2-cleaning-requests-public-form
+cms-v2-cleaning-request-form-details
 
-UPLOAD OR REPLACE:
-- index.html
-- public-request-form.js
+FILES TO UPLOAD OR REPLACE
 
-WHAT CHANGES
+ADD:
+cloudflare-worker/migrations/0005_add_cleaning_request_contact_details.sql
 
-- Replaces the embedded Google Form with a native Tidy by Tabb form
-- Submits to POST /api/cleaning-requests
-- Captures contact information, address, service details, add-ons,
-  property details, access notes, pets, and customer notes
-- Requires at least an email address or phone number
-- Shows an in-form success or error message
-- Prevents duplicate clicks while submitting
-- Keeps the appointment language clear: this is a request, not a
-  confirmed booking
-- Preserves the existing homepage layout and controls
-- Adds responsive styling directly to index.html
-- Loads public-request-form.js with version 20260805-1
+REPLACE:
+cloudflare-worker/src/public-cleaning-requests.js
+index.html
+public-request-form.js
 
-LIVE TEST
+OPTIONAL:
+VERIFY.sql
 
-1. Open Submit Cleaning Request.
-2. Confirm the Google Form iframe is gone.
-3. Submit without email and phone.
-4. Confirm the form asks for at least one contact method.
-5. Submit a new customer.
-6. Confirm the success message appears.
-7. Confirm a new client and cleaning_requests row exist in D1.
-8. Submit the same customer again.
-9. Confirm no duplicate client is created.
-10. Test on a phone-sized screen.
+DEPLOYMENT ORDER
 
-D1 CHECK
+1. Upload all files to the branch.
+2. Merge the pull request into main.
+3. Apply migration 0005 to the production D1 database.
+4. Deploy the updated Cloudflare Worker.
+5. Wait for GitHub Pages to publish.
+6. Test the live public form.
 
-SELECT
-  id,
-  client_id,
-  submitted_first_name,
-  submitted_last_name,
-  submitted_email,
-  submitted_phone,
-  requested_service_type,
-  requested_add_ons,
-  match_status,
-  status,
-  created_at
-FROM cleaning_requests
-ORDER BY created_at DESC;
+IMPORTANT
+
+The Worker code expects the new D1 columns. Apply migration 0005 before
+testing the updated form against the deployed Worker.
+
+CHANGES
+
+- Confirmation remains visible for 3 seconds, then the request modal
+  closes automatically.
+- State is now a controlled U.S. state dropdown.
+- States are submitted and stored as two-letter codes such as KY.
+- Preferred contact method is required:
+  email, phone, or either.
+- Choosing email requires an email address.
+- Choosing phone requires a phone number.
+- Adds optional referral source.
+- Adds explicit, unchecked mailing-list consent.
+- Mailing-list consent is stored as 0 or 1.
+- Existing cleaning requests remain valid and default to no mailing-list
+  consent.
+- public-request-form.js asset version is bumped to 20260805-2.
+
+D1 MIGRATION
+
+From the Cloudflare dashboard, run the contents of:
+
+cloudflare-worker/migrations/0005_add_cleaning_request_contact_details.sql
+
+VERIFY
+
+Run VERIFY.sql after migration and after submitting a live request.
+
+LIVE TESTS
+
+1. Submit with preferred contact = email but no email.
+   Expect a validation error.
+
+2. Submit with preferred contact = phone but no phone.
+   Expect a validation error.
+
+3. Submit with preferred contact = either and one valid contact method.
+   Expect success.
+
+4. Confirm state stores KY, not Kentucky.
+
+5. Enter a referral source and confirm it is stored.
+
+6. Leave mailing-list consent unchecked.
+   Expect mailing_list_opt_in = 0.
+
+7. Submit another request with consent checked.
+   Expect mailing_list_opt_in = 1.
+
+8. Confirm the success message appears and the modal closes after
+   approximately 3 seconds.
+
+CLOUDFLARE WORKER FILE
+
+Because public-cleaning-requests.js is a Worker module, replace that
+module in the Cloudflare web editor and deploy after the migration.
 
 COMMIT MESSAGE
 
-Connect public cleaning request form
+Add cleaning request contact details
