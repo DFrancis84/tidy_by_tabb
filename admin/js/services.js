@@ -146,6 +146,15 @@ export class ServicesController {
           )}</small>
         </div>
       </td>
+      <td data-label="Phone">
+        ${
+          service.client_phone
+            ? `<a class="service-phone-link" href="tel:${escapeHtml(
+                normalizePhoneHref(service.client_phone)
+              )}">${escapeHtml(service.client_phone)}</a>`
+            : '<span class="service-phone-empty">Not provided</span>'
+        }
+      </td>
       <td data-label="Service">
         <strong>${escapeHtml(service.service_type || "Unspecified service")}</strong>
       </td>
@@ -254,6 +263,11 @@ function formatPrice(value) {
     style: "currency",
     currency: "USD",
   }).format(cents / 100);
+}
+
+function normalizePhoneHref(value) {
+  return String(value || "")
+    .replace(/[^\d+]/g, "");
 }
 
 function escapeHtml(value) {
