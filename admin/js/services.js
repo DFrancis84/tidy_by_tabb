@@ -139,10 +139,7 @@ export class ServicesController {
         <div class="service-client">
           <strong>${escapeHtml(clientName || "Unknown client")}</strong>
           <small>${escapeHtml(
-            service.client_email ||
-            service.client_phone ||
-            service.client_id ||
-            ""
+            service.client_id || ""
           )}</small>
         </div>
       </td>
