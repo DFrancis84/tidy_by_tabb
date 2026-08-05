@@ -103,6 +103,7 @@ export async function handlePublicCleaningRequest(
           submitted_last_name,
           submitted_email,
           submitted_phone,
+          preferred_contact_method,
           normalized_email,
           normalized_phone,
           submitted_address_line1,
@@ -122,13 +123,15 @@ export async function handlePublicCleaningRequest(
           pets,
           entry_instructions,
           customer_notes,
+          referred_by,
+          mailing_list_opt_in,
           match_status,
           status,
           created_by,
           updated_by
         ) VALUES (
           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
       `
     ).bind(
@@ -138,6 +141,7 @@ export async function handlePublicCleaningRequest(
       input.lastName,
       input.email,
       input.phone,
+      input.preferredContactMethod,
       input.normalizedEmail,
       input.normalizedPhone,
       input.addressLine1,
@@ -157,6 +161,8 @@ export async function handlePublicCleaningRequest(
       input.pets,
       input.entryInstructions,
       input.notes,
+      input.referredBy,
+      input.mailingListOptIn ? 1 : 0,
       matchStatus,
       requestStatus,
       PUBLIC_ACTOR,
@@ -194,6 +200,7 @@ function validateAllowedFields(body, HttpError) {
     "lastName",
     "email",
     "phone",
+    "preferredContactMethod",
     "addressLine1",
     "addressLine2",
     "city",
@@ -211,6 +218,8 @@ function validateAllowedFields(body, HttpError) {
     "pets",
     "entryInstructions",
     "notes",
+    "referredBy",
+    "mailingListOptIn",
   ]);
 
   const unexpected = Object.keys(body).filter(
@@ -259,12 +268,20 @@ function parseRequestInput(body, HttpError) {
   }
 
   const addOns = parseAddOns(body.addOns, HttpError);
+  const preferredContactMethod =
+    normalizePreferredContactMethod(
+      body.preferredContactMethod,
+      email,
+      phone,
+      HttpError
+    );
 
   return {
     firstName,
     lastName,
     email,
     phone,
+    preferredContactMethod,
     normalizedEmail: email,
     normalizedPhone: normalizePhone(phone),
     addressLine1: optionalText(
@@ -285,10 +302,8 @@ function parseRequestInput(body, HttpError) {
       100,
       HttpError
     ),
-    state: optionalText(
+    state: normalizeOptionalState(
       body.state,
-      "state",
-      50,
       HttpError
     ),
     postalCode: optionalText(
@@ -364,6 +379,17 @@ function parseRequestInput(body, HttpError) {
       body.notes,
       "notes",
       5000,
+      HttpError
+    ),
+    referredBy: optionalText(
+      body.referredBy,
+      "referredBy",
+      250,
+      HttpError
+    ),
+    mailingListOptIn: parseBoolean(
+      body.mailingListOptIn,
+      "mailingListOptIn",
       HttpError
     ),
   };
@@ -643,6 +669,95 @@ function normalizeOptionalEmail(value, HttpError) {
     throw new HttpError(
       400,
       "email must be a valid email address."
+    );
+  }
+
+  return normalized;
+}
+
+
+function normalizePreferredContactMethod(
+  value,
+  email,
+  phone,
+  HttpError
+) {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  const allowed = new Set([
+    "email",
+    "phone",
+    "either",
+  ]);
+
+  if (!allowed.has(normalized)) {
+    throw new HttpError(
+      400,
+      "preferredContactMethod must be email, phone, or either."
+    );
+  }
+
+  if (normalized === "email" && !email) {
+    throw new HttpError(
+      400,
+      "An email address is required when email is the preferred contact method."
+    );
+  }
+
+  if (normalized === "phone" && !phone) {
+    throw new HttpError(
+      400,
+      "A phone number is required when phone is the preferred contact method."
+    );
+  }
+
+  return normalized;
+}
+
+function parseBoolean(value, fieldName, HttpError) {
+  if (value === undefined || value === null) {
+    return false;
+  }
+
+  if (typeof value !== "boolean") {
+    throw new HttpError(
+      400,
+      `${fieldName} must be true or false.`
+    );
+  }
+
+  return value;
+}
+
+function normalizeOptionalState(value, HttpError) {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  const normalized = String(value)
+    .trim()
+    .toUpperCase();
+
+  const allowedStates = new Set([
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE",
+    "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA",
+    "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN",
+    "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM",
+    "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI",
+    "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA",
+    "WV", "WI", "WY",
+  ]);
+
+  if (!allowedStates.has(normalized)) {
+    throw new HttpError(
+      400,
+      "state must be a valid two-letter U.S. state code."
     );
   }
 
