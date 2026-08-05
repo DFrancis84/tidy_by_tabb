@@ -44,18 +44,18 @@
   ],
   "addOns": [
     {
-      "id": "inside-oven",
-      "name": "Inside Oven",
+      "id": "oven-cleaning",
+      "name": "Oven Cleaning",
       "active": true
     },
     {
-      "id": "inside-refrigerator",
-      "name": "Inside Refrigerator",
+      "id": "interior-fridge-freezer",
+      "name": "Interior Fridge & Freezer",
       "active": true
     },
     {
-      "id": "interior-windows",
-      "name": "Interior Windows",
+      "id": "inside-cabinets-drawers",
+      "name": "Inside Cabinets/Drawers",
       "active": true
     },
     {
@@ -69,13 +69,38 @@
       "active": true
     },
     {
-      "id": "dishes",
-      "name": "Dishes",
+      "id": "organizing",
+      "name": "Organizing",
       "active": true
     },
     {
-      "id": "cabinet-interiors",
-      "name": "Inside Cabinets",
+      "id": "wall-washing",
+      "name": "Wall Washing",
+      "active": true
+    },
+    {
+      "id": "blinds-cleaning",
+      "name": "Blinds Cleaning",
+      "active": true
+    },
+    {
+      "id": "grout-scrubbing",
+      "name": "Grout Scrubbing",
+      "active": true
+    },
+    {
+      "id": "window-cleaning",
+      "name": "Window Cleaning",
+      "active": true
+    },
+    {
+      "id": "dishwasher-interior",
+      "name": "Dishwasher Interior",
+      "active": true
+    },
+    {
+      "id": "dishes",
+      "name": "Dishes",
       "active": true
     }
   ]
