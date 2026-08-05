@@ -1,51 +1,42 @@
-TIDY BY TABB SERVICE CREATE UI
+TIDY BY TABB SERVICE ADD-ONS ONLY
 
-Branch:
-cms-v2-service-ui-create
+This package removes automatic price calculation.
 
-UPLOAD OR REPLACE THESE FILES IN GITHUB
+KEPT:
+- Manual price entry
+- Service type dropdown
+- Multiple add-on selection
+- Developer button overlap fix
+- Scheduled end removed
 
-Replace:
+UPLOAD OR REPLACE:
 - admin/js/script.js
+- admin/js/service-drawer.js
 - admin/js/service-api.js
 - admin/js/services.js
+- admin/js/ui.js
 - admin/css/services.css
 
-Add:
-- admin/js/service-drawer.js
+ADD:
+- admin/config/service-options.json
 
-admin/js/ui.js is included as a full replacement so all package files
-remain aligned, although its behavior is unchanged.
+DELETE IF PRESENT:
+- admin/config/service-pricing.json
 
-IMPORTANT VERSION UPDATE IN admin/index.html
+UPDATE admin/index.html:
 
-Change the Services stylesheet reference to:
+<link rel="stylesheet" href="css/services.css?v=20260804-4">
 
-<link rel="stylesheet" href="css/services.css?v=20260804-2">
+<script type="module" src="js/script.js?v=20260804-4"></script>
 
-Change the bottom module script reference to:
+COMMIT MESSAGE:
+Keep manual pricing and service add-ons
 
-<script type="module" src="js/script.js?v=20260804-2"></script>
-
-No PowerShell, shell, or executable helper files are included.
-
-COMMIT MESSAGE
-
-Add service create UI
-
-MERGE AND LIVE TEST
-
-1. Merge the branch into main.
-2. Wait for GitHub Pages.
-3. Open CMS > Services.
-4. Click Add service.
-5. Select an active client.
-6. Enter a service type, schedule, status, price, and notes.
-7. Save.
-8. Confirm the drawer closes and the service appears in the list.
-9. Confirm the row shows client, type, schedule, status, and price.
-10. Confirm the row exists in D1.
-11. Confirm the appropriate status filter shows the record.
-12. Confirm attempting the exact same service again returns the
-    duplicate-protection error rather than creating a second row.
-13. Regression test Clients and Add Transformation.
+LIVE TEST:
+1. Open Add service.
+2. Confirm Developer hides.
+3. Confirm Scheduled end is gone.
+4. Confirm Service type dropdown loads.
+5. Confirm multiple add-ons can be selected.
+6. Confirm price is manual only.
+7. Save and confirm add-ons are stored in notes under [Add-ons].
