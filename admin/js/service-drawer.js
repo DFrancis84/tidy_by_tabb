@@ -1,4 +1,6 @@
 const CLIENT_PAGE_SIZE = 100;
+const SERVICE_CONFIG_URL =
+  "./config/service-options.json?v=20260804-4";
 
 export class ServiceDrawer {
   constructor({
@@ -13,55 +15,31 @@ export class ServiceDrawer {
     this.onError = onError;
     this.isSaving = false;
     this.clients = [];
+    this.options = {
+      currency: "USD",
+      serviceTypes: [],
+      addOns: [],
+    };
 
     this.injectMarkup();
 
     this.elements = {
-      backdrop: document.getElementById(
-        "serviceDrawerBackdrop"
-      ),
-      drawer: document.getElementById(
-        "serviceDrawer"
-      ),
-      form: document.getElementById(
-        "serviceForm"
-      ),
-      close: document.getElementById(
-        "serviceDrawerClose"
-      ),
-      cancel: document.getElementById(
-        "serviceCancel"
-      ),
-      save: document.getElementById(
-        "saveService"
-      ),
-      loading: document.getElementById(
-        "serviceClientLoading"
-      ),
-      error: document.getElementById(
-        "serviceFormError"
-      ),
-      client: document.getElementById(
-        "serviceClientId"
-      ),
-      type: document.getElementById(
-        "serviceType"
-      ),
-      status: document.getElementById(
-        "serviceStatus"
-      ),
-      start: document.getElementById(
-        "serviceScheduledStart"
-      ),
-      end: document.getElementById(
-        "serviceScheduledEnd"
-      ),
-      price: document.getElementById(
-        "servicePrice"
-      ),
-      notes: document.getElementById(
-        "serviceNotes"
-      ),
+      backdrop: document.getElementById("serviceDrawerBackdrop"),
+      drawer: document.getElementById("serviceDrawer"),
+      form: document.getElementById("serviceForm"),
+      close: document.getElementById("serviceDrawerClose"),
+      cancel: document.getElementById("serviceCancel"),
+      save: document.getElementById("saveService"),
+      loading: document.getElementById("serviceClientLoading"),
+      error: document.getElementById("serviceFormError"),
+      client: document.getElementById("serviceClientId"),
+      type: document.getElementById("serviceType"),
+      status: document.getElementById("serviceStatus"),
+      start: document.getElementById("serviceScheduledStart"),
+      price: document.getElementById("servicePrice"),
+      notes: document.getElementById("serviceNotes"),
+      addOnList: document.getElementById("serviceAddOnList"),
+      addOnSummary: document.getElementById("serviceAddOnSummary"),
     };
   }
 
@@ -73,11 +51,7 @@ export class ServiceDrawer {
     document.body.insertAdjacentHTML(
       "beforeend",
       `
-        <div
-          id="serviceDrawerBackdrop"
-          class="drawer-backdrop"
-          hidden
-        ></div>
+        <div id="serviceDrawerBackdrop" class="drawer-backdrop" hidden></div>
 
         <aside
           id="serviceDrawer"
@@ -89,9 +63,7 @@ export class ServiceDrawer {
             <div class="drawer-header">
               <div>
                 <p class="eyebrow">Cleaning operations</p>
-                <h2 id="serviceDrawerTitle">
-                  Add service
-                </h2>
+                <h2 id="serviceDrawerTitle">Add service</h2>
                 <small class="drawer-subtitle">
                   Schedule a cleaning service for an active client.
                 </small>
@@ -102,9 +74,7 @@ export class ServiceDrawer {
                 class="icon-button"
                 type="button"
                 aria-label="Close service editor"
-              >
-                ×
-              </button>
+              >×</button>
             </div>
 
             <div class="drawer-body">
@@ -126,56 +96,42 @@ export class ServiceDrawer {
               <div class="service-form-grid">
                 <label class="field service-field-wide">
                   <span>Client</span>
-                  <select
-                    id="serviceClientId"
-                    required
-                  >
-                    <option value="">
-                      Select a client
-                    </option>
+                  <select id="serviceClientId" required>
+                    <option value="">Select a client</option>
                   </select>
-                  <small>
-                    Only active clients are available.
-                  </small>
+                  <small>Only active clients are available.</small>
                 </label>
 
                 <label class="field service-field-wide">
                   <span>Service type</span>
-                  <input
-                    id="serviceType"
-                    list="serviceTypeOptions"
-                    maxlength="120"
-                    placeholder="Example: Standard Cleaning"
-                    autocomplete="off"
-                    required
-                  >
-                  <datalist id="serviceTypeOptions">
-                    <option value="Standard Cleaning"></option>
-                    <option value="Deep Cleaning"></option>
-                    <option value="Move-In Cleaning"></option>
-                    <option value="Move-Out Cleaning"></option>
-                    <option value="Office Cleaning"></option>
-                    <option value="Recurring Cleaning"></option>
-                    <option value="Post-Construction Cleaning"></option>
-                    <option value="Organization Service"></option>
-                  </datalist>
+                  <select id="serviceType" required>
+                    <option value="">Select a service</option>
+                  </select>
                 </label>
+
+                <div class="field service-field-wide">
+                  <span>Add-ons</span>
+                  <details class="addon-picker">
+                    <summary id="serviceAddOnSummary">
+                      Select add-ons
+                    </summary>
+                    <div
+                      id="serviceAddOnList"
+                      class="addon-options"
+                    ></div>
+                  </details>
+                  <small>
+                    Choose any extras requested for this visit.
+                  </small>
+                </div>
 
                 <label class="field">
                   <span>Status</span>
                   <select id="serviceStatus" required>
-                    <option value="scheduled">
-                      Scheduled
-                    </option>
-                    <option value="in_progress">
-                      In progress
-                    </option>
-                    <option value="completed">
-                      Completed
-                    </option>
-                    <option value="cancelled">
-                      Cancelled
-                    </option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
                   </select>
                 </label>
 
@@ -190,25 +146,20 @@ export class ServiceDrawer {
                       min="0"
                       max="1000000"
                       step="0.01"
-                      placeholder="0.00"
+                      placeholder="Enter price"
                     >
                   </div>
+                  <small>
+                    Enter the quoted price for this specific job.
+                  </small>
                 </label>
 
-                <label class="field">
+                <label class="field service-field-wide">
                   <span>Scheduled start</span>
                   <input
                     id="serviceScheduledStart"
                     type="datetime-local"
                     required
-                  >
-                </label>
-
-                <label class="field">
-                  <span>Scheduled end</span>
-                  <input
-                    id="serviceScheduledEnd"
-                    type="datetime-local"
                   >
                 </label>
 
@@ -255,38 +206,22 @@ export class ServiceDrawer {
       (event) => this.submit(event)
     );
 
-    this.elements.close.addEventListener(
-      "click",
-      () => this.close()
-    );
+    this.elements.close.addEventListener("click", () => this.close());
+    this.elements.cancel.addEventListener("click", () => this.close());
+    this.elements.backdrop.addEventListener("click", () => this.close());
 
-    this.elements.cancel.addEventListener(
-      "click",
-      () => this.close()
-    );
-
-    this.elements.backdrop.addEventListener(
-      "click",
-      () => this.close()
-    );
-
-    document.addEventListener(
-      "keydown",
-      (event) => {
-        if (
-          event.key === "Escape" &&
-          this.elements.drawer.classList.contains(
-            "is-open"
-          )
-        ) {
-          this.close();
-        }
+    document.addEventListener("keydown", (event) => {
+      if (
+        event.key === "Escape" &&
+        this.elements.drawer.classList.contains("is-open")
+      ) {
+        this.close();
       }
-    );
+    });
 
-    this.elements.start.addEventListener(
+    this.elements.addOnList.addEventListener(
       "change",
-      () => this.suggestEndTime()
+      () => this.updateAddOnSummary()
     );
   }
 
@@ -297,15 +232,16 @@ export class ServiceDrawer {
 
     this.reset();
     this.show();
-    await this.loadClients();
+
+    await Promise.all([
+      this.loadClients(),
+      this.loadOptions(),
+    ]);
   }
 
   show() {
     this.elements.backdrop.hidden = false;
-    this.elements.drawer.setAttribute(
-      "aria-hidden",
-      "false"
-    );
+    this.elements.drawer.setAttribute("aria-hidden", "false");
 
     requestAnimationFrame(() => {
       this.elements.drawer.classList.add("is-open");
@@ -319,10 +255,7 @@ export class ServiceDrawer {
     }
 
     this.elements.drawer.classList.remove("is-open");
-    this.elements.drawer.setAttribute(
-      "aria-hidden",
-      "true"
-    );
+    this.elements.drawer.setAttribute("aria-hidden", "true");
     this.elements.backdrop.hidden = true;
     document.body.classList.remove("drawer-open");
     this.hideError();
@@ -334,9 +267,16 @@ export class ServiceDrawer {
     this.elements.client.replaceChildren(
       new Option("Select a client", "")
     );
+    this.elements.type.replaceChildren(
+      new Option("Select a service", "")
+    );
+    this.elements.addOnList.replaceChildren();
+    this.elements.addOnSummary.textContent = "Select add-ons";
     this.elements.client.disabled = true;
+    this.elements.type.disabled = true;
     this.elements.save.disabled = false;
     this.elements.save.textContent = "Save service";
+    this.elements.price.value = "";
     this.hideError();
 
     const start = new Date();
@@ -345,10 +285,8 @@ export class ServiceDrawer {
       0,
       0
     );
-
     this.elements.start.value =
       toLocalDateTimeValue(start);
-    this.suggestEndTime();
   }
 
   async loadClients() {
@@ -361,9 +299,7 @@ export class ServiceDrawer {
         offset: 0,
       });
 
-      this.clients = Array.isArray(
-        response?.data?.clients
-      )
+      this.clients = Array.isArray(response?.data?.clients)
         ? response.data.clients
         : [];
 
@@ -375,7 +311,8 @@ export class ServiceDrawer {
             client.last_name,
           ].filter(Boolean).join(" ");
 
-          const detail = client.email ||
+          const detail =
+            client.email ||
             client.phone ||
             client.city ||
             "";
@@ -387,9 +324,7 @@ export class ServiceDrawer {
         }),
       ];
 
-      this.elements.client.replaceChildren(
-        ...options
-      );
+      this.elements.client.replaceChildren(...options);
       this.elements.client.disabled = false;
 
       if (!this.clients.length) {
@@ -413,51 +348,103 @@ export class ServiceDrawer {
     }
   }
 
-  suggestEndTime() {
-    if (
-      !this.elements.start.value ||
-      this.elements.end.value
-    ) {
-      return;
-    }
+  async loadOptions() {
+    try {
+      const response = await fetch(SERVICE_CONFIG_URL, {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
 
-    const start = new Date(
-      this.elements.start.value
+      if (!response.ok) {
+        throw new Error(
+          `Service options failed (${response.status}).`
+        );
+      }
+
+      const config = await response.json();
+
+      this.options = {
+        serviceTypes: Array.isArray(config.serviceTypes)
+          ? config.serviceTypes.filter((item) => item.active !== false)
+          : [],
+        addOns: Array.isArray(config.addOns)
+          ? config.addOns.filter((item) => item.active !== false)
+          : [],
+      };
+
+      const serviceOptions = [
+        new Option("Select a service", ""),
+        ...this.options.serviceTypes.map(
+          (service) =>
+            new Option(service.name, service.id)
+        ),
+      ];
+
+      this.elements.type.replaceChildren(...serviceOptions);
+      this.elements.type.disabled = false;
+
+      this.elements.addOnList.replaceChildren(
+        ...this.options.addOns.map((addon) => {
+          const label = document.createElement("label");
+          label.className = "addon-option";
+
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          input.value = addon.id;
+
+          const text = document.createElement("span");
+          text.innerHTML = `<strong>${escapeHtml(addon.name)}</strong>`;
+
+          label.append(input, text);
+          return label;
+        })
+      );
+    } catch (error) {
+      this.showError(
+        "Service options could not be loaded. " +
+        "Manual service entry is still available."
+      );
+      this.elements.type.disabled = false;
+      this.onError(error);
+    }
+  }
+
+  selectedService() {
+    return this.options.serviceTypes.find(
+      (service) =>
+        service.id === this.elements.type.value
+    ) || null;
+  }
+
+  selectedAddOns() {
+    const selectedIds = new Set(
+      Array.from(
+        this.elements.addOnList.querySelectorAll(
+          'input[type="checkbox"]:checked'
+        )
+      ).map((input) => input.value)
     );
 
-    if (Number.isNaN(start.getTime())) {
-      return;
-    }
+    return this.options.addOns.filter(
+      (addon) => selectedIds.has(addon.id)
+    );
+  }
 
-    start.setHours(start.getHours() + 2);
-    this.elements.end.value =
-      toLocalDateTimeValue(start);
+  updateAddOnSummary() {
+    const addOns = this.selectedAddOns();
+
+    this.elements.addOnSummary.textContent =
+      addOns.length
+        ? `${addOns.length} add-on${addOns.length === 1 ? "" : "s"} selected`
+        : "Select add-ons";
   }
 
   validate() {
-    const start = new Date(
-      this.elements.start.value
-    );
-
-    const end = this.elements.end.value
-      ? new Date(this.elements.end.value)
-      : null;
+    const start = new Date(this.elements.start.value);
 
     if (Number.isNaN(start.getTime())) {
       throw new Error(
         "Scheduled start must be a valid date and time."
-      );
-    }
-
-    if (
-      end &&
-      (
-        Number.isNaN(end.getTime()) ||
-        end <= start
-      )
-    ) {
-      throw new Error(
-        "Scheduled end must be later than scheduled start."
       );
     }
 
@@ -478,24 +465,44 @@ export class ServiceDrawer {
 
   buildPayload() {
     const price = this.elements.price.value.trim();
+    const service = this.selectedService();
+    const addOns = this.selectedAddOns();
+
+    const noteSections = [];
+
+    if (addOns.length) {
+      noteSections.push(
+        `[Add-ons]\n${addOns
+          .map((addon) => `- ${addon.name}`)
+          .join("\n")}`
+      );
+    }
+
+    const manualNotes = this.elements.notes.value.trim();
+
+    if (manualNotes) {
+      noteSections.push(manualNotes);
+    }
 
     return {
       clientId: this.elements.client.value,
-      serviceType: this.elements.type.value.trim(),
+      serviceType:
+        service?.name ||
+        this.elements.type.options[
+          this.elements.type.selectedIndex
+        ]?.text ||
+        this.elements.type.value,
       status: this.elements.status.value,
       scheduledStart: new Date(
         this.elements.start.value
       ).toISOString(),
-      scheduledEnd: this.elements.end.value
-        ? new Date(
-            this.elements.end.value
-          ).toISOString()
-        : null,
+      scheduledEnd: null,
       priceCents: price
         ? Math.round(Number(price) * 100)
         : null,
-      notes:
-        this.elements.notes.value.trim() || null,
+      notes: noteSections.length
+        ? noteSections.join("\n\n")
+        : null,
     };
   }
 
@@ -555,6 +562,7 @@ export class ServiceDrawer {
     this.elements.cancel.disabled = isSaving;
     this.elements.close.disabled = isSaving;
     this.elements.client.disabled = isSaving;
+    this.elements.type.disabled = isSaving;
     this.elements.save.textContent = isSaving
       ? "Saving..."
       : "Save service";
@@ -582,4 +590,14 @@ function toLocalDateTimeValue(date) {
   );
 
   return local.toISOString().slice(0, 16);
+}
+
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
