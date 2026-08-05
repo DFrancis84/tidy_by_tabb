@@ -520,14 +520,6 @@
                 </label>
 
                 <label>
-                  <span>Scheduled end</span>
-                  <input
-                    name="scheduledEnd"
-                    type="datetime-local"
-                  >
-                </label>
-
-                <label>
                   <span>Price</span>
                   <input
                     name="price"
@@ -633,9 +625,6 @@
                   form.get("serviceType"),
                 scheduledStart:
                   form.get("scheduledStart"),
-                scheduledEnd:
-                  form.get("scheduledEnd") ||
-                  null,
                 priceCents:
                   price === ""
                     ? null
