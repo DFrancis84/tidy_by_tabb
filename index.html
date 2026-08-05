@@ -85,6 +85,167 @@
       font-family: Arial, sans-serif !important;
       transform: none !important;
     }
+
+    /* Public cleaning request form */
+    .request-modal {
+      width: min(920px, calc(100% - 24px));
+      max-height: calc(100dvh - 24px);
+      overflow: auto;
+    }
+
+    .cleaning-request-form {
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .cleaning-request-form fieldset {
+      margin: 0;
+      padding: 18px;
+      border: 1px solid rgba(22, 57, 87, 0.14);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .cleaning-request-form legend {
+      padding: 0 8px;
+      color: var(--deep);
+      font-weight: 950;
+    }
+
+    .request-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .request-form-grid label,
+    .request-addons {
+      display: grid;
+      gap: 6px;
+    }
+
+    .request-form-grid label > span,
+    .request-addons-title {
+      color: var(--deep);
+      font-weight: 850;
+    }
+
+    .request-form-grid input,
+    .request-form-grid select,
+    .request-form-grid textarea {
+      width: 100%;
+      min-height: 46px;
+      padding: 10px 12px;
+      border: 1px solid rgba(22, 57, 87, 0.2);
+      border-radius: 12px;
+      background: white;
+      color: var(--deep);
+      font: inherit;
+    }
+
+    .request-form-grid textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .request-field-wide {
+      grid-column: 1 / -1;
+    }
+
+    .request-form-help {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .request-addons {
+      margin: 16px 0;
+    }
+
+    .request-addon-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 12px;
+    }
+
+    .request-addon-grid label,
+    .request-consent {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.78);
+      font-weight: 700;
+    }
+
+    .request-addon-grid input,
+    .request-consent input {
+      flex: 0 0 auto;
+      margin-top: 3px;
+    }
+
+    .request-form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      position: sticky;
+      bottom: -1px;
+      padding: 14px 0 2px;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0),
+        rgba(247, 252, 255, 0.96) 28%
+      );
+    }
+
+    .request-form-status {
+      padding: 13px 15px;
+      border-radius: 12px;
+      font-weight: 850;
+    }
+
+    .request-form-status.is-error {
+      color: #8e2033;
+      background: #ffe7eb;
+      border: 1px solid #e07a8b;
+    }
+
+    .request-form-status.is-success {
+      color: #155c48;
+      background: #e4f8f0;
+      border: 1px solid #78c9af;
+    }
+
+    .cleaning-request-form.is-submitting {
+      opacity: 0.78;
+      pointer-events: none;
+    }
+
+    @media (max-width: 700px) {
+      .request-modal {
+        width: calc(100% - 12px);
+        max-height: calc(100dvh - 12px);
+        padding: 16px;
+      }
+
+      .request-form-grid,
+      .request-addon-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .request-field-wide {
+        grid-column: auto;
+      }
+
+      .request-form-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
   </style>
 </head>
 
@@ -547,17 +708,198 @@
     <div class="modal-heading">
       <p class="eyebrow">Request service</p>
       <h2>Submit Cleaning Request</h2>
-      <p>Complete the form below and Tabb will follow up to confirm availability, pricing, and appointment details.</p>
+      <p>
+        Tell us about your home and preferred service. Tabb will follow up
+        within 24-48 hours to confirm availability, pricing, and appointment details.
+      </p>
     </div>
 
-    <div class="form-frame-wrap">
-      <iframe
-        src="https://docs.google.com/forms/d/e/1FAIpQLSdYEHZUKHjEIHOd_Fd-Z9axIb0fwuSU4q8JZAggiaSMvaBLJA/viewform?embedded=true"
-        title="Tidy by Tabb Cleaning Request Form"
-        loading="lazy">
-        Loading…
-      </iframe>
-    </div>
+    <form id="cleaningRequestForm" class="cleaning-request-form" novalidate>
+      <div id="cleaningRequestStatus" class="request-form-status" role="status" aria-live="polite" hidden></div>
+
+      <fieldset>
+        <legend>Contact information</legend>
+
+        <div class="request-form-grid">
+          <label>
+            <span>First name *</span>
+            <input name="firstName" autocomplete="given-name" maxlength="100" required>
+          </label>
+
+          <label>
+            <span>Last name *</span>
+            <input name="lastName" autocomplete="family-name" maxlength="100" required>
+          </label>
+
+          <label>
+            <span>Email</span>
+            <input name="email" type="email" autocomplete="email" maxlength="254">
+          </label>
+
+          <label>
+            <span>Phone</span>
+            <input name="phone" type="tel" autocomplete="tel" maxlength="30">
+          </label>
+        </div>
+
+        <p class="request-form-help">Please provide at least an email address or phone number.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Service address</legend>
+
+        <div class="request-form-grid">
+          <label class="request-field-wide">
+            <span>Street address</span>
+            <input name="addressLine1" autocomplete="address-line1" maxlength="200">
+          </label>
+
+          <label class="request-field-wide">
+            <span>Apartment, suite, or unit</span>
+            <input name="addressLine2" autocomplete="address-line2" maxlength="200">
+          </label>
+
+          <label>
+            <span>City</span>
+            <input name="city" autocomplete="address-level2" maxlength="100">
+          </label>
+
+          <label>
+            <span>State</span>
+            <input name="state" autocomplete="address-level1" maxlength="50" value="Kentucky">
+          </label>
+
+          <label>
+            <span>ZIP code</span>
+            <input name="postalCode" autocomplete="postal-code" maxlength="20">
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cleaning request</legend>
+
+        <div class="request-form-grid">
+          <label>
+            <span>Service type *</span>
+            <select name="serviceType" required>
+              <option value="">Select a service</option>
+              <option>Standard Cleaning</option>
+              <option>Deep Cleaning</option>
+              <option>Move-In / Move-Out</option>
+              <option>Custom Cleaning</option>
+              <option>Commercial Cleaning</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Preferred date</span>
+            <input name="preferredDate" type="date">
+          </label>
+
+          <label>
+            <span>Preferred time window</span>
+            <select name="preferredTimeWindow">
+              <option value="">No preference</option>
+              <option>Morning</option>
+              <option>Afternoon</option>
+              <option>Evening</option>
+              <option>Flexible</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Property type</span>
+            <select name="propertyType">
+              <option value="">Select property type</option>
+              <option>House</option>
+              <option>Apartment</option>
+              <option>Condo</option>
+              <option>Townhome</option>
+              <option>Office / Commercial</option>
+              <option>Other</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Bedrooms</span>
+            <input name="bedrooms" type="number" min="0" max="100" step="1">
+          </label>
+
+          <label>
+            <span>Bathrooms</span>
+            <input name="bathrooms" type="number" min="0" max="100" step="0.5">
+          </label>
+
+          <label>
+            <span>Approximate square footage</span>
+            <input name="squareFootage" type="number" min="0" max="1000000" step="1">
+          </label>
+
+          <label>
+            <span>Current condition</span>
+            <select name="propertyCondition">
+              <option value="">Select condition</option>
+              <option>Light upkeep</option>
+              <option>Average lived-in condition</option>
+              <option>Heavy buildup</option>
+              <option>Move-in / move-out condition</option>
+              <option>Not sure</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="request-addons">
+          <span class="request-addons-title">Add-on services</span>
+          <div class="request-addon-grid">
+            <label><input type="checkbox" name="addOns" value="Oven Cleaning"> Oven Cleaning</label>
+            <label><input type="checkbox" name="addOns" value="Interior Fridge & Freezer"> Interior Fridge & Freezer</label>
+            <label><input type="checkbox" name="addOns" value="Dishwasher Cleaning"> Dishwasher Cleaning</label>
+            <label><input type="checkbox" name="addOns" value="Dishes"> Dishes</label>
+            <label><input type="checkbox" name="addOns" value="Baseboards"> Baseboards</label>
+            <label><input type="checkbox" name="addOns" value="Interior Wall Cleaning"> Interior Wall Cleaning</label>
+            <label><input type="checkbox" name="addOns" value="Blinds Cleaning"> Blinds Cleaning</label>
+            <label><input type="checkbox" name="addOns" value="Grout Scrubbing"> Grout Scrubbing</label>
+            <label><input type="checkbox" name="addOns" value="Interior Window Cleaning"> Interior Window Cleaning</label>
+            <label><input type="checkbox" name="addOns" value="Inside Cabinets & Drawers"> Inside Cabinets & Drawers</label>
+            <label><input type="checkbox" name="addOns" value="Laundry"> Laundry</label>
+            <label><input type="checkbox" name="addOns" value="Organization Assistance"> Organization Assistance</label>
+          </div>
+        </div>
+
+        <div class="request-form-grid">
+          <label class="request-field-wide">
+            <span>Pets</span>
+            <input name="pets" maxlength="500" placeholder="Type, number, and anything Tabb should know">
+          </label>
+
+          <label class="request-field-wide">
+            <span>Entry instructions</span>
+            <textarea name="entryInstructions" rows="3" maxlength="2000" placeholder="Parking, gate, lockbox, or access details"></textarea>
+          </label>
+
+          <label class="request-field-wide">
+            <span>Additional notes</span>
+            <textarea name="notes" rows="4" maxlength="5000" placeholder="Priority rooms, special requests, concerns, or anything else"></textarea>
+          </label>
+        </div>
+      </fieldset>
+
+      <label class="request-consent">
+        <input id="requestTerms" type="checkbox" required>
+        <span>
+          I acknowledge that this is a request, not a confirmed appointment,
+          and I have reviewed the Service Agreement and Terms of Service.
+        </span>
+      </label>
+
+      <div class="request-form-actions">
+        <button class="ghost-btn" type="button" data-request-cancel>Cancel</button>
+        <button id="cleaningRequestSubmit" class="primary-btn" type="submit">
+          Submit Request
+        </button>
+      </div>
+    </form>
   </dialog>
 
   <dialog id="galleryModal" class="modal gallery-modal">
@@ -660,5 +1002,6 @@
   </dialog>
 
   <script src="script.js?v=5"></script>
+  <script src="public-request-form.js?v=20260805-1"></script>
 </body>
 </html>

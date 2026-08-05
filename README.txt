@@ -1,95 +1,39 @@
-TIDY BY TABB PUBLIC CLEANING REQUEST API
+TIDY BY TABB PUBLIC CLEANING REQUEST FORM
 
 Branch:
-cms-v2-cleaning-requests-api
+cms-v2-cleaning-requests-public-form
 
-ADD:
-cloudflare-worker/src/public-cleaning-requests.js
+UPLOAD OR REPLACE:
+- index.html
+- public-request-form.js
 
-UPDATE:
-cloudflare-worker/src/index.js
+WHAT CHANGES
 
-OPTIONAL TEMPORARY TEST PAGE:
-cloudflare-worker/test/public-cleaning-request.html
+- Replaces the embedded Google Form with a native Tidy by Tabb form
+- Submits to POST /api/cleaning-requests
+- Captures contact information, address, service details, add-ons,
+  property details, access notes, pets, and customer notes
+- Requires at least an email address or phone number
+- Shows an in-form success or error message
+- Prevents duplicate clicks while submitting
+- Keeps the appointment language clear: this is a request, not a
+  confirmed booking
+- Preserves the existing homepage layout and controls
+- Adds responsive styling directly to index.html
+- Loads public-request-form.js with version 20260805-1
 
-Use INDEX-CHANGES.txt for the two exact index.js edits.
+LIVE TEST
 
-ENDPOINT
-
-POST /api/cleaning-requests
-
-This endpoint is public, but it still requires the request Origin to be:
-https://www.tidybytabb.com
-
-MATCHING RULES
-
-1. Exact normalized email and exact normalized phone match the same
-   active client:
-   - use that client
-   - match_status = matched_email_and_phone
-
-2. Only email matches:
-   - use that client
-   - match_status = matched_email
-
-3. Only phone matches:
-   - use that client
-   - match_status = matched_phone
-
-4. Neither matches:
-   - create a new client
-   - match_status = new_client
-
-5. Email and phone point to different clients, or either value matches
-   multiple active clients:
-   - do not guess
-   - do not create a new client
-   - create request with client_id = NULL
-   - match_status = conflict
-   - status = needs_review
-
-SECURITY
-
-- Public route is handled before Cloudflare Access JWT validation.
-- The existing origin allowlist still applies.
-- All /admin/api routes remain protected.
-- Payload size is limited to 64 KB.
-- Unknown fields are rejected.
-- Input lengths and numeric ranges are validated.
-- The response does not reveal an existing client's identity.
-
-DEPLOY
-
-1. Upload the new module.
-2. Apply both index.js changes.
-3. Deploy the Worker.
-4. Do not connect the real homepage form yet.
-5. Use the temporary test page or browser console to test.
-
-TEST CASES
-
-A. New customer
-- Use a unique email and phone.
-- Expect clientCreated = true.
-- Confirm one client and one cleaning_requests row were created.
-
-B. Returning customer by email
-- Reuse the email with a different phone.
-- Expect clientMatched = true and clientCreated = false.
-- Confirm no duplicate client was created.
-
-C. Returning customer by phone
-- Reuse the phone with a different email.
-- Expect clientMatched = true and clientCreated = false.
-
-D. Both match the same customer
-- Reuse both.
-- Expect clientMatched = true.
-
-E. Conflict
-- Use one client's email and another client's phone.
-- Expect requiresManualReview = true.
-- Confirm request status is needs_review and client_id is NULL.
+1. Open Submit Cleaning Request.
+2. Confirm the Google Form iframe is gone.
+3. Submit without email and phone.
+4. Confirm the form asks for at least one contact method.
+5. Submit a new customer.
+6. Confirm the success message appears.
+7. Confirm a new client and cleaning_requests row exist in D1.
+8. Submit the same customer again.
+9. Confirm no duplicate client is created.
+10. Test on a phone-sized screen.
 
 D1 CHECK
 
@@ -100,6 +44,8 @@ SELECT
   submitted_last_name,
   submitted_email,
   submitted_phone,
+  requested_service_type,
+  requested_add_ons,
   match_status,
   status,
   created_at
@@ -108,4 +54,4 @@ ORDER BY created_at DESC;
 
 COMMIT MESSAGE
 
-Add public cleaning request API
+Connect public cleaning request form
