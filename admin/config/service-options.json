@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "serviceTypes": [
+    {
+      "id": "standard-cleaning",
+      "name": "Standard Cleaning",
+      "active": true
+    },
+    {
+      "id": "deep-cleaning",
+      "name": "Deep Cleaning",
+      "active": true
+    },
+    {
+      "id": "move-in-cleaning",
+      "name": "Move-In Cleaning",
+      "active": true
+    },
+    {
+      "id": "move-out-cleaning",
+      "name": "Move-Out Cleaning",
+      "active": true
+    },
+    {
+      "id": "office-cleaning",
+      "name": "Office Cleaning",
+      "active": true
+    },
+    {
+      "id": "recurring-cleaning",
+      "name": "Recurring Cleaning",
+      "active": true
+    },
+    {
+      "id": "post-construction-cleaning",
+      "name": "Post-Construction Cleaning",
+      "active": true
+    },
+    {
+      "id": "organization-service",
+      "name": "Organization Service",
+      "active": true
+    }
+  ],
+  "addOns": [
+    {
+      "id": "inside-oven",
+      "name": "Inside Oven",
+      "active": true
+    },
+    {
+      "id": "inside-refrigerator",
+      "name": "Inside Refrigerator",
+      "active": true
+    },
+    {
+      "id": "interior-windows",
+      "name": "Interior Windows",
+      "active": true
+    },
+    {
+      "id": "baseboards",
+      "name": "Baseboards",
+      "active": true
+    },
+    {
+      "id": "laundry",
+      "name": "Laundry",
+      "active": true
+    },
+    {
+      "id": "dishes",
+      "name": "Dishes",
+      "active": true
+    },
+    {
+      "id": "cabinet-interiors",
+      "name": "Inside Cabinets",
+      "active": true
+    }
+  ]
+}
