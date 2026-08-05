@@ -1,14 +1,14 @@
-import { GalleryApi } from "./api.js?v=20260804-4";
-import { ClientApi } from "./client-api.js?v=20260804-4";
-import { ClientsController } from "./clients.js?v=20260804-4";
-import { ServiceApi } from "./service-api.js?v=20260804-4";
-import { ServicesController } from "./services.js?v=20260804-4";
-import { ServiceDrawer } from "./service-drawer.js?v=20260804-4";
-import { ClientDrawer } from "./client-drawer.js?v=20260804-4";
-import { DeveloperPanel } from "./developer.js?v=20260804-4";
-import { GalleryDrawer } from "./drawer.js?v=20260804-4";
-import { GalleryController } from "./gallery.js?v=20260804-4";
-import { toast, switchView } from "./ui.js?v=20260804-4";
+import { GalleryApi } from "./api.js?v=20260804-6";
+import { ClientApi } from "./client-api.js?v=20260804-6";
+import { ClientsController } from "./clients.js?v=20260804-6";
+import { ServiceApi } from "./service-api.js?v=20260804-6";
+import { ServicesController } from "./services.js?v=20260804-6";
+import { ServiceDrawer } from "./service-drawer.js?v=20260804-6";
+import { ClientDrawer } from "./client-drawer.js?v=20260804-6";
+import { DeveloperPanel } from "./developer.js?v=20260804-6";
+import { GalleryDrawer } from "./drawer.js?v=20260804-6";
+import { GalleryController } from "./gallery.js?v=20260804-6";
+import { toast, switchView } from "./ui.js?v=20260804-6";
 
 const developer = new DeveloperPanel();
 
@@ -84,11 +84,8 @@ const services = new ServicesController({
   onAdd: async () => {
     await serviceDrawer.open();
   },
-  onOpen: () => {
-    toast(
-      "Service detail is coming in the next UI slice.",
-      "success"
-    );
+  onOpen: async (serviceId) => {
+    await serviceDrawer.open(serviceId);
   },
   onError: (error) => {
     toast(error.message, "error");
@@ -98,15 +95,17 @@ const services = new ServicesController({
 serviceDrawer = new ServiceDrawer({
   api: serviceApi,
   clientApi,
-  onSaved: async (service) => {
+  onSaved: async (service, mode) => {
     const clientName = [
       service.client_first_name,
       service.client_last_name,
     ].filter(Boolean).join(" ");
 
     toast(
-      `${service.service_type} was added` +
-        `${clientName ? ` for ${clientName}` : ""}.`,
+      mode === "create"
+        ? `${service.service_type} was added` +
+          `${clientName ? ` for ${clientName}` : ""}.`
+        : `${service.service_type} was updated.`,
       "success"
     );
 
