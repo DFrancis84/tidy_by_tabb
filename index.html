@@ -30,6 +30,61 @@
     dialog.gallery-modal.gallery-v2[open] {
       display: block !important;
     }
+
+    /* Homepage floating controls and button alignment */
+    @media (min-width: 921px) {
+      .accessibility-toggle {
+        left: 24px !important;
+        right: auto !important;
+        bottom: 24px !important;
+      }
+    }
+
+    .social-bubble {
+      z-index: 40;
+    }
+
+    .social-popover {
+      display: grid;
+      gap: 8px;
+      min-width: 160px;
+      padding: 10px;
+    }
+
+    .social-popover a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 8px 14px;
+      border-radius: 12px;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .coverflow-arrow {
+      display: grid !important;
+      place-items: center !important;
+      padding: 0 !important;
+      line-height: 1 !important;
+      text-align: center !important;
+    }
+
+    .coverflow-arrow > span {
+      display: block;
+      line-height: 1;
+      transform: translateY(-1px);
+    }
+
+    .addon-groups summary::after {
+      display: grid !important;
+      place-items: center !important;
+      padding: 0 !important;
+      line-height: 1 !important;
+      text-align: center !important;
+      font-family: Arial, sans-serif !important;
+      transform: none !important;
+    }
   </style>
 </head>
 
@@ -112,7 +167,7 @@
         </div>
 
         <div class="pricing-coverflow">
-          <button class="coverflow-arrow price-prev" type="button" aria-label="Previous pricing option">‹</button>
+          <button class="coverflow-arrow price-prev" type="button" aria-label="Previous pricing option"><span aria-hidden="true">‹</span></button>
 
           <div class="coverflow-stage">
             <article class="price-card coverflow-card">
@@ -141,7 +196,7 @@
             </article>
           </div>
 
-          <button class="coverflow-arrow price-next" type="button" aria-label="Next pricing option">›</button>
+          <button class="coverflow-arrow price-next" type="button" aria-label="Next pricing option"><span aria-hidden="true">›</span></button>
         </div>
 
         <div class="addon-card">
@@ -362,13 +417,15 @@
         ✨
       </button>
 
+
       <div class="social-popover">
-                <a href="https://www.facebook.com/profile.php?id=61575743107629" target="_blank" rel="noopener">Facebook</a>
-<!--
-        <a href="YOUR_FACEBOOK_LINK_HERE" target="_blank" rel="noopener">Facebook</a>
-        <a href="YOUR_INSTAGRAM_LINK_HERE" target="_blank" rel="noopener">Instagram</a>
-        <a href="YOUR_TIKTOK_LINK_HERE" target="_blank" rel="noopener">TikTok</a>
-        -->
+        <a
+          href="https://www.facebook.com/profile.php?id=61575743107629"
+          target="_blank"
+          rel="noopener"
+        >
+          Facebook
+        </a>
         <a href="mailto:tidy.by.tabb@gmail.com">Email</a>
       </div>
     </div>
