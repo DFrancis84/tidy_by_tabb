@@ -3,6 +3,11 @@ import {
   isPublicCleaningRequest,
 } from "./public-cleaning-requests.js";
 
+import {
+  handleCleaningRequestsAdminRoute,
+  isCleaningRequestsAdminRoute,
+} from "./cleaning-requests-admin.js";
+
 const ALLOWED_ORIGIN = "https://www.tidybytabb.com";
 const ALLOWED_ACTIONS = new Set([
   "create",
@@ -57,6 +62,23 @@ export default {
           jsonResponse,
           HttpError
         );
+      }
+
+      if (
+        isCleaningRequestsAdminRoute(
+          request,
+          url
+        )
+      ) {
+        return await handleCleaningRequestsAdminRoute({
+          request,
+          url,
+          env,
+          actorEmail,
+          origin,
+          jsonResponse,
+          HttpError,
+        });
       }
       
       const jwt = request.headers.get("Cf-Access-Jwt-Assertion");
