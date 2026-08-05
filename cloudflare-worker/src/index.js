@@ -58,6 +58,18 @@ export default {
           HttpError
         );
       }
+
+      const url = new URL(request.url);
+
+      if (isPublicCleaningRequest(request, url)) {
+        return await handlePublicCleaningRequest(
+          request,
+          env,
+          origin,
+          jsonResponse,
+          HttpError
+        );
+      }
       
       const jwt = request.headers.get("Cf-Access-Jwt-Assertion");
       if (!jwt) {
