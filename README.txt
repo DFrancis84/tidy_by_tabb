@@ -1,42 +1,35 @@
-TIDY BY TABB SERVICE ADD-ONS ONLY
+TIDY BY TABB SERVICE VIEW / EDIT UI
 
-This package removes automatic price calculation.
-
-KEPT:
-- Manual price entry
-- Service type dropdown
-- Multiple add-on selection
-- Developer button overlap fix
-- Scheduled end removed
+Branch:
+cms-v2-service-ui-edit
 
 UPLOAD OR REPLACE:
 - admin/js/script.js
-- admin/js/service-drawer.js
 - admin/js/service-api.js
+- admin/js/service-drawer.js
+- admin/css/services.css
 - admin/js/services.js
 - admin/js/ui.js
-- admin/css/services.css
-
-ADD:
 - admin/config/service-options.json
 
-DELETE IF PRESENT:
-- admin/config/service-pricing.json
-
 UPDATE admin/index.html:
+- services.css version: 20260804-6
+- script.js version: 20260804-6
 
-<link rel="stylesheet" href="css/services.css?v=20260804-4">
-
-<script type="module" src="js/script.js?v=20260804-4"></script>
-
-COMMIT MESSAGE:
-Keep manual pricing and service add-ons
+Commit message:
+Add service view and edit UI
 
 LIVE TEST:
-1. Open Add service.
-2. Confirm Developer hides.
-3. Confirm Scheduled end is gone.
-4. Confirm Service type dropdown loads.
-5. Confirm multiple add-ons can be selected.
-6. Confirm price is manual only.
-7. Save and confirm add-ons are stored in notes under [Add-ons].
+1. Open Services.
+2. Click View on an existing service.
+3. Confirm client, service type, add-ons, status, schedule, price,
+   and notes populate.
+4. Change several fields and click Save changes.
+5. Confirm the drawer closes and the list refreshes.
+6. Reopen the service and confirm the changes persisted.
+7. Confirm selected add-ons remain selected.
+8. Confirm the notes box does not show the internal [Add-ons] block.
+9. Test a stale version response by opening the same service in two
+   tabs, saving in one, then saving in the other. The second should
+   receive a concurrency error instead of overwriting the first.
+10. Regression test Add service, Clients, and Gallery.

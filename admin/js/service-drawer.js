@@ -1,6 +1,6 @@
 const CLIENT_PAGE_SIZE = 100;
 const SERVICE_CONFIG_URL =
-  "./config/service-options.json?v=20260804-4";
+  "./config/service-options.json?v=20260804-6";
 
 export class ServiceDrawer {
   constructor({
@@ -14,9 +14,11 @@ export class ServiceDrawer {
     this.onSaved = onSaved;
     this.onError = onError;
     this.isSaving = false;
+    this.mode = "create";
+    this.serviceId = "";
+    this.version = null;
     this.clients = [];
     this.options = {
-      currency: "USD",
       serviceTypes: [],
       addOns: [],
     };
@@ -27,6 +29,8 @@ export class ServiceDrawer {
       backdrop: document.getElementById("serviceDrawerBackdrop"),
       drawer: document.getElementById("serviceDrawer"),
       form: document.getElementById("serviceForm"),
+      title: document.getElementById("serviceDrawerTitle"),
+      subtitle: document.getElementById("serviceDrawerSubtitle"),
       close: document.getElementById("serviceDrawerClose"),
       cancel: document.getElementById("serviceCancel"),
       save: document.getElementById("saveService"),
@@ -44,15 +48,12 @@ export class ServiceDrawer {
   }
 
   injectMarkup() {
-    if (document.getElementById("serviceDrawer")) {
-      return;
-    }
+    if (document.getElementById("serviceDrawer")) return;
 
     document.body.insertAdjacentHTML(
       "beforeend",
       `
         <div id="serviceDrawerBackdrop" class="drawer-backdrop" hidden></div>
-
         <aside
           id="serviceDrawer"
           class="drawer service-drawer"
@@ -64,11 +65,10 @@ export class ServiceDrawer {
               <div>
                 <p class="eyebrow">Cleaning operations</p>
                 <h2 id="serviceDrawerTitle">Add service</h2>
-                <small class="drawer-subtitle">
+                <small id="serviceDrawerSubtitle" class="drawer-subtitle">
                   Schedule a cleaning service for an active client.
                 </small>
               </div>
-
               <button
                 id="serviceDrawerClose"
                 class="icon-button"
@@ -78,19 +78,9 @@ export class ServiceDrawer {
             </div>
 
             <div class="drawer-body">
-              <div
-                id="serviceFormError"
-                class="form-error"
-                role="alert"
-                hidden
-              ></div>
-
-              <div
-                id="serviceClientLoading"
-                class="loading-state service-client-loading"
-                hidden
-              >
-                Loading clients...
+              <div id="serviceFormError" class="form-error" role="alert" hidden></div>
+              <div id="serviceClientLoading" class="loading-state service-client-loading" hidden>
+                Loading service details...
               </div>
 
               <div class="service-form-grid">
@@ -112,17 +102,10 @@ export class ServiceDrawer {
                 <div class="field service-field-wide">
                   <span>Add-ons</span>
                   <details class="addon-picker">
-                    <summary id="serviceAddOnSummary">
-                      Select add-ons
-                    </summary>
-                    <div
-                      id="serviceAddOnList"
-                      class="addon-options"
-                    ></div>
+                    <summary id="serviceAddOnSummary">Select add-ons</summary>
+                    <div id="serviceAddOnList" class="addon-options"></div>
                   </details>
-                  <small>
-                    Choose any extras requested for this visit.
-                  </small>
+                  <small>Choose any extras requested for this visit.</small>
                 </div>
 
                 <label class="field">
@@ -149,18 +132,12 @@ export class ServiceDrawer {
                       placeholder="Enter price"
                     >
                   </div>
-                  <small>
-                    Enter the quoted price for this specific job.
-                  </small>
+                  <small>Enter the quoted price for this specific job.</small>
                 </label>
 
                 <label class="field service-field-wide">
                   <span>Scheduled start</span>
-                  <input
-                    id="serviceScheduledStart"
-                    type="datetime-local"
-                    required
-                  >
+                  <input id="serviceScheduledStart" type="datetime-local" required>
                 </label>
 
                 <label class="field service-field-wide">
@@ -177,19 +154,10 @@ export class ServiceDrawer {
 
             <div class="drawer-actions">
               <div class="drawer-actions-right">
-                <button
-                  id="serviceCancel"
-                  class="button button-secondary"
-                  type="button"
-                >
+                <button id="serviceCancel" class="button button-secondary" type="button">
                   Cancel
                 </button>
-
-                <button
-                  id="saveService"
-                  class="button button-primary"
-                  type="submit"
-                >
+                <button id="saveService" class="button button-primary" type="submit">
                   Save service
                 </button>
               </div>
@@ -201,11 +169,7 @@ export class ServiceDrawer {
   }
 
   bind() {
-    this.elements.form.addEventListener(
-      "submit",
-      (event) => this.submit(event)
-    );
-
+    this.elements.form.addEventListener("submit", (event) => this.submit(event));
     this.elements.close.addEventListener("click", () => this.close());
     this.elements.cancel.addEventListener("click", () => this.close());
     this.elements.backdrop.addEventListener("click", () => this.close());
@@ -225,18 +189,33 @@ export class ServiceDrawer {
     );
   }
 
-  async open() {
-    if (this.isSaving) {
-      return;
-    }
+  async open(serviceId = "") {
+    if (this.isSaving) return;
 
+    this.mode = serviceId ? "edit" : "create";
+    this.serviceId = serviceId || "";
+    this.version = null;
     this.reset();
     this.show();
+    this.setLoading(true);
 
-    await Promise.all([
-      this.loadClients(),
-      this.loadOptions(),
-    ]);
+    try {
+      await Promise.all([
+        this.loadClients(),
+        this.loadOptions(),
+      ]);
+
+      if (this.mode === "edit") {
+        await this.loadService();
+      } else {
+        this.elements.client.focus();
+      }
+    } catch (error) {
+      this.showError(error.message || "The service editor could not be opened.");
+      this.onError(error);
+    } finally {
+      this.setLoading(false);
+    }
   }
 
   show() {
@@ -250,9 +229,7 @@ export class ServiceDrawer {
   }
 
   close() {
-    if (this.isSaving) {
-      return;
-    }
+    if (this.isSaving) return;
 
     this.elements.drawer.classList.remove("is-open");
     this.elements.drawer.setAttribute("aria-hidden", "true");
@@ -263,157 +240,190 @@ export class ServiceDrawer {
 
   reset() {
     this.elements.form.reset();
+    this.elements.title.textContent =
+      this.mode === "edit" ? "Edit service" : "Add service";
+    this.elements.subtitle.textContent =
+      this.mode === "edit"
+        ? "Update the service while preserving its client history."
+        : "Schedule a cleaning service for an active client.";
+    this.elements.save.textContent =
+      this.mode === "edit" ? "Save changes" : "Save service";
     this.elements.status.value = "scheduled";
-    this.elements.client.replaceChildren(
-      new Option("Select a client", "")
-    );
-    this.elements.type.replaceChildren(
-      new Option("Select a service", "")
-    );
+    this.elements.client.replaceChildren(new Option("Select a client", ""));
+    this.elements.type.replaceChildren(new Option("Select a service", ""));
     this.elements.addOnList.replaceChildren();
     this.elements.addOnSummary.textContent = "Select add-ons";
     this.elements.client.disabled = true;
     this.elements.type.disabled = true;
     this.elements.save.disabled = false;
-    this.elements.save.textContent = "Save service";
-    this.elements.price.value = "";
     this.hideError();
 
-    const start = new Date();
-    start.setMinutes(
-      Math.ceil(start.getMinutes() / 15) * 15,
-      0,
-      0
-    );
-    this.elements.start.value =
-      toLocalDateTimeValue(start);
+    if (this.mode === "create") {
+      const start = new Date();
+      start.setMinutes(
+        Math.ceil(start.getMinutes() / 15) * 15,
+        0,
+        0
+      );
+      this.elements.start.value = toLocalDateTimeValue(start);
+    }
   }
 
   async loadClients() {
-    this.elements.loading.hidden = false;
+    const response = await this.clientApi.list({
+      search: "",
+      limit: CLIENT_PAGE_SIZE,
+      offset: 0,
+    });
 
-    try {
-      const response = await this.clientApi.list({
-        search: "",
-        limit: CLIENT_PAGE_SIZE,
-        offset: 0,
-      });
+    this.clients = Array.isArray(response?.data?.clients)
+      ? response.data.clients
+      : [];
 
-      this.clients = Array.isArray(response?.data?.clients)
-        ? response.data.clients
-        : [];
-
-      const options = [
-        new Option("Select a client", ""),
-        ...this.clients.map((client) => {
-          const name = [
-            client.first_name,
-            client.last_name,
-          ].filter(Boolean).join(" ");
-
-          const detail =
-            client.email ||
-            client.phone ||
-            client.city ||
-            "";
-
-          return new Option(
-            detail ? `${name} (${detail})` : name,
-            client.id
-          );
-        }),
-      ];
-
-      this.elements.client.replaceChildren(...options);
-      this.elements.client.disabled = false;
-
-      if (!this.clients.length) {
-        this.showError(
-          "Add an active client before creating a service."
+    this.elements.client.replaceChildren(
+      new Option("Select a client", ""),
+      ...this.clients.map((client) => {
+        const name = [client.first_name, client.last_name]
+          .filter(Boolean)
+          .join(" ");
+        const detail = client.email || client.phone || client.city || "";
+        return new Option(
+          detail ? `${name} (${detail})` : name,
+          client.id
         );
-        this.elements.save.disabled = true;
-        return;
-      }
+      })
+    );
 
-      this.elements.client.focus();
-    } catch (error) {
-      this.showError(
-        error.message ||
-          "Active clients could not be loaded."
-      );
-      this.elements.save.disabled = true;
-      this.onError(error);
-    } finally {
-      this.elements.loading.hidden = true;
+    this.elements.client.disabled = false;
+
+    if (!this.clients.length) {
+      throw new Error("Add an active client before creating a service.");
     }
   }
 
   async loadOptions() {
-    try {
-      const response = await fetch(SERVICE_CONFIG_URL, {
-        cache: "no-store",
-        credentials: "same-origin",
+    const response = await fetch(SERVICE_CONFIG_URL, {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Service options failed (${response.status}).`);
+    }
+
+    const config = await response.json();
+
+    this.options = {
+      serviceTypes: Array.isArray(config.serviceTypes)
+        ? config.serviceTypes.filter((item) => item.active !== false)
+        : [],
+      addOns: Array.isArray(config.addOns)
+        ? config.addOns.filter((item) => item.active !== false)
+        : [],
+    };
+
+    this.elements.type.replaceChildren(
+      new Option("Select a service", ""),
+      ...this.options.serviceTypes.map(
+        (service) => new Option(service.name, service.id)
+      )
+    );
+    this.elements.type.disabled = false;
+
+    this.elements.addOnList.replaceChildren(
+      ...this.options.addOns.map((addon) => {
+        const label = document.createElement("label");
+        label.className = "addon-option";
+
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.value = addon.id;
+
+        const text = document.createElement("span");
+        text.innerHTML = `<strong>${escapeHtml(addon.name)}</strong>`;
+
+        label.append(input, text);
+        return label;
+      })
+    );
+  }
+
+  async loadService() {
+    const response = await this.api.detail(this.serviceId);
+    const service = response?.data?.service ?? response?.data;
+
+    if (!service?.id) {
+      throw new Error("The service details response was incomplete.");
+    }
+
+    this.version = Number(service.version);
+    this.elements.client.value = service.client_id || "";
+    this.selectServiceType(service.service_type || "");
+    this.elements.status.value = service.status || "scheduled";
+    this.elements.start.value = toLocalDateTimeValue(
+      new Date(service.scheduled_start)
+    );
+    this.elements.price.value =
+      service.price_cents === null ||
+      service.price_cents === undefined
+        ? ""
+        : (Number(service.price_cents) / 100).toFixed(2);
+
+    const parsed = parseNotes(service.notes || "");
+    this.elements.notes.value = parsed.notes;
+
+    const selectedNames = new Set(
+      parsed.addOns.map((name) => name.toLowerCase())
+    );
+
+    this.elements.addOnList
+      .querySelectorAll('input[type="checkbox"]')
+      .forEach((input) => {
+        const addon = this.options.addOns.find(
+          (item) => item.id === input.value
+        );
+        input.checked = Boolean(
+          addon && selectedNames.has(addon.name.toLowerCase())
+        );
       });
 
-      if (!response.ok) {
-        throw new Error(
-          `Service options failed (${response.status}).`
-        );
-      }
+    this.updateAddOnSummary();
+    this.elements.type.focus();
+  }
 
-      const config = await response.json();
+  selectServiceType(serviceType) {
+    const match = this.options.serviceTypes.find(
+      (item) =>
+        item.name.toLowerCase() ===
+        String(serviceType).toLowerCase()
+    );
 
-      this.options = {
-        serviceTypes: Array.isArray(config.serviceTypes)
-          ? config.serviceTypes.filter((item) => item.active !== false)
-          : [],
-        addOns: Array.isArray(config.addOns)
-          ? config.addOns.filter((item) => item.active !== false)
-          : [],
-      };
+    if (match) {
+      this.elements.type.value = match.id;
+      return;
+    }
 
-      const serviceOptions = [
-        new Option("Select a service", ""),
-        ...this.options.serviceTypes.map(
-          (service) =>
-            new Option(service.name, service.id)
-        ),
-      ];
-
-      this.elements.type.replaceChildren(...serviceOptions);
-      this.elements.type.disabled = false;
-
-      this.elements.addOnList.replaceChildren(
-        ...this.options.addOns.map((addon) => {
-          const label = document.createElement("label");
-          label.className = "addon-option";
-
-          const input = document.createElement("input");
-          input.type = "checkbox";
-          input.value = addon.id;
-
-          const text = document.createElement("span");
-          text.innerHTML = `<strong>${escapeHtml(addon.name)}</strong>`;
-
-          label.append(input, text);
-          return label;
-        })
+    if (serviceType) {
+      const customId = `legacy:${serviceType}`;
+      this.elements.type.append(
+        new Option(`${serviceType} (existing)`, customId)
       );
-    } catch (error) {
-      this.showError(
-        "Service options could not be loaded. " +
-        "Manual service entry is still available."
-      );
-      this.elements.type.disabled = false;
-      this.onError(error);
+      this.elements.type.value = customId;
     }
   }
 
-  selectedService() {
-    return this.options.serviceTypes.find(
-      (service) =>
-        service.id === this.elements.type.value
-    ) || null;
+  selectedServiceName() {
+    const selected = this.options.serviceTypes.find(
+      (service) => service.id === this.elements.type.value
+    );
+
+    if (selected) return selected.name;
+
+    const option = this.elements.type.options[
+      this.elements.type.selectedIndex
+    ];
+
+    return option?.text?.replace(" (existing)", "") || "";
   }
 
   selectedAddOns() {
@@ -432,7 +442,6 @@ export class ServiceDrawer {
 
   updateAddOnSummary() {
     const addOns = this.selectedAddOns();
-
     this.elements.addOnSummary.textContent =
       addOns.length
         ? `${addOns.length} add-on${addOns.length === 1 ? "" : "s"} selected`
@@ -443,31 +452,31 @@ export class ServiceDrawer {
     const start = new Date(this.elements.start.value);
 
     if (Number.isNaN(start.getTime())) {
-      throw new Error(
-        "Scheduled start must be a valid date and time."
-      );
+      throw new Error("Scheduled start must be a valid date and time.");
     }
 
     const price = this.elements.price.value.trim();
 
     if (
       price &&
-      (
-        !Number.isFinite(Number(price)) ||
-        Number(price) < 0
-      )
+      (!Number.isFinite(Number(price)) || Number(price) < 0)
+    ) {
+      throw new Error("Price must be zero or a positive amount.");
+    }
+
+    if (
+      this.mode === "edit" &&
+      (!Number.isInteger(this.version) || this.version < 1)
     ) {
       throw new Error(
-        "Price must be zero or a positive amount."
+        "This service is missing its concurrency version. Refresh and try again."
       );
     }
   }
 
   buildPayload() {
     const price = this.elements.price.value.trim();
-    const service = this.selectedService();
     const addOns = this.selectedAddOns();
-
     const noteSections = [];
 
     if (addOns.length) {
@@ -479,45 +488,32 @@ export class ServiceDrawer {
     }
 
     const manualNotes = this.elements.notes.value.trim();
+    if (manualNotes) noteSections.push(manualNotes);
 
-    if (manualNotes) {
-      noteSections.push(manualNotes);
+    const payload = {
+      clientId: this.elements.client.value,
+      serviceType: this.selectedServiceName(),
+      status: this.elements.status.value,
+      scheduledStart: new Date(this.elements.start.value).toISOString(),
+      scheduledEnd: null,
+      priceCents: price ? Math.round(Number(price) * 100) : null,
+      notes: noteSections.length ? noteSections.join("\n\n") : null,
+    };
+
+    if (this.mode === "edit") {
+      payload.version = this.version;
     }
 
-    return {
-      clientId: this.elements.client.value,
-      serviceType:
-        service?.name ||
-        this.elements.type.options[
-          this.elements.type.selectedIndex
-        ]?.text ||
-        this.elements.type.value,
-      status: this.elements.status.value,
-      scheduledStart: new Date(
-        this.elements.start.value
-      ).toISOString(),
-      scheduledEnd: null,
-      priceCents: price
-        ? Math.round(Number(price) * 100)
-        : null,
-      notes: noteSections.length
-        ? noteSections.join("\n\n")
-        : null,
-    };
+    return payload;
   }
 
   async submit(event) {
     event.preventDefault();
-
-    if (this.isSaving) {
-      return;
-    }
+    if (this.isSaving) return;
 
     this.hideError();
 
-    if (!this.elements.form.reportValidity()) {
-      return;
-    }
+    if (!this.elements.form.reportValidity()) return;
 
     try {
       this.validate();
@@ -529,13 +525,15 @@ export class ServiceDrawer {
     this.setSaving(true);
 
     try {
-      const response = await this.api.create(
-        this.buildPayload()
-      );
+      const response =
+        this.mode === "edit"
+          ? await this.api.update(
+              this.serviceId,
+              this.buildPayload()
+            )
+          : await this.api.create(this.buildPayload());
 
-      const service =
-        response?.data?.service ??
-        response?.data;
+      const service = response?.data?.service ?? response?.data;
 
       if (!service?.id) {
         throw new Error(
@@ -543,17 +541,25 @@ export class ServiceDrawer {
         );
       }
 
+      const mode = this.mode;
       this.setSaving(false);
       this.close();
-      await this.onSaved(service);
+      await this.onSaved(service, mode);
     } catch (error) {
       this.setSaving(false);
       this.showError(
-        error.message ||
-          "The service could not be saved."
+        error.message || "The service could not be saved."
       );
       this.onError(error);
     }
+  }
+
+  setLoading(isLoading) {
+    this.elements.loading.hidden = !isLoading;
+    this.elements.form.classList.toggle(
+      "service-form-is-loading",
+      isLoading
+    );
   }
 
   setSaving(isSaving) {
@@ -565,7 +571,9 @@ export class ServiceDrawer {
     this.elements.type.disabled = isSaving;
     this.elements.save.textContent = isSaving
       ? "Saving..."
-      : "Save service";
+      : this.mode === "edit"
+        ? "Save changes"
+        : "Save service";
   }
 
   showError(message) {
@@ -583,15 +591,37 @@ export class ServiceDrawer {
   }
 }
 
-function toLocalDateTimeValue(date) {
-  const offset = date.getTimezoneOffset();
-  const local = new Date(
-    date.getTime() - offset * 60_000
-  );
+function parseNotes(value) {
+  const text = String(value || "").trim();
 
-  return local.toISOString().slice(0, 16);
+  if (!text.startsWith("[Add-ons]")) {
+    return { addOns: [], notes: text };
+  }
+
+  const parts = text.split(/\n\s*\n/);
+  const addOnBlock = parts.shift() || "";
+
+  const addOns = addOnBlock
+    .split("\n")
+    .slice(1)
+    .map((line) => line.replace(/^\s*-\s*/, "").trim())
+    .filter(Boolean);
+
+  return {
+    addOns,
+    notes: parts.join("\n\n").trim(),
+  };
 }
 
+function toLocalDateTimeValue(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60_000);
+  return local.toISOString().slice(0, 16);
+}
 
 function escapeHtml(value) {
   return String(value ?? "")

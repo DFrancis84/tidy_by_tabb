@@ -272,3 +272,13 @@ body.drawer-open .developer-toggle {
     min-height: 52px;
   }
 }
+
+
+.service-form-is-loading .service-form-grid {
+  opacity: .5;
+  pointer-events: none;
+}
+
+.service-form-is-loading + .drawer-actions {
+  pointer-events: none;
+}

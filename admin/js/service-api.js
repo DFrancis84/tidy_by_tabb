@@ -44,6 +44,29 @@ export class ServiceApi {
     );
   }
 
+  async detail(serviceId) {
+    return this.request(
+      "services.detail",
+      `${SERVICES_API_URL}/${encodeURIComponent(serviceId)}`,
+      { method: "GET" }
+    );
+  }
+
+  async update(serviceId, service) {
+    return this.request(
+      "services.update",
+      `${SERVICES_API_URL}/${encodeURIComponent(serviceId)}`,
+      {
+        method: "PATCH",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(service),
+      }
+    );
+  }
+
   async request(action, url, options) {
     const started = performance.now();
     let response;
