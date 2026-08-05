@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+  <title>Cleaning Request API Test</title>
+  <style>
+    body {
+      max-width: 760px;
+      margin: 40px auto;
+      padding: 0 20px;
+      font-family: system-ui, sans-serif;
+    }
+
+    form {
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      font-weight: 700;
+    }
+
+    input,
+    textarea,
+    button {
+      padding: 10px;
+      font: inherit;
+    }
+
+    pre {
+      min-height: 120px;
+      padding: 14px;
+      overflow: auto;
+      background: #f3f5f8;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cleaning Request API Test</h1>
+  <p>
+    Temporary test page. Remove it after the public request form is
+    connected.
+  </p>
+
+  <form id="requestForm">
+    <label>
+      First name
+      <input name="firstName" required>
+    </label>
+
+    <label>
+      Last name
+      <input name="lastName" required>
+    </label>
+
+    <label>
+      Email
+      <input name="email" type="email">
+    </label>
+
+    <label>
+      Phone
+      <input name="phone">
+    </label>
+
+    <label>
+      Service type
+      <input
+        name="serviceType"
+        value="Deep Cleaning"
+        required
+      >
+    </label>
+
+    <label>
+      Preferred date
+      <input name="preferredDate" type="date">
+    </label>
+
+    <label>
+      Notes
+      <textarea name="notes"></textarea>
+    </label>
+
+    <button type="submit">Submit test request</button>
+  </form>
+
+  <h2>Response</h2>
+  <pre id="result">Waiting...</pre>
+
+  <script>
+    const form = document.getElementById("requestForm");
+    const result = document.getElementById("result");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      result.textContent = "Submitting...";
+
+      const values = Object.fromEntries(
+        new FormData(form).entries()
+      );
+
+      const payload = {
+        ...values,
+        addOns: ["Inside Oven", "Baseboards"],
+      };
+
+      try {
+        const response = await fetch(
+          "/api/cleaning-requests",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+
+        const body = await response.json();
+
+        result.textContent = JSON.stringify(
+          {
+            status: response.status,
+            body,
+          },
+          null,
+          2
+        );
+      } catch (error) {
+        result.textContent = String(error);
+      }
+    });
+  </script>
+</body>
+</html>
