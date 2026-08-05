@@ -38,6 +38,9 @@
       lastName: String(formData.get("lastName") || "").trim(),
       email: optionalText(formData, "email"),
       phone: optionalText(formData, "phone"),
+      preferredContactMethod: String(
+        formData.get("preferredContactMethod") || ""
+      ).trim(),
       addressLine1: optionalText(formData, "addressLine1"),
       addressLine2: optionalText(formData, "addressLine2"),
       city: optionalText(formData, "city"),
@@ -55,6 +58,9 @@
       pets: optionalText(formData, "pets"),
       entryInstructions: optionalText(formData, "entryInstructions"),
       notes: optionalText(formData, "notes"),
+      referredBy: optionalText(formData, "referredBy"),
+      mailingListOptIn:
+        formData.get("mailingListOptIn") === "true",
     };
   };
 
@@ -62,6 +68,24 @@
     if (!payload.email && !payload.phone) {
       throw new Error(
         "Please provide at least an email address or phone number."
+      );
+    }
+
+    if (
+      payload.preferredContactMethod === "email" &&
+      !payload.email
+    ) {
+      throw new Error(
+        "Please provide an email address or choose a different contact method."
+      );
+    }
+
+    if (
+      payload.preferredContactMethod === "phone" &&
+      !payload.phone
+    ) {
+      throw new Error(
+        "Please provide a phone number or choose a different contact method."
       );
     }
   };
@@ -116,15 +140,22 @@
       );
 
       form.reset();
+
       const stateInput = form.elements.namedItem("state");
       if (stateInput) {
-        stateInput.value = "Kentucky";
+        stateInput.value = "KY";
       }
 
       status.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
       });
+
+      window.setTimeout(() => {
+        if (modal.open) {
+          modal.close();
+        }
+      }, 3000);
     } catch (error) {
       setStatus(
         error?.message ||
