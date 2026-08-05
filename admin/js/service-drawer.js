@@ -1,17 +1,19 @@
 const CLIENT_PAGE_SIZE = 100;
 const SERVICE_CONFIG_URL =
-  "./config/service-options.json?v=20260804-6";
+  "./config/service-options.json?v=20260804-9";
 
 export class ServiceDrawer {
   constructor({
     api,
     clientApi,
     onSaved = () => {},
+    onDeleted = () => {},
     onError = () => {},
   }) {
     this.api = api;
     this.clientApi = clientApi;
     this.onSaved = onSaved;
+    this.onDeleted = onDeleted;
     this.onError = onError;
     this.isSaving = false;
     this.mode = "create";
@@ -34,6 +36,7 @@ export class ServiceDrawer {
       close: document.getElementById("serviceDrawerClose"),
       cancel: document.getElementById("serviceCancel"),
       save: document.getElementById("saveService"),
+      delete: document.getElementById("deleteService"),
       loading: document.getElementById("serviceClientLoading"),
       error: document.getElementById("serviceFormError"),
       client: document.getElementById("serviceClientId"),
@@ -152,7 +155,16 @@ export class ServiceDrawer {
               </div>
             </div>
 
-            <div class="drawer-actions">
+            <div class="drawer-actions service-drawer-actions">
+              <button
+                id="deleteService"
+                class="button button-danger service-delete-button"
+                type="button"
+                hidden
+              >
+                Delete service
+              </button>
+
               <div class="drawer-actions-right">
                 <button id="serviceCancel" class="button button-secondary" type="button">
                   Cancel
@@ -172,6 +184,7 @@ export class ServiceDrawer {
     this.elements.form.addEventListener("submit", (event) => this.submit(event));
     this.elements.close.addEventListener("click", () => this.close());
     this.elements.cancel.addEventListener("click", () => this.close());
+    this.elements.delete.addEventListener("click", () => this.deleteService());
     this.elements.backdrop.addEventListener("click", () => this.close());
 
     document.addEventListener("keydown", (event) => {
@@ -248,6 +261,7 @@ export class ServiceDrawer {
         : "Schedule a cleaning service for an active client.";
     this.elements.save.textContent =
       this.mode === "edit" ? "Save changes" : "Save service";
+    this.elements.delete.hidden = this.mode !== "edit";
     this.elements.status.value = "scheduled";
     this.elements.client.replaceChildren(new Option("Select a client", ""));
     this.elements.type.replaceChildren(new Option("Select a service", ""));
@@ -507,6 +521,72 @@ export class ServiceDrawer {
     return payload;
   }
 
+  async deleteService() {
+    if (
+      this.isSaving ||
+      this.mode !== "edit" ||
+      !this.serviceId
+    ) {
+      return;
+    }
+
+    if (
+      !Number.isInteger(this.version) ||
+      this.version < 1
+    ) {
+      this.showError(
+        "This service is missing its concurrency version. Refresh and try again."
+      );
+      return;
+    }
+
+    const serviceName =
+      this.selectedServiceName() || "this service";
+
+    const confirmed = window.confirm(
+      `Delete ${serviceName}?\n\n` +
+      "This removes it from the active dashboard but preserves its history."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.hideError();
+    this.setSaving(true);
+    this.elements.delete.textContent = "Deleting...";
+
+    try {
+      const response = await this.api.delete(
+        this.serviceId,
+        this.version
+      );
+
+      const service =
+        response?.data?.service ??
+        response?.data;
+
+      if (!service?.id) {
+        throw new Error(
+          "The service was deleted, but the API response was incomplete."
+        );
+      }
+
+      this.setSaving(false);
+      this.elements.delete.textContent = "Delete service";
+      this.close();
+      await this.onDeleted(service);
+    } catch (error) {
+      this.setSaving(false);
+      this.elements.delete.textContent = "Delete service";
+      this.showError(
+        error.message ||
+          "The service could not be deleted."
+      );
+      this.onError(error);
+    }
+  }
+
   async submit(event) {
     event.preventDefault();
     if (this.isSaving) return;
@@ -565,6 +645,7 @@ export class ServiceDrawer {
   setSaving(isSaving) {
     this.isSaving = isSaving;
     this.elements.save.disabled = isSaving;
+    this.elements.delete.disabled = isSaving;
     this.elements.cancel.disabled = isSaving;
     this.elements.close.disabled = isSaving;
     this.elements.client.disabled = isSaving;

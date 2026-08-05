@@ -1,14 +1,14 @@
-import { GalleryApi } from "./api.js?v=20260804-8";
-import { ClientApi } from "./client-api.js?v=20260804-8";
-import { ClientsController } from "./clients.js?v=20260804-8";
-import { ServiceApi } from "./service-api.js?v=20260804-8";
-import { ServicesController } from "./services.js?v=20260804-8";
-import { ServiceDrawer } from "./service-drawer.js?v=20260804-8";
-import { ClientDrawer } from "./client-drawer.js?v=20260804-8";
-import { DeveloperPanel } from "./developer.js?v=20260804-8";
-import { GalleryDrawer } from "./drawer.js?v=20260804-8";
-import { GalleryController } from "./gallery.js?v=20260804-8";
-import { toast, switchView } from "./ui.js?v=20260804-8";
+import { GalleryApi } from "./api.js?v=20260804-9";
+import { ClientApi } from "./client-api.js?v=20260804-9";
+import { ClientsController } from "./clients.js?v=20260804-9";
+import { ServiceApi } from "./service-api.js?v=20260804-9";
+import { ServicesController } from "./services.js?v=20260804-9";
+import { ServiceDrawer } from "./service-drawer.js?v=20260804-9";
+import { ClientDrawer } from "./client-drawer.js?v=20260804-9";
+import { DeveloperPanel } from "./developer.js?v=20260804-9";
+import { GalleryDrawer } from "./drawer.js?v=20260804-9";
+import { GalleryController } from "./gallery.js?v=20260804-9";
+import { toast, switchView } from "./ui.js?v=20260804-9";
 
 const developer = new DeveloperPanel();
 
@@ -106,6 +106,15 @@ serviceDrawer = new ServiceDrawer({
         ? `${service.service_type} was added` +
           `${clientName ? ` for ${clientName}` : ""}.`
         : `${service.service_type} was updated.`,
+      "success"
+    );
+
+    services.resetToFirstPage();
+    await services.load();
+  },
+  onDeleted: async (service) => {
+    toast(
+      `${service.service_type || "Service"} was deleted.`,
       "success"
     );
 
