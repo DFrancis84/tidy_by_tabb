@@ -1,71 +1,81 @@
-TIDY BY TABB CLEANING REQUESTS ADMIN INBOX
+TIDY BY TABB ADMIN REQUESTS ROUTE FIX
 
-Branch:
-cms-v2-cleaning-requests-admin-inbox
+This package removes the actorEmail confusion.
 
-ADD THESE FILES
+FILES
 
-admin/requests.html
-admin/css/requests-inbox.css
-admin/js/requests-api.js
-admin/js/requests-inbox.js
-cloudflare-worker/src/cleaning-requests-admin.js
+1. cloudflare-worker/src/cleaning-requests-admin.js
+   Add or replace this Worker module.
 
-UPDATE
+2. INDEX-IMPORT.js.txt
+   Copy this import to the very top of the main Worker index.js,
+   immediately after the existing public-cleaning-requests import.
 
-cloudflare-worker/src/index.js
-admin/index.html
+3. INDEX-AUTHENTICATED-ROUTE.js.txt
+   Copy this route block into the main Worker index.js.
 
-Use INDEX-CHANGES.txt for the exact small edits.
+EXACT PLACEMENT
 
-FEATURES
+Inside export default > async fetch(request, env), find this existing
+admin authentication block:
 
-- Searchable and filterable request inbox
-- Statuses: new, needs review, contacted, accepted, declined,
-  converted, and archived
-- Full customer, property, request, referral, contact preference,
-  mailing-list, and add-on details
-- Internal notes
-- Client-match conflict warning
-- Optimistic concurrency for request updates
-- Accept & Create Service workflow
-- Converted-service link information
-- Mobile-friendly standalone Requests workspace
+      const claims = await verifyAccessJwt(jwt, env);
+      const actorEmail = normalizeEmail(claims.email);
 
-DEPLOYMENT
+      if (!actorEmail) {
+        throw new HttpError(
+          401,
+          "Authenticated email is required."
+        );
+      }
 
-1. Upload all new files and apply INDEX-CHANGES.txt.
-2. Merge the branch.
-3. In the Cloudflare Worker editor, add:
-   cleaning-requests-admin.js
-4. Update index.js with the import and route handler.
-5. Deploy the Worker.
-6. Wait for GitHub Pages.
-7. Open:
-   https://www.tidybytabb.com/admin/requests.html
+      const allowedEmails = parseAllowedEmails(
+        env.ALLOWED_ADMIN_EMAILS
+      );
 
-No new D1 migration is required for this slice.
+      if (!allowedEmails.has(actorEmail)) {
+        throw new HttpError(
+          403,
+          "Administrator access is denied."
+        );
+      }
 
-TESTS
+Paste INDEX-AUTHENTICATED-ROUTE.js.txt IMMEDIATELY AFTER that block.
 
-1. Open the inbox and verify requests load.
-2. Filter by New and Needs review.
-3. Search by customer email or phone.
-4. Open a request and save internal notes.
-5. Mark a request Contacted.
-6. Open a request with a linked client.
-7. Enter a scheduled start and click Accept & Create Service.
-8. Confirm the request becomes Converted.
-9. Confirm the new service appears in Services.
-10. Open two browser tabs on the same request, save in one, then save
-    in the stale tab. Expect a 409 refresh message.
+The order must be:
 
-IMPORTANT CONVERSION RULE
+1. Origin validation
+2. Public cleaning request route
+3. Cloudflare Access JWT validation
+4. actorEmail creation
+5. Allowed-admin-email validation
+6. Cleaning Requests admin route
+7. Existing health, reviews, services, clients, and gallery routes
 
-Requests with a client match conflict cannot be converted until a
-future conflict-resolution workflow links the correct client. The inbox
-shows the conflict clearly and disables conversion.
+IMPORTANT
+
+Delete any earlier copy of the Cleaning Requests admin route before
+pasting the corrected block. There should be exactly one call to:
+
+handleCleaningRequestsAdminRoute
+
+The import does not count as a call.
+
+WHY IT FAILED
+
+The prior route block was placed where actorEmail was not available.
+This route is an administrator route, so it must run after Cloudflare
+Access authentication creates actorEmail.
+
+DEPLOY
+
+1. Replace/add cleaning-requests-admin.js in Cloudflare.
+2. Fix index.js using the two supplied text files.
+3. Deploy the Worker.
+4. Open /admin/requests.html.
+
+No D1 migration is required.
 
 COMMIT MESSAGE
 
-Add cleaning requests admin inbox
+Fix authenticated cleaning requests route
