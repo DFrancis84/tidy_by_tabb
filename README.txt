@@ -1,92 +1,111 @@
-TIDY BY TABB CLEANING REQUESTS SCHEMA
+TIDY BY TABB PUBLIC CLEANING REQUEST API
 
 Branch:
-cms-v2-cleaning-requests-schema
+cms-v2-cleaning-requests-api
 
 ADD:
-cloudflare-worker/migrations/0004_create_cleaning_requests.sql
+cloudflare-worker/src/public-cleaning-requests.js
 
-WHAT THIS MIGRATION CREATES
+UPDATE:
+cloudflare-worker/src/index.js
 
-- cleaning_requests table
-- Optional link to an existing or newly created client
-- Optional link to the Service created from an accepted request
-- Submitted contact and address snapshot
-- Normalized email and phone fields for exact matching
-- Requested service type and JSON add-on list
-- Preferred date and time window
-- Property details and customer notes
-- Private internal notes
-- Request status and match status
-- Soft-delete fields
-- Optimistic concurrency through version
-- Foreign keys to clients and services
-- Indexes for admin inbox, matching, and conversion
+OPTIONAL TEMPORARY TEST PAGE:
+cloudflare-worker/test/public-cleaning-request.html
 
-REQUEST STATUSES
+Use INDEX-CHANGES.txt for the two exact index.js edits.
 
-- new
-- needs_review
-- contacted
-- accepted
-- declined
-- converted
-- archived
+ENDPOINT
 
-MATCH STATUSES
+POST /api/cleaning-requests
 
-- new_client
-- matched_email
-- matched_phone
-- matched_email_and_phone
-- conflict
-- unmatched
+This endpoint is public, but it still requires the request Origin to be:
+https://www.tidybytabb.com
 
-IMPORTANT DESIGN NOTES
+MATCHING RULES
 
-1. requested_add_ons is JSON text and must contain a valid JSON value.
-   The submission API will store an array such as:
+1. Exact normalized email and exact normalized phone match the same
+   active client:
+   - use that client
+   - match_status = matched_email_and_phone
 
-   ["Inside Oven", "Baseboards"]
+2. Only email matches:
+   - use that client
+   - match_status = matched_email
 
-2. The request preserves exactly what the customer submitted, even when
-   it links to an existing client.
+3. Only phone matches:
+   - use that client
+   - match_status = matched_phone
 
-3. The migration does not yet change the public form or Worker routes.
-   Those belong to the next API slice.
+4. Neither matches:
+   - create a new client
+   - match_status = new_client
 
-4. The migration does not create a Service. A Service is created later
-   only after Tabb reviews and accepts the request.
+5. Email and phone point to different clients, or either value matches
+   multiple active clients:
+   - do not guess
+   - do not create a new client
+   - create request with client_id = NULL
+   - match_status = conflict
+   - status = needs_review
 
-APPLY TO D1
+SECURITY
 
-Using the Cloudflare dashboard:
+- Public route is handled before Cloudflare Access JWT validation.
+- The existing origin allowlist still applies.
+- All /admin/api routes remain protected.
+- Payload size is limited to 64 KB.
+- Unknown fields are rejected.
+- Input lengths and numeric ranges are validated.
+- The response does not reveal an existing client's identity.
 
-1. Open Workers & Pages.
-2. Open D1.
-3. Select the tidy-by-tabb database.
-4. Open Console.
-5. Paste the full contents of:
-   cloudflare-worker/migrations/0004_create_cleaning_requests.sql
-6. Run the statement.
+DEPLOY
 
-VERIFY
+1. Upload the new module.
+2. Apply both index.js changes.
+3. Deploy the Worker.
+4. Do not connect the real homepage form yet.
+5. Use the temporary test page or browser console to test.
 
-Run the statements from VERIFY.sql.
+TEST CASES
 
-Expected:
-- cleaning_requests exists as a table
-- version defaults to 1
-- status defaults to new
-- match_status defaults to unmatched
-- cleaning_request_count is 0
+A. New customer
+- Use a unique email and phone.
+- Expect clientCreated = true.
+- Confirm one client and one cleaning_requests row were created.
+
+B. Returning customer by email
+- Reuse the email with a different phone.
+- Expect clientMatched = true and clientCreated = false.
+- Confirm no duplicate client was created.
+
+C. Returning customer by phone
+- Reuse the phone with a different email.
+- Expect clientMatched = true and clientCreated = false.
+
+D. Both match the same customer
+- Reuse both.
+- Expect clientMatched = true.
+
+E. Conflict
+- Use one client's email and another client's phone.
+- Expect requiresManualReview = true.
+- Confirm request status is needs_review and client_id is NULL.
+
+D1 CHECK
+
+SELECT
+  id,
+  client_id,
+  submitted_first_name,
+  submitted_last_name,
+  submitted_email,
+  submitted_phone,
+  match_status,
+  status,
+  created_at
+FROM cleaning_requests
+ORDER BY created_at DESC;
 
 COMMIT MESSAGE
 
-Add cleaning requests schema
-
-ROLLBACK DURING DEVELOPMENT ONLY
-
-Do not run this after real request data exists.
-
-DROP TABLE cleaning_requests;
+Add public cleaning request API
