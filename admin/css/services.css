@@ -300,3 +300,18 @@ body.drawer-open .developer-toggle {
   color: var(--muted);
   font-size: .9rem;
 }
+
+
+/* Services dashboard phone cleanup */
+.service-phone-link {
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.service-client small {
+  font-family: inherit;
+  font-size: .82rem;
+  line-height: 1.25;
+}
