@@ -1371,12 +1371,16 @@ async function handleServicesListRequest(
   }
 
   if (from) {
-    conditions.push("s.scheduled_start >= ?");
+    conditions.push(
+      "datetime(s.scheduled_start) >= datetime(?)"
+    );
     parameters.push(from);
   }
 
   if (to) {
-    conditions.push("s.scheduled_start <= ?");
+    conditions.push(
+      "datetime(s.scheduled_start) <= datetime(?)"
+    );
     parameters.push(to);
   }
 
@@ -1404,7 +1408,7 @@ async function handleServicesListRequest(
         s.version,
         c.first_name AS client_first_name,
         c.last_name AS client_last_name,
-        c.phone AS client_phone,
+        c.phone AS client_phone
       FROM services AS s
       INNER JOIN clients AS c
         ON c.id = s.client_id
@@ -1414,8 +1418,8 @@ async function handleServicesListRequest(
           WHEN s.scheduled_start IS NULL THEN 1
           ELSE 0
         END ASC,
-        s.scheduled_start ASC,
-        s.created_at DESC
+        datetime(s.scheduled_start) ASC,
+        datetime(s.created_at) DESC
       LIMIT ?
       OFFSET ?
     `
@@ -1461,7 +1465,8 @@ async function handleServicesListRequest(
         offset,
         returned: services.length,
         total,
-        hasMore: offset + services.length < total,
+        hasMore:
+          offset + services.length < total,
       },
       timestamp: new Date().toISOString(),
     },
