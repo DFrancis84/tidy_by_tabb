@@ -1,81 +1,61 @@
-TIDY BY TABB ADMIN REQUESTS ROUTE FIX
+TIDY BY TABB CMS REQUESTS LINK
 
-This package removes the actorEmail confusion.
+GOAL
 
-FILES
+Add a Requests item to the existing CMS sidebar. Clicking it opens
+admin/requests.html. The Requests page already has a Back to CMS button.
 
-1. cloudflare-worker/src/cleaning-requests-admin.js
-   Add or replace this Worker module.
+FILES IN THIS PACKAGE
 
-2. INDEX-IMPORT.js.txt
-   Copy this import to the very top of the main Worker index.js,
-   immediately after the existing public-cleaning-requests import.
+NAVIGATION-LINK.html
+STYLES-ADD.css
 
-3. INDEX-AUTHENTICATED-ROUTE.js.txt
-   Copy this route block into the main Worker index.js.
+ADMIN INDEX CHANGE
 
-EXACT PLACEMENT
+Open admin/index.html.
 
-Inside export default > async fetch(request, env), find this existing
-admin authentication block:
+Inside:
 
-      const claims = await verifyAccessJwt(jwt, env);
-      const actorEmail = normalizeEmail(claims.email);
+<nav class="sidebar-nav">
 
-      if (!actorEmail) {
-        throw new HttpError(
-          401,
-          "Authenticated email is required."
-        );
-      }
+Paste NAVIGATION-LINK.html immediately after the Services button:
 
-      const allowedEmails = parseAllowedEmails(
-        env.ALLOWED_ADMIN_EMAILS
-      );
+<button class="nav-item" data-view="services">Services</button>
 
-      if (!allowedEmails.has(actorEmail)) {
-        throw new HttpError(
-          403,
-          "Administrator access is denied."
-        );
-      }
+The finished area should look like:
 
-Paste INDEX-AUTHENTICATED-ROUTE.js.txt IMMEDIATELY AFTER that block.
+<button class="nav-item" data-view="dashboard">Dashboard</button>
+<button class="nav-item" data-view="clients">Clients</button>
+<button class="nav-item" data-view="services">Services</button>
+<a class="nav-item nav-link" href="requests.html">
+  Requests
+</a>
+<button class="nav-item" data-view="gallery">Gallery</button>
 
-The order must be:
+ADMIN CSS CHANGE
 
-1. Origin validation
-2. Public cleaning request route
-3. Cloudflare Access JWT validation
-4. actorEmail creation
-5. Allowed-admin-email validation
-6. Cleaning Requests admin route
-7. Existing health, reviews, services, clients, and gallery routes
+Open admin/css/styles.css and paste STYLES-ADD.css at the bottom.
 
-IMPORTANT
+REQUESTS PAGE
 
-Delete any earlier copy of the Cleaning Requests admin route before
-pasting the corrected block. There should be exactly one call to:
+admin/requests.html already contains:
 
-handleCleaningRequestsAdminRoute
+Back to CMS
 
-The import does not count as a call.
-
-WHY IT FAILED
-
-The prior route block was placed where actorEmail was not available.
-This route is an administrator route, so it must run after Cloudflare
-Access authentication creates actorEmail.
+which links to index.html.
 
 DEPLOY
 
-1. Replace/add cleaning-requests-admin.js in Cloudflare.
-2. Fix index.js using the two supplied text files.
-3. Deploy the Worker.
-4. Open /admin/requests.html.
+1. Update admin/index.html.
+2. Update admin/css/styles.css.
+3. Merge.
+4. Wait for GitHub Pages.
+5. Open /admin/.
+6. Click Requests.
+7. Confirm Back to CMS returns to /admin/index.html.
 
-No D1 migration is required.
+This change does not touch the Worker, D1, or the public homepage.
 
 COMMIT MESSAGE
 
-Fix authenticated cleaning requests route
+Add Requests link to CMS navigation
