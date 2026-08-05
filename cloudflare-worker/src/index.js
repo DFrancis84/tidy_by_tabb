@@ -1,3 +1,8 @@
+import {
+  handlePublicCleaningRequest,
+  isPublicCleaningRequest,
+} from "./public-cleaning-requests.js";
+
 const ALLOWED_ORIGIN = "https://www.tidybytabb.com";
 const ALLOWED_ACTIONS = new Set([
   "create",
@@ -42,6 +47,18 @@ export default {
         throw new HttpError(403, "Origin is not allowed.");
       }
 
+      const url = new URL(request.url);
+
+      if (isPublicCleaningRequest(request, url)) {
+        return await handlePublicCleaningRequest(
+          request,
+          env,
+          origin,
+          jsonResponse,
+          HttpError
+        );
+      }
+      
       const jwt = request.headers.get("Cf-Access-Jwt-Assertion");
       if (!jwt) {
         throw new HttpError(401, "Authentication is required.");
@@ -58,8 +75,6 @@ export default {
       if (!allowedEmails.has(actorEmail)) {
         throw new HttpError(403, "Administrator access is denied.");
       }
-
-      const url = new URL(request.url);
 
       if (
         request.method === "GET" &&
