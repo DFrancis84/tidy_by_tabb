@@ -8,6 +8,11 @@ import {
   isCleaningRequestsAdminRoute,
 } from "./cleaning-requests-admin.js";
 
+import {
+  handleCleaningRequestConflictRoute,
+  isCleaningRequestConflictRoute,
+} from "./cleaning-request-conflicts.js";
+
 const ALLOWED_ORIGIN = "https://www.tidybytabb.com";
 const ALLOWED_ACTIONS = new Set([
   "create",
@@ -88,6 +93,23 @@ export default {
         )
       ) {
         return await handleCleaningRequestsAdminRoute({
+          request,
+          url,
+          env,
+          actorEmail,
+          origin,
+          jsonResponse,
+          HttpError,
+        });
+      }
+
+      if (
+        isCleaningRequestConflictRoute(
+          request,
+          url
+        )
+      ) {
+        return await handleCleaningRequestConflictRoute({
           request,
           url,
           env,
