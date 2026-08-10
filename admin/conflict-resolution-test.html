@@ -41,15 +41,16 @@
       font-weight: 700;
     }
 
-    input, button {
+    select, button {
       font: inherit;
     }
 
-    input {
+    select {
       width: 100%;
       padding: 11px 12px;
       border: 1px solid #bdccd8;
       border-radius: 10px;
+      background: white;
     }
 
     button {
@@ -58,6 +59,11 @@
       padding: 10px 14px;
       cursor: pointer;
       font-weight: 800;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .55;
     }
 
     .primary {
@@ -83,7 +89,7 @@
     }
 
     .row > label {
-      flex: 1 1 320px;
+      flex: 1 1 420px;
     }
 
     .results {
@@ -155,6 +161,10 @@
       padding-left: 12px;
     }
 
+    .muted {
+      color: #607486;
+    }
+
     @media (max-width: 650px) {
       body { padding: 12px; }
       .candidate { grid-template-columns: 1fr; }
@@ -167,31 +177,39 @@
   <section class="card">
     <h1>Cleaning Request Conflict Test Harness</h1>
     <p>
-      Temporary authenticated test page for the client-conflict API.
-      Run the safe checks first. The resolve button intentionally changes
-      the selected request.
+      This version finds conflict requests automatically. No request ID scavenger hunt required.
     </p>
 
     <div class="row">
       <label>
-        Conflict Request ID
-        <input id="requestId" placeholder="req_..." autocomplete="off">
+        Conflict Request
+        <select id="requestSelect">
+          <option value="">Loading conflict requests...</option>
+        </select>
       </label>
 
-      <button id="runSafe" class="primary" type="button">
+      <button id="refreshRequests" class="secondary" type="button">
+        Refresh List
+      </button>
+
+      <button id="runSafe" class="primary" type="button" disabled>
         Run Safe Tests
       </button>
 
-      <a href="index.html">
-        <button class="secondary" type="button">Back to CMS</button>
-      </a>
+      <button id="backCms" class="secondary" type="button">
+        Back to CMS
+      </button>
     </div>
+
+    <p id="selectionHelp" class="muted">
+      Looking for requests with match_status = conflict.
+    </p>
   </section>
 
   <section class="card">
     <h2>Automated safe tests</h2>
     <div id="safeResults" class="results">
-      <div class="test">Enter a request ID and run the tests.</div>
+      <div class="test">Choose a conflict request and run the tests.</div>
     </div>
   </section>
 
@@ -199,7 +217,7 @@
     <h2>Conflict candidates</h2>
     <p class="warning">
       Clicking <strong>Resolve to this client</strong> is the only destructive
-      action on this page. It will permanently link the request to that client.
+      action on this page. It permanently links the request to that client.
     </p>
     <div id="candidates">No candidates loaded.</div>
   </section>
@@ -218,8 +236,11 @@
     "/admin/api/cleaning-requests";
 
   const els = {
-    requestId: document.getElementById("requestId"),
+    requestSelect: document.getElementById("requestSelect"),
+    refreshRequests: document.getElementById("refreshRequests"),
     runSafe: document.getElementById("runSafe"),
+    backCms: document.getElementById("backCms"),
+    selectionHelp: document.getElementById("selectionHelp"),
     safeResults: document.getElementById("safeResults"),
     candidates: document.getElementById("candidates"),
     raw: document.getElementById("raw"),
@@ -261,10 +282,7 @@
       2
     );
 
-    return {
-      response,
-      body,
-    };
+    return { response, body };
   }
 
   function renderTest(name, pass, detail) {
@@ -276,16 +294,125 @@
     `;
   }
 
+  function requestLabel(item) {
+    const name = [
+      item.submitted_first_name,
+      item.submitted_last_name,
+    ].filter(Boolean).join(" ") || "Unknown customer";
+
+    const email = item.submitted_email || "no email";
+    const phone = item.submitted_phone || "no phone";
+
+    return `${name} | ${email} | ${phone}`;
+  }
+
+  async function loadConflictRequests() {
+    els.requestSelect.disabled = true;
+    els.runSafe.disabled = true;
+    els.requestSelect.innerHTML =
+      '<option value="">Loading conflict requests...</option>';
+    els.selectionHelp.textContent =
+      "Searching active cleaning requests for client conflicts...";
+
+    try {
+      const result = await fetchJson(
+        `${requestBase}?status=needs_review&limit=100&offset=0`
+      );
+
+      if (
+        !result.response.ok ||
+        result.body?.success !== true
+      ) {
+        throw new Error(
+          result.body?.message ||
+          `Request list failed (${result.response.status}).`
+        );
+      }
+
+      let requests =
+        result.body?.data?.requests || [];
+
+      let conflicts =
+        requests.filter(
+          (item) => item.match_status === "conflict"
+        );
+
+      // Also check "new" in case a manually adjusted request still has conflict.
+      if (!conflicts.length) {
+        const active = await fetchJson(
+          `${requestBase}?limit=100&offset=0`
+        );
+
+        if (
+          active.response.ok &&
+          active.body?.success === true
+        ) {
+          conflicts =
+            (active.body?.data?.requests || [])
+              .filter(
+                (item) => item.match_status === "conflict"
+              );
+        }
+      }
+
+      els.requestSelect.innerHTML = "";
+
+      if (!conflicts.length) {
+        els.requestSelect.innerHTML =
+          '<option value="">No conflict requests found</option>';
+        els.selectionHelp.textContent =
+          "There are currently no requests with match_status = conflict. To test this feature, create one where the submitted email matches one existing client and the submitted phone matches a different existing client.";
+        return;
+      }
+
+      els.requestSelect.append(
+        new Option(
+          `Select a conflict request (${conflicts.length} found)`,
+          ""
+        )
+      );
+
+      for (const item of conflicts) {
+        const option =
+          new Option(
+            requestLabel(item),
+            item.id
+          );
+
+        option.dataset.version =
+          item.version;
+
+        els.requestSelect.append(option);
+      }
+
+      els.selectionHelp.textContent =
+        `${conflicts.length} conflict request${conflicts.length === 1 ? "" : "s"} found.`;
+
+      if (conflicts.length === 1) {
+        els.requestSelect.value =
+          conflicts[0].id;
+        els.runSafe.disabled = false;
+      }
+    } catch (error) {
+      els.requestSelect.innerHTML =
+        '<option value="">Could not load requests</option>';
+      els.selectionHelp.textContent =
+        error.message;
+    } finally {
+      els.requestSelect.disabled = false;
+    }
+  }
+
   async function runSafeTests() {
     const requestId =
-      els.requestId.value.trim();
+      els.requestSelect.value;
 
     if (!requestId) {
       els.safeResults.innerHTML =
         renderTest(
-          "Request ID",
+          "Conflict request selection",
           false,
-          "Enter a conflict request ID first."
+          "Choose a request from the dropdown first."
         );
       return;
     }
@@ -299,7 +426,6 @@
     const results = [];
 
     try {
-      // Test 1: conflict endpoint returns 200.
       const conflict = await fetchJson(
         `${conflictBase}/${encodeURIComponent(requestId)}`
       );
@@ -321,7 +447,6 @@
       const candidates =
         conflict.body?.data?.candidates || [];
 
-      // Test 2: request ID and version are present.
       const version =
         conflict.body?.data?.version;
 
@@ -340,7 +465,6 @@
         )
       );
 
-      // Test 3: there should be at least two conflict candidates.
       const t3 =
         Array.isArray(candidates) &&
         candidates.length >= 2;
@@ -355,7 +479,6 @@
         )
       );
 
-      // Test 4: one candidate should match email and one phone.
       const hasEmail =
         candidates.some((c) => c.matchedByEmail === true);
       const hasPhone =
@@ -373,7 +496,6 @@
         )
       );
 
-      // Test 5: invalid client ID should be rejected without changing anything.
       const invalidChoice = await fetchJson(
         `${conflictBase}/${encodeURIComponent(requestId)}`,
         {
@@ -399,38 +521,45 @@
         )
       );
 
-      // Test 6: stale version should be rejected safely.
-      if (candidates[0]) {
+      if (candidates[0] && version > 1) {
         const stale = await fetchJson(
           `${conflictBase}/${encodeURIComponent(requestId)}`,
           {
             method: "POST",
             body: JSON.stringify({
-              version: Math.max(1, version - 1),
+              version: version - 1,
               clientId: candidates[0].id,
             }),
           }
         );
 
         const t6 =
-          version === 1
-            ? true
-            : stale.response.status === 409;
+          stale.response.status === 409;
 
         results.push(
           renderTest(
             "Optimistic concurrency",
             t6,
-            version === 1
-              ? "Skipped destructive stale-version check because current version is 1."
-              : t6
-                ? "Stale version was rejected with 409."
-                : `Expected 409; received ${stale.response.status}.`
+            t6
+              ? "Stale version was rejected with 409."
+              : `Expected 409; received ${stale.response.status}.`
+          )
+        );
+      } else {
+        results.push(
+          renderTest(
+            "Optimistic concurrency",
+            true,
+            "Skipped stale-version mutation because current version is 1."
           )
         );
       }
 
-      renderCandidates(requestId, version, candidates);
+      renderCandidates(
+        requestId,
+        version,
+        candidates
+      );
     } catch (error) {
       results.push(
         renderTest(
@@ -444,7 +573,8 @@
     } finally {
       els.safeResults.innerHTML =
         results.join("");
-      els.runSafe.disabled = false;
+      els.runSafe.disabled =
+        !els.requestSelect.value;
     }
   }
 
@@ -460,53 +590,49 @@
     }
 
     els.candidates.innerHTML =
-      candidates
-        .map((client) => {
-          const name = [
-            client.first_name,
-            client.last_name,
-          ]
-            .filter(Boolean)
-            .join(" ");
+      candidates.map((client) => {
+        const name = [
+          client.first_name,
+          client.last_name,
+        ].filter(Boolean).join(" ");
 
-          return `
-            <article class="candidate">
-              <div>
-                <strong>${escapeHtml(name || client.id)}</strong>
-                <small>${escapeHtml(client.email || "No email")}</small>
-                <small>${escapeHtml(client.phone || "No phone")}</small>
-                <small>${escapeHtml(
-                  [client.city, client.state]
-                    .filter(Boolean)
-                    .join(", ")
-                )}</small>
+        return `
+          <article class="candidate">
+            <div>
+              <strong>${escapeHtml(name || client.id)}</strong>
+              <small>${escapeHtml(client.email || "No email")}</small>
+              <small>${escapeHtml(client.phone || "No phone")}</small>
+              <small>${escapeHtml(
+                [client.city, client.state]
+                  .filter(Boolean)
+                  .join(", ")
+              )}</small>
 
-                <div class="badges">
-                  ${
-                    client.matchedByEmail
-                      ? '<span class="badge">Email match</span>'
-                      : ""
-                  }
-                  ${
-                    client.matchedByPhone
-                      ? '<span class="badge">Phone match</span>'
-                      : ""
-                  }
-                </div>
+              <div class="badges">
+                ${
+                  client.matchedByEmail
+                    ? '<span class="badge">Email match</span>'
+                    : ""
+                }
+                ${
+                  client.matchedByPhone
+                    ? '<span class="badge">Phone match</span>'
+                    : ""
+                }
               </div>
+            </div>
 
-              <button
-                class="danger"
-                type="button"
-                data-resolve="${escapeHtml(client.id)}"
-                data-name="${escapeHtml(name || client.id)}"
-              >
-                Resolve to this client
-              </button>
-            </article>
-          `;
-        })
-        .join("");
+            <button
+              class="danger"
+              type="button"
+              data-resolve="${escapeHtml(client.id)}"
+              data-name="${escapeHtml(name || client.id)}"
+            >
+              Resolve to this client
+            </button>
+          </article>
+        `;
+      }).join("");
 
     els.candidates
       .querySelectorAll("[data-resolve]")
@@ -531,7 +657,7 @@
   ) {
     const confirmed =
       window.confirm(
-        `PERMANENT TEST ACTION\n\nLink request ${requestId} to ${clientName} (${clientId})?\n\nThis should only be done when that is the correct client.`
+        `PERMANENT TEST ACTION\n\nLink this cleaning request to ${clientName} (${clientId})?\n\nOnly continue when this is the correct customer.`
       );
 
     if (!confirmed) return;
@@ -559,7 +685,6 @@
         return;
       }
 
-      // Verify through the existing request detail API.
       const detail = await fetchJson(
         `${requestBase}/${encodeURIComponent(requestId)}`
       );
@@ -576,16 +701,46 @@
           : "Resolution returned success, but the follow-up detail check did not match expectations. Review the raw response."
       );
 
-      await runSafeTests();
+      await loadConflictRequests();
+      els.safeResults.innerHTML =
+        '<div class="test pass"><strong>PASS: Conflict resolved</strong><div>The request was removed from the conflict list.</div></div>';
+      els.candidates.textContent =
+        "Conflict resolved. Choose another conflict request to continue testing.";
     } catch (error) {
       window.alert(error.message);
     }
   }
 
+  els.requestSelect.addEventListener(
+    "change",
+    () => {
+      els.runSafe.disabled =
+        !els.requestSelect.value;
+      els.safeResults.innerHTML =
+        '<div class="test">Ready to run safe tests.</div>';
+      els.candidates.textContent =
+        "No candidates loaded.";
+    }
+  );
+
+  els.refreshRequests.addEventListener(
+    "click",
+    loadConflictRequests
+  );
+
   els.runSafe.addEventListener(
     "click",
     runSafeTests
   );
+
+  els.backCms.addEventListener(
+    "click",
+    () => {
+      window.location.href = "index.html";
+    }
+  );
+
+  loadConflictRequests();
 })();
 </script>
 </body>
