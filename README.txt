@@ -1,241 +1,199 @@
-TIDY BY TABB - REVIEW REQUEST WORKFLOW V1
+TIDY BY TABB - REVIEW WORKFLOW POLISH
 
 Suggested branch:
-cms-v2-review-requests
+cms-v2-review-workflow-polish
 
-THIS IS THE NEXT MAJOR REVIEWS STEP
+THIS UPDATE IMPLEMENTS ALL THREE REQUESTS
 
-Completed Service
--> Generate secure review link in CMS
--> Copy link OR open a prefilled email from CMS
--> Customer opens branded review page
--> Customer submits 1-5 stars + review
--> Review is created as DRAFT in CMS
--> Tabb reviews it and chooses when to Publish
--> Published review automatically appears on the website
+1. Review page now looks much closer to the public Tidy by Tabb website.
+2. Service-linked Generate Review Link lives INSIDE a completed Service.
+3. Reviews screen no longer uses the old completed-service picker.
+   It now gets a GENERIC REVIEW LINK tool for one-off requests.
 
 ============================================================
-ARCHITECTURE DECISION
+1. PUBLIC REVIEW PAGE
 ============================================================
 
-This slice does NOT add a third-party transactional email provider yet.
-
-The CMS "Email Review Request" button opens the user's normal email application
-with the customer's address, subject, message, and secure review link already
-filled in.
-
-Why:
-- no new vendor/API key yet
-- no email deliverability/domain setup yet
-- easy to test
-- Tabb still sends the message herself
-- secure review workflow can be proven before adding automation
-
-Once this is stable, one-click server-side email delivery can be added with a
-transactional provider without redesigning the review system.
-
-============================================================
-ADD
-============================================================
-
-cloudflare-worker/migrations/0007_create_review_requests.sql
-cloudflare-worker/src/review-requests.js
-
-admin/js/review-requests.js
+REPLACE:
 
 review.html
 public-review-form.js
 
-============================================================
-D1
-============================================================
-
-Run:
-
-cloudflare-worker/migrations/0007_create_review_requests.sql
-
-The table stores ONLY a SHA-256 hash of the secure token.
-The actual token is returned once when the review link is generated.
-
-Review links expire after 30 days.
-
-Generating a new link for the same Service revokes any previous pending link.
+The new page:
+- uses the Tidy by Tabb logo
+- uses pink/teal glass styling
+- uses the same site stylesheet
+- has branded trust chips
+- retains the secure token flow
+- works for both service-linked and generic review requests
 
 ============================================================
-WORKER index.js
+2. COMPLETED SERVICE REVIEW BUTTON
 ============================================================
 
-1. Add INDEX-IMPORT.js.txt with the other imports.
+ADD:
 
-2. Add INDEX-PUBLIC-ROUTE.js.txt BEFORE Cloudflare Access JWT authentication.
+admin/js/service-review-request.js
 
-Recommended public ordering:
+Add to admin/index.html:
 
-- public cleaning request
-- public reviews list
-- public review request
-- THEN authentication
+<script src="js/service-review-request.js?v=20260812-1"></script>
 
-3. Add INDEX-ADMIN-ROUTE.js.txt AFTER Access authentication and allowed-admin
-   email validation.
+This enhancer watches Services.
 
-Then deploy the Worker.
+When an EXISTING service is opened:
+- Scheduled -> no review button
+- In Progress -> no review button
+- Cancelled -> no review button
+- Completed -> Generate Review Link appears
+
+The backend still validates that the service is actually Completed, so changing
+the dropdown without saving does not create a review request.
+
+Generated service review link can be:
+- copied
+- opened in a prefilled email to the linked Client
 
 ============================================================
-CLOUDFLARE ROUTING
+3. GENERIC REVIEW LINK
 ============================================================
 
-Add Worker route:
+RUN MIGRATION:
+
+cloudflare-worker/migrations/0008_create_generic_review_requests.sql
+
+ADD WORKER MODULE:
+
+cloudflare-worker/src/generic-review-requests.js
+
+Add INDEX-IMPORT.js.txt.
+
+Add INDEX-PUBLIC-ROUTE.js.txt BEFORE the normal
+isPublicReviewRequestRoute() handler.
+
+This ordering matters because:
+
+/api/review/generic/<token>
+
+also starts with:
+
+/api/review/
+
+The generic route must get first shot.
+
+Add INDEX-ADMIN-ROUTE.js.txt after authentication / allowed admin email,
+before or near the existing authenticated Review Request route.
+
+DEPLOY WORKER.
+
+NO NEW CLOUDFLARE WORKER ROUTE IS REQUIRED.
+
+Your existing:
 
 www.tidybytabb.com/api/review*
 
-Point it to:
-tidy-by-tabb-admin-gateway
+already covers:
 
-============================================================
-CLOUDFLARE ACCESS
-============================================================
+/api/review/generic/<token>
 
-Create a PUBLIC Access application for:
+Your existing public Access application for:
 
 www.tidybytabb.com/api/review/*
 
-Policy:
-Action: Bypass
-Include: Everyone
-
-Do NOT expose:
-/admin/api/review-requests
-
-That remains behind the existing Admin Access application.
+also covers it.
 
 ============================================================
-ADMIN CMS
+4. REVIEWS SCREEN
 ============================================================
 
-Add to admin/index.html AFTER reviews-cms.js:
+REMOVE OLD SCRIPT TAG:
 
 <script src="js/review-requests.js?v=20260812-1"></script>
 
-This adds a "Request Review" button to Reviews.
+The file can remain in the repo temporarily, but it will no longer be loaded.
 
-The modal:
-- loads Completed Services
-- generates a secure 30-day link
-- displays Copy Link
-- displays Email Review Request
-- shows recent request status history
+ADD:
 
-A Service must be Completed before it can receive a review request.
+admin/js/generic-review-request.js
 
-A Service that already has a Review cannot receive another request.
+Add to admin/index.html:
 
-============================================================
-PUBLIC REVIEW PAGE
-============================================================
+<script src="js/generic-review-request.js?v=20260812-1"></script>
 
-review.html is a public GitHub Pages page.
+The Reviews screen now gets:
 
-Example generated URL:
+Generic Review Link
 
-https://www.tidybytabb.com/review.html?token=<secure-token>
+Click it and enter:
+- Email address (required)
+- Name (optional)
 
-The token is validated through:
+Then:
+- Generate Review Link
+- Copy Link
+- Email Review Request
 
-GET /api/review/<token>
+Generic customer submissions become Draft reviews with:
+- no client_id
+- no service_id
+- source NULL
 
-Submission uses:
-
-POST /api/review/<token>
-
-The public API never exposes:
-- customer email
-- customer phone
-- client ID
-- service ID
-- internal notes
-- review request database ID
+Tabb can still edit and publish them from Reviews.
 
 ============================================================
-REVIEW SUBMISSION
+RECOMMENDED ADMIN SCRIPT ORDER
 ============================================================
 
-Customer submits:
-- display name
-- 1-5 rating
-- review text
+<script src="js/reviews-cms.js?v=20260812-2"></script>
+<script src="js/service-review-request.js?v=20260812-1"></script>
+<script src="js/generic-review-request.js?v=20260812-1"></script>
 
-The resulting Review is created with:
-
-status = draft
-client_id = linked client
-service_id = linked completed service
-source = NULL
-
-It does NOT immediately appear on the public website.
-
-Tabb publishes it from:
-CMS -> Reviews
+Do NOT load the old review-requests.js script after this update.
 
 ============================================================
-TEST
+TEST SERVICE-LINKED FLOW
 ============================================================
 
-1. Run migration.
-2. Deploy Worker.
-3. Add Worker route /api/review*
-4. Add public Access application /api/review/*
-5. Upload review.html and public-review-form.js.
-6. Add admin/js/review-requests.js and script tag.
-7. Hard refresh CMS.
-
-TEST SERVICE
-
-8. Pick a completed Service that has a Client with email.
-9. CMS -> Reviews -> Request Review.
-10. Select the completed Service.
-11. Click Generate Review Link.
-12. Copy Link.
-13. Open link in an incognito/private browser.
-14. Confirm:
-    - review page loads
-    - customer display name is prefilled
-    - service type is mentioned
-15. Submit 5 stars + test review.
-16. Confirm thank-you screen.
-17. Try the same link again.
-18. Confirm it says the request has already been completed.
-19. CMS -> Reviews.
-20. Confirm the new review appears as Draft.
-21. Edit it if needed.
-22. Change to Published.
-23. Refresh public homepage.
-24. Confirm the review appears.
-
-EMAIL TEST
-
-25. Generate a request for another completed service.
-26. Click Email Review Request.
-27. Confirm the email application opens with:
-    - customer email
-    - subject
-    - message
-    - secure review URL
+1. Open Scheduled Service.
+2. Confirm NO Generate Review Link button.
+3. Open Completed Service.
+4. Confirm Generate Review Link appears.
+5. Generate it.
+6. Copy and open it privately.
+7. Submit review.
+8. Confirm Review appears in CMS as Draft.
+9. Publish and confirm homepage display.
 
 ============================================================
-SECURITY NOTES
+TEST GENERIC FLOW
 ============================================================
 
-- review token is cryptographically random
-- D1 stores token hash only
-- links expire after 30 days
-- link is single-use
-- duplicate review per service is blocked
-- submission becomes Draft, not Published
-- Admin generation endpoint remains authenticated
+1. CMS -> Reviews.
+2. Click Generic Review Link.
+3. Enter an email address.
+4. Optionally enter a name.
+5. Generate.
+6. Open link privately.
+7. Confirm branded review page loads.
+8. Submit review.
+9. Confirm it arrives in CMS as Draft.
+10. Publish it if desired.
+
+============================================================
+WHY THIS STRUCTURE
+============================================================
+
+Service review requests belong to Services because they are earned by a
+specific completed job.
+
+Generic Review Link belongs to Reviews because it is not tied to operational
+service history.
+
+That keeps the normal workflow contextual while still giving Tabb an escape
+hatch for reviews from people not represented by a completed Service record.
 
 ============================================================
 COMMIT MESSAGE
 ============================================================
 
-Add secure customer review request workflow
+Move review requests into Services and add generic links

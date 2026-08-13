@@ -9,6 +9,13 @@
       params.get("token") || ""
     ).trim();
 
+  const mode =
+    String(
+      params.get("mode") || ""
+    )
+      .trim()
+      .toLowerCase();
+
   const intro =
     document.getElementById(
       "reviewIntro"
@@ -37,9 +44,13 @@
   }
 
   const apiUrl =
-    `/api/review/${encodeURIComponent(
-      token
-    )}`;
+    mode === "generic"
+      ? `/api/review/generic/${encodeURIComponent(
+          token
+        )}`
+      : `/api/review/${encodeURIComponent(
+          token
+        )}`;
 
   async function request(
     options = {}
@@ -101,8 +112,8 @@
 
       intro.textContent =
         item?.serviceType
-          ? `Thank you for choosing Tidy by Tabb for your ${item.serviceType}. Your feedback helps a small local business grow.`
-          : "Thank you for choosing Tidy by Tabb. Your feedback helps a small local business grow.";
+          ? `Thank you for choosing Tidy by Tabb for your ${item.serviceType}. Your feedback helps a local small business grow.`
+          : "Thank you for choosing Tidy by Tabb. Your feedback helps a local small business grow.";
 
       form.elements
         .reviewerName
@@ -164,12 +175,12 @@
 
         form.hidden = true;
         state.hidden = false;
-        state.classList.add(
-          "review-thank-you"
-        );
 
         state.innerHTML = `
-          <h2>Thank you! 🫧</h2>
+          <h2>
+            Thank you! 🫧
+          </h2>
+
           <p>
             Your review was submitted successfully.
             Tidy by Tabb truly appreciates your feedback.

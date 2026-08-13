@@ -15,34 +15,147 @@
     rel="stylesheet"
     href="styles.css"
   >
+
   <style>
     .review-page {
       min-height: 100vh;
       display: grid;
       place-items: center;
-      padding: 28px 18px;
+      padding:
+        32px 18px 54px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .review-page::before,
+    .review-page::after {
+      content: "";
+      position: fixed;
+      width: 380px;
+      height: 380px;
+      border-radius: 50%;
+      filter: blur(4px);
+      pointer-events: none;
+      opacity: .4;
+    }
+
+    .review-page::before {
+      top: -130px;
+      right: -90px;
+      background:
+        radial-gradient(
+          circle,
+          rgba(231,90,168,.48),
+          transparent 68%
+        );
+    }
+
+    .review-page::after {
+      left: -110px;
+      bottom: -140px;
+      background:
+        radial-gradient(
+          circle,
+          rgba(40,189,210,.48),
+          transparent 68%
+        );
     }
 
     .review-shell {
-      width: min(680px, 100%);
-      padding: clamp(24px, 5vw, 44px);
-      border: 1px solid
-        rgba(255,255,255,.78);
-      border-radius: 30px;
-      background: var(--glass);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(20px);
+      width: min(720px, 100%);
+      position: relative;
+      z-index: 1;
     }
 
-    .review-shell h1 {
+    .review-brand {
+      display: grid;
+      justify-items: center;
+      margin-bottom: -34px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .review-brand img {
+      width:
+        min(290px, 72vw);
+      filter:
+        drop-shadow(
+          0 16px 32px
+          rgba(231,90,168,.22)
+        );
+    }
+
+    .review-card-shell {
+      padding:
+        clamp(32px, 6vw, 54px);
+      border:
+        1px solid
+        rgba(255,255,255,.82);
+      border-radius: 34px;
+      background:
+        linear-gradient(
+          145deg,
+          rgba(255,255,255,.84),
+          rgba(255,255,255,.68)
+        );
+      box-shadow:
+        0 28px 90px
+        rgba(21,45,75,.18);
+      backdrop-filter:
+        blur(22px);
+    }
+
+    .review-heading {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .review-heading h1 {
       margin-bottom: 12px;
       font-size:
-        clamp(2.5rem, 8vw, 4.8rem);
+        clamp(2.7rem, 8vw, 5rem);
+      line-height: .9;
+      background:
+        linear-gradient(
+          135deg,
+          var(--pink),
+          var(--teal)
+        );
+      -webkit-background-clip:
+        text;
+      background-clip:
+        text;
+      color: transparent;
     }
 
     .review-intro {
+      max-width: 560px;
+      margin: 0 auto;
       color: var(--muted);
       line-height: 1.7;
+      font-size: 1.03rem;
+    }
+
+    .review-trust {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .review-trust span {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background:
+        linear-gradient(
+          135deg,
+          rgba(98,220,229,.18),
+          rgba(231,90,168,.13)
+        );
+      color: var(--deep);
+      font-size: .8rem;
+      font-weight: 850;
     }
 
     .review-public-form {
@@ -64,14 +177,25 @@
     .review-public-form input,
     .review-public-form textarea {
       width: 100%;
-      border: 1px solid
-        rgba(32,50,74,.16);
+      border:
+        1px solid
+        rgba(32,50,74,.15);
       border-radius: 14px;
       padding: 13px 14px;
       background:
-        rgba(255,255,255,.86);
+        rgba(255,255,255,.9);
       color: var(--ink);
       font: inherit;
+      box-shadow:
+        inset 0 1px 2px
+        rgba(21,45,75,.04);
+    }
+
+    .review-public-form input:focus,
+    .review-public-form textarea:focus {
+      outline: 2px solid
+        rgba(40,189,210,.24);
+      border-color: var(--teal);
     }
 
     .review-public-form textarea {
@@ -96,14 +220,24 @@
       min-height: 58px;
       display: grid;
       place-items: center;
-      border: 1px solid
+      border:
+        1px solid
         rgba(32,50,74,.13);
       border-radius: 14px;
       background:
-        rgba(255,255,255,.75);
+        rgba(255,255,255,.78);
       color: #b6b7bc;
-      font-size: 1.55rem;
+      font-size: 1.45rem;
+      font-weight: 900;
       cursor: pointer;
+      transition:
+        transform .16s ease,
+        border-color .16s ease;
+    }
+
+    .public-rating label:hover {
+      transform:
+        translateY(-2px);
     }
 
     .public-rating
@@ -111,19 +245,60 @@
       color: #d79d16;
       border-color: #e1b447;
       background: #fff9e7;
+      box-shadow:
+        0 8px 24px
+        rgba(215,157,22,.14);
+    }
+
+    .review-submit {
+      justify-self: center;
+      min-width: 210px;
+      margin-top: 4px;
     }
 
     .review-state {
-      padding: 20px;
-      border-radius: 16px;
+      padding: 22px;
+      border-radius: 18px;
       background:
-        rgba(255,255,255,.72);
+        linear-gradient(
+          135deg,
+          rgba(98,220,229,.15),
+          rgba(231,90,168,.12)
+        );
       color: var(--deep);
       line-height: 1.6;
+      text-align: center;
     }
 
-    .review-thank-you {
+    .review-footer-note {
+      margin-top: 20px;
       text-align: center;
+      color: var(--muted);
+      font-size: .84rem;
+    }
+
+    @media (
+      max-width: 560px
+    ) {
+      .review-brand {
+        margin-bottom: -18px;
+      }
+
+      .review-card-shell {
+        padding: 28px 20px;
+        border-radius: 26px;
+      }
+
+      .public-rating {
+        grid-template-columns:
+          repeat(5, 1fr);
+        gap: 5px;
+      }
+
+      .public-rating label {
+        min-height: 50px;
+        font-size: 1.1rem;
+      }
     }
   </style>
 </head>
@@ -131,134 +306,158 @@
 <body>
   <main class="review-page">
     <section class="review-shell">
-      <p class="eyebrow">
-        Tidy by Tabb
-      </p>
-
-      <h1>
-        How did we do?
-      </h1>
-
-      <p
-        id="reviewIntro"
-        class="review-intro"
-      >
-        Loading your review request…
-      </p>
-
-      <div
-        id="reviewState"
-        class="review-state"
-      >
-        Loading…
+      <div class="review-brand">
+        <img
+          src="assets/tidy-by-tabb-logo.png"
+          alt="Tidy by Tabb"
+        >
       </div>
 
-      <form
-        id="publicReviewForm"
-        class="review-public-form"
-        hidden
-      >
-        <label>
-          <span>
-            Your name
-          </span>
+      <div class="review-card-shell">
+        <div class="review-heading">
+          <p class="eyebrow">
+            Customer Feedback
+          </p>
 
-          <input
-            name="reviewerName"
-            maxlength="200"
-            required
+          <h1>
+            How did we do?
+          </h1>
+
+          <p
+            id="reviewIntro"
+            class="review-intro"
           >
-        </label>
+            Loading your review request…
+          </p>
 
-        <div>
-          <span
-            style="display:block;font-weight:900;margin-bottom:8px;"
-          >
-            Your rating
-          </span>
-
-          <div
-            class="public-rating"
-          >
-            <input
-              id="rating1"
-              name="rating"
-              type="radio"
-              value="1"
-            >
-            <label for="rating1">
-              1★
-            </label>
-
-            <input
-              id="rating2"
-              name="rating"
-              type="radio"
-              value="2"
-            >
-            <label for="rating2">
-              2★
-            </label>
-
-            <input
-              id="rating3"
-              name="rating"
-              type="radio"
-              value="3"
-            >
-            <label for="rating3">
-              3★
-            </label>
-
-            <input
-              id="rating4"
-              name="rating"
-              type="radio"
-              value="4"
-            >
-            <label for="rating4">
-              4★
-            </label>
-
-            <input
-              id="rating5"
-              name="rating"
-              type="radio"
-              value="5"
-              checked
-            >
-            <label for="rating5">
-              5★
-            </label>
+          <div class="review-trust">
+            <span>🫧 Local Small Business</span>
+            <span>🏡 Detail Focused</span>
+            <span>💗 Your Feedback Matters</span>
           </div>
         </div>
 
-        <label>
-          <span>
-            Your review
-          </span>
-
-          <textarea
-            name="reviewText"
-            maxlength="10000"
-            placeholder="Tell us about your experience..."
-            required
-          ></textarea>
-        </label>
-
-        <button
-          id="publicReviewSubmit"
-          class="primary-btn"
-          type="submit"
+        <div
+          id="reviewState"
+          class="review-state"
         >
-          Submit Review
-        </button>
-      </form>
+          Loading…
+        </div>
+
+        <form
+          id="publicReviewForm"
+          class="review-public-form"
+          hidden
+        >
+          <label>
+            <span>
+              Your name
+            </span>
+
+            <input
+              name="reviewerName"
+              maxlength="200"
+              required
+            >
+          </label>
+
+          <div>
+            <span
+              style="
+                display:block;
+                font-weight:900;
+                margin-bottom:8px;
+              "
+            >
+              Your rating
+            </span>
+
+            <div class="public-rating">
+              <input
+                id="rating1"
+                name="rating"
+                type="radio"
+                value="1"
+              >
+              <label for="rating1">
+                1★
+              </label>
+
+              <input
+                id="rating2"
+                name="rating"
+                type="radio"
+                value="2"
+              >
+              <label for="rating2">
+                2★
+              </label>
+
+              <input
+                id="rating3"
+                name="rating"
+                type="radio"
+                value="3"
+              >
+              <label for="rating3">
+                3★
+              </label>
+
+              <input
+                id="rating4"
+                name="rating"
+                type="radio"
+                value="4"
+              >
+              <label for="rating4">
+                4★
+              </label>
+
+              <input
+                id="rating5"
+                name="rating"
+                type="radio"
+                value="5"
+                checked
+              >
+              <label for="rating5">
+                5★
+              </label>
+            </div>
+          </div>
+
+          <label>
+            <span>
+              Your review
+            </span>
+
+            <textarea
+              name="reviewText"
+              maxlength="10000"
+              placeholder="Tell us about your experience..."
+              required
+            ></textarea>
+          </label>
+
+          <button
+            id="publicReviewSubmit"
+            class="primary-btn review-submit"
+            type="submit"
+          >
+            Submit Review
+          </button>
+        </form>
+
+        <p class="review-footer-note">
+          Reviews are submitted directly to Tidy by Tabb
+          and are reviewed before being published publicly.
+        </p>
+      </div>
     </section>
   </main>
 
   <script
-    src="public-review-form.js?v=20260812-1"
+    src="public-review-form.js?v=20260812-2"
   ></script>
 </body>
 </html>
