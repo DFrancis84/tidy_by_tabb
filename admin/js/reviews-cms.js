@@ -212,6 +212,11 @@
     const style = document.createElement("style");
     style.id = "reviewsCmsStyles";
     style.textContent = `
+      #developerToggle,
+      #developerPanel {
+        display: none !important;
+      }
+
       .reviews-manager {
         display: grid;
         gap: 18px;
@@ -1613,6 +1618,14 @@
 
   function install() {
     if (state.installed) return;
+
+    document
+      .getElementById("developerToggle")
+      ?.setAttribute("hidden", "");
+
+    document
+      .getElementById("developerPanel")
+      ?.setAttribute("hidden", "");
 
     installStyles();
     installPanel();
