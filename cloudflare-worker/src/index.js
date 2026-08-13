@@ -18,6 +18,14 @@ import {
   isPublicReviewsRequest,
 } from "./public-reviews.js";
 
+import {
+  handleAdminReviewRequestsRoute,
+  handlePublicReviewRequestRoute,
+  isAdminReviewRequestsRoute,
+  isPublicReviewRequestRoute,
+} from "./review-requests.js";
+
+
 const ALLOWED_ORIGIN = "https://www.tidybytabb.com";
 const ALLOWED_ACTIONS = new Set([
   "create",
@@ -81,6 +89,17 @@ export default {
           origin,
           jsonResponse,
           HttpError
+        );
+      }
+      
+      if (isPublicReviewRequestRoute(request,url)) {
+        return await handlePublicReviewRequestRoute(
+          request,
+          url,
+          env,
+          origin,
+          jsonResponse,
+          HttpError,
         );
       }
       
