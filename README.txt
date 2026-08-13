@@ -1,165 +1,73 @@
-TIDY BY TABB - PUBLIC REVIEWS + CMS DEVELOPER BUTTON CLEANUP
+TIDY BY TABB - REVIEWS POLISH
 
 Suggested branch:
-cms-v2-public-reviews
+cms-v2-reviews-polish
 
-WHAT THIS DOES
-
-1. Published Reviews from the CMS automatically appear on the public website.
-2. Draft and Hidden reviews are NEVER returned by the public API.
-3. The public Reviews section shows:
-   - rating
-   - review text
-   - reviewer display name
-   - source
-   - review month/year
-   - published review count
-   - average published rating
-4. The Developer button and Developer panel are removed from the visible CMS UI.
-
-NO D1 MIGRATION.
-
-============================================================
-FILES TO ADD
-============================================================
-
-public-reviews.js
-cloudflare-worker/src/public-reviews.js
-
-============================================================
-FILES TO REPLACE
-============================================================
+REPLACE
 
 index.html
+public-reviews.js
 admin/js/reviews-cms.js
 
-============================================================
-WORKER index.js
-============================================================
+ADMIN CACHE BUMP
 
-Add the import from:
+In admin/index.html change:
 
-INDEX-IMPORT.js.txt
+<script src="js/reviews-cms.js?v=20260812-1"></script>
 
-near the other imports at the top of:
+to:
 
-cloudflare-worker/src/index.js
+<script src="js/reviews-cms.js?v=20260812-2"></script>
 
-Then add the public route from:
+WHAT CHANGED
 
-INDEX-PUBLIC-ROUTE.js.txt
+PUBLIC REVIEWS
+- A single review no longer stretches across the whole section.
+- One review is capped at 640px and centered.
+- Multiple reviews still expand into a responsive grid.
+- Source is no longer shown publicly.
+- Public copy no longer talks about the CMS.
 
-IMMEDIATELY AFTER:
+CMS REVIEWS
+- Source column removed.
+- Source field removed from Add/Edit Review.
+- Search placeholder no longer mentions Source.
+- Backend/database source column is intentionally left alone for compatibility.
+  Existing source values can remain in D1 without affecting the UI.
 
-const url = new URL(request.url);
+WHY WE ARE KEEPING THE DATABASE COLUMN FOR NOW
 
-and before the Cloudflare Access JWT is required.
+The next Reviews feature is the proper review-request workflow:
 
-A safe ordering is:
+Client / completed Service
+-> Generate secure review link
+-> Send review request by email from CMS
+-> Customer opens link
+-> Customer submits rating + review
+-> Review enters CMS for management/publishing
 
-const url = new URL(request.url);
+Once that flow is live, all new reviews have a known origin, so a manual Source
+field is unnecessary. Leaving the old nullable column in the database costs
+nothing and avoids a pointless migration right now.
 
-if (isPublicCleaningRequest(request, url)) {
-  ...
-}
+NO WORKER CHANGE.
+NO D1 CHANGE.
+NO CLOUDFLARE CHANGE.
 
-if (isPublicReviewsRequest(request, url)) {
-  ...
-}
-
-const jwt = request.headers.get("Cf-Access-Jwt-Assertion");
-
-Then deploy the Worker.
-
-============================================================
-CLOUDFLARE ACCESS
-============================================================
-
-The new public endpoint is:
-
-/api/reviews
-
-It must be publicly reachable, just like the existing:
-
-/api/cleaning-requests
-
-Add the same exact public Bypass / Everyone treatment for:
-
-https://www.tidybytabb.com/api/reviews
-
-Do NOT make /admin/api/reviews public.
-
-Only /api/reviews is public.
-
-============================================================
-PUBLIC API SECURITY
-============================================================
-
-The public endpoint intentionally returns ONLY:
-
-reviewerName
-rating
-reviewText
-source
-reviewDate
-
-It does NOT return:
-
-review IDs
-client IDs
-service IDs
-client contact information
-internal audit fields
-draft reviews
-hidden reviews
-
-============================================================
-CMS DEVELOPER BUTTON
-============================================================
-
-admin/js/reviews-cms.js now hides:
-
-#developerToggle
-#developerPanel
-
-on every CMS load.
-
-The old developer diagnostics code remains untouched in this slice so there is
-zero risk to Gallery / Client / Service API callbacks. The UI is completely
-removed from normal use.
-
-A later shell-cleanup refactor can delete the unused diagnostics module itself.
-
-============================================================
 TEST
-============================================================
 
-1. CMS -> Reviews.
-2. Create or edit one review:
-   - 5 stars
-   - status Published
-3. Open the public website.
-4. Click Reviews.
-5. Confirm the review appears.
-6. Confirm the average rating and published count appear.
-7. Change that review to Draft in the CMS.
-8. Refresh the public website.
-9. Confirm the review disappears.
-10. Change it back to Published.
-11. Confirm it returns.
-12. Set a review to Hidden.
-13. Confirm it does not appear publicly.
-14. Open the CMS and confirm the Developer button is gone.
+1. Merge and let GitHub Pages deploy.
+2. Hard refresh the main site.
+3. Open Reviews.
+4. Confirm one review is centered and noticeably smaller.
+5. Confirm only reviewer name + review date show under the review.
+6. Open CMS -> Reviews.
+7. Confirm Source is gone from:
+   - table
+   - Add Review
+   - Edit Review
+8. Confirm create/edit still work.
 
-============================================================
-ROLLBACK
-============================================================
-
-Restore the previous index.html and reviews-cms.js, remove the public Reviews
-route from Worker index.js, and remove public-reviews.js files.
-
-============================================================
 COMMIT MESSAGE
-============================================================
 
-Publish CMS reviews to website
+Polish reviews layout and remove source field

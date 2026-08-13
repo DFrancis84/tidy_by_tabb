@@ -91,12 +91,17 @@
       }
 
       #publicReviewsGrid {
-        width: min(1160px, 100%);
+        width: min(1060px, 100%);
         margin: 0 auto;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
         gap: 20px;
         align-items: stretch;
+      }
+
+      #publicReviewsGrid .public-review-card:only-child {
+        width: min(640px, 100%);
+        justify-self: center;
       }
 
       #publicReviewsGrid .public-review-card {
@@ -225,9 +230,7 @@
 
       grid.innerHTML = reviews
         .map((review) => {
-          const detail = [review.source, formatDate(review.reviewDate)]
-            .filter(Boolean)
-            .join(" • ");
+          const detail = formatDate(review.reviewDate);
 
           return `
             <article class="review-card public-review-card">
