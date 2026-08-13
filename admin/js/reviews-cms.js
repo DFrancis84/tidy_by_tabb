@@ -113,9 +113,6 @@
       .join(" ");
   }
 
-  function sourceLabel(value) {
-    return value || "Not provided";
-  }
 
   async function api(url, options = {}) {
     const response = await fetch(url, {
@@ -551,7 +548,7 @@
             <p class="eyebrow">Customer feedback</p>
             <h2>Reviews</h2>
             <p class="panel-description">
-              Store, link, publish, hide, and manage customer reviews.
+              Manage customer reviews and prepare review requests for clients.
             </p>
           </div>
 
@@ -561,7 +558,7 @@
               <input
                 id="reviewSearch"
                 type="search"
-                placeholder="Reviewer, review text, or source"
+                placeholder="Reviewer or review text"
                 autocomplete="off"
               >
             </label>
@@ -635,7 +632,6 @@
                 <th>Reviewer</th>
                 <th>Rating</th>
                 <th>Review</th>
-                <th>Source</th>
                 <th>Status</th>
                 <th>Date</th>
                 <th></th>
@@ -925,8 +921,6 @@
                 }
               </td>
 
-              <td>${escapeHtml(sourceLabel(review.source))}</td>
-
               <td>
                 <span class="review-status review-status-${escapeHtml(review.status)}">
                   ${escapeHtml(prettyStatus(review.status))}
@@ -1173,31 +1167,7 @@
           >${escapeHtml(review?.review_text || "")}</textarea>
         </label>
 
-        <div class="review-form-row">
-          <label>
-            <span>Source</span>
-            <select name="source">
-              ${[
-                "",
-                "Google",
-                "Facebook",
-                "Yelp",
-                "Website",
-                "Direct / Text",
-                "Other",
-              ]
-                .map((source) => `
-                  <option
-                    value="${escapeHtml(source)}"
-                    ${String(review?.source || "") === source ? "selected" : ""}
-                  >
-                    ${escapeHtml(source || "Select source")}
-                  </option>
-                `)
-                .join("")}
-            </select>
-          </label>
-
+        <div>
           <label>
             <span>Review date</span>
             <input
@@ -1357,9 +1327,6 @@
       rating,
       reviewText:
         String(formData.get("reviewText") || "").trim(),
-      source:
-        String(formData.get("source") || "").trim() ||
-        null,
       reviewDate,
       status:
         String(formData.get("status") || "published"),
