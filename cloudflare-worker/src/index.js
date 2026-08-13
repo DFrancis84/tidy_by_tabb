@@ -93,14 +93,14 @@ export default {
       }
       
       if (isPublicReviewRequestRoute(request,url)) {
-        return await handlePublicReviewRequestRoute(
+        return await handlePublicReviewRequestRoute({
           request,
           url,
           env,
           origin,
           jsonResponse,
           HttpError,
-        );
+        });
       }
       
       const jwt = request.headers.get("Cf-Access-Jwt-Assertion");
@@ -118,6 +118,23 @@ export default {
       const allowedEmails = parseAllowedEmails(env.ALLOWED_ADMIN_EMAILS);
       if (!allowedEmails.has(actorEmail)) {
         throw new HttpError(403, "Administrator access is denied.");
+      }
+
+      if (
+        isAdminReviewRequestsRoute(
+          request,
+          url
+        )
+      ) {
+        return await handleAdminReviewRequestsRoute({
+          request,
+          url,
+          env,
+          actorEmail,
+          origin,
+          jsonResponse,
+          HttpError,
+        });
       }
 
       if (
