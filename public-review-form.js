@@ -102,6 +102,18 @@
       "We could not open this review request.";
   }
 
+  function closeOrReturnHome() {
+    window.close();
+
+    setTimeout(() => {
+      if (!window.closed) {
+        window.location.replace(
+          "https://www.tidybytabb.com/"
+        );
+      }
+    }, 350);
+  }
+
   async function load() {
     try {
       const response =
@@ -185,10 +197,21 @@
             Your review was submitted successfully.
             Tidy by Tabb truly appreciates your feedback.
           </p>
+
+          <p>
+            <small>
+              This page will close automatically.
+            </small>
+          </p>
         `;
 
         intro.textContent =
           "Your feedback is in.";
+
+        setTimeout(
+          closeOrReturnHome,
+          3000
+        );
       } catch (error) {
         window.alert(
           error.message
