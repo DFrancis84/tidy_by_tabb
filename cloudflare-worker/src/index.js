@@ -25,6 +25,12 @@ import {
   isPublicReviewRequestRoute,
 } from "./review-requests.js";
 
+import {
+  handleAdminGenericReviewRequestRoute,
+  handlePublicGenericReviewRequestRoute,
+  isAdminGenericReviewRequestRoute,
+  isPublicGenericReviewRequestRoute,
+} from "./generic-review-requests.js";
 
 const ALLOWED_ORIGIN = "https://www.tidybytabb.com";
 const ALLOWED_ACTIONS = new Set([
@@ -91,6 +97,22 @@ export default {
           HttpError
         );
       }
+
+      if (
+        isPublicGenericReviewRequestRoute(
+          request,
+          url
+        )
+      ) {
+        return await handlePublicGenericReviewRequestRoute({
+          request,
+          url,
+          env,
+          origin,
+          jsonResponse,
+          HttpError,
+        });
+      }
       
       if (isPublicReviewRequestRoute(request,url)) {
         return await handlePublicReviewRequestRoute({
@@ -129,6 +151,22 @@ export default {
         return await handleAdminReviewRequestsRoute({
           request,
           url,
+          env,
+          actorEmail,
+          origin,
+          jsonResponse,
+          HttpError,
+        });
+      }
+
+      if (
+        isAdminGenericReviewRequestRoute(
+          request,
+          url
+        )
+      ) {
+        return await handleAdminGenericReviewRequestRoute({
+          request,
           env,
           actorEmail,
           origin,
