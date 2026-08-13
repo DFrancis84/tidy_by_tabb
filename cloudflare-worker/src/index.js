@@ -73,6 +73,16 @@ export default {
           HttpError
         );
       }
+
+      if (isPublicReviewsRequest(request, url)) {
+        return await handlePublicReviewsRequest(
+          url,
+          env,
+          origin,
+          jsonResponse,
+          HttpError
+        );
+      }
       
       const jwt = request.headers.get("Cf-Access-Jwt-Assertion");
       if (!jwt) {
