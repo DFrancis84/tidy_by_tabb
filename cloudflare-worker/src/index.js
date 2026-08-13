@@ -13,6 +13,11 @@ import {
   isCleaningRequestConflictRoute,
 } from "./cleaning-request-conflicts.js";
 
+import {
+  handlePublicReviewsRequest,
+  isPublicReviewsRequest,
+} from "./public-reviews.js";
+
 const ALLOWED_ORIGIN = "https://www.tidybytabb.com";
 const ALLOWED_ACTIONS = new Set([
   "create",
