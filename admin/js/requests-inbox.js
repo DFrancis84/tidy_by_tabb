@@ -111,6 +111,108 @@
     return (Number(cents) / 100).toFixed(2);
   };
 
+  const formatSquareFootage = (item) => {
+    if (item.square_footage_range) {
+      return item.square_footage_range;
+    }
+
+    if (
+      item.square_footage !== null &&
+      item.square_footage !== undefined &&
+      item.square_footage !== ""
+    ) {
+      return `${Number(item.square_footage).toLocaleString()} sq ft`;
+    }
+
+    return "Not provided";
+  };
+
+  const buildServiceNotes = (item) => {
+    const lines = [];
+
+    if (
+      Array.isArray(item.requested_add_ons) &&
+      item.requested_add_ons.length
+    ) {
+      lines.push(
+        `Requested add-ons: ${item.requested_add_ons.join(", ")}`
+      );
+    }
+
+    const propertyParts = [
+      item.property_type,
+      item.bedrooms !== null &&
+      item.bedrooms !== undefined
+        ? `${item.bedrooms} bedroom${Number(item.bedrooms) === 1 ? "" : "s"}`
+        : "",
+      item.bathrooms !== null &&
+      item.bathrooms !== undefined
+        ? `${item.bathrooms} bathroom${Number(item.bathrooms) === 1 ? "" : "s"}`
+        : "",
+      formatSquareFootage(item) !== "Not provided"
+        ? formatSquareFootage(item)
+        : "",
+    ].filter(Boolean);
+
+    if (propertyParts.length) {
+      lines.push(`Property: ${propertyParts.join(" | ")}`);
+    }
+
+    if (item.property_condition) {
+      lines.push(`Condition: ${item.property_condition}`);
+    }
+
+    if (item.pets) {
+      lines.push(`Pets: ${item.pets}`);
+    }
+
+    if (item.entry_instructions) {
+      lines.push(`Entry: ${item.entry_instructions}`);
+    }
+
+    if (item.customer_notes) {
+      lines.push(`Customer notes: ${item.customer_notes}`);
+    }
+
+    return lines.join("\\n");
+  };
+
+  const localDateTimeToIso = (
+    dateValue,
+    timeValue
+  ) => {
+    const dateMatch = String(dateValue || "").match(
+      /^(\\d{4})-(\\d{2})-(\\d{2})$/
+    );
+    const timeMatch = String(timeValue || "").match(
+      /^(\\d{2}):(\\d{2})$/
+    );
+
+    if (!dateMatch || !timeMatch) {
+      throw new Error(
+        "Choose both a scheduled date and scheduled time."
+      );
+    }
+
+    const date = new Date(
+      Number(dateMatch[1]),
+      Number(dateMatch[2]) - 1,
+      Number(dateMatch[3]),
+      Number(timeMatch[1]),
+      Number(timeMatch[2]),
+      0,
+      0
+    );
+
+    if (Number.isNaN(date.getTime())) {
+      throw new Error(
+        "Scheduled date and time are invalid."
+      );
+    }
+
+    return date.toISOString();
+  };
+
   function setLoading() {
     elements.loading.hidden = false;
     elements.error.hidden = true;
@@ -449,7 +551,7 @@
         ${detail("Bathrooms", item.bathrooms)}
         ${detail(
           "Square footage",
-          item.square_footage
+          formatSquareFootage(item)
         )}
         ${detail(
           "Condition",
@@ -497,6 +599,11 @@
           ? `
             <section class="detail-card">
               <h3>Accept & Create Service</h3>
+              <p class="conversion-help">
+                Confirm the appointment details below. Creating the service
+                will mark this request as converted.
+              </p>
+
               <form id="requestConvertForm">
                 <label>
                   <span>Service type</span>
@@ -511,22 +618,41 @@
                 </label>
 
                 <label>
-                  <span>Scheduled start</span>
+                  <span>Scheduled date</span>
                   <input
-                    name="scheduledStart"
-                    type="datetime-local"
+                    name="scheduledDate"
+                    type="date"
+                    value="${escapeHtml(
+                      item.preferred_date || ""
+                    )}"
                     required
                   >
                 </label>
 
                 <label>
-                  <span>Price</span>
+                  <span>Scheduled time</span>
+                  <input
+                    name="scheduledTime"
+                    type="time"
+                    required
+                  >
+                  <small>
+                    Requested window:
+                    ${escapeHtml(
+                      item.preferred_time_window || "No preference"
+                    )}
+                  </small>
+                </label>
+
+                <label>
+                  <span>Confirmed price *</span>
                   <input
                     name="price"
                     type="number"
                     min="0"
                     step="0.01"
                     placeholder="0.00"
+                    required
                   >
                 </label>
 
@@ -534,9 +660,11 @@
                   <span>Service notes</span>
                   <textarea
                     name="notes"
-                    rows="4"
+                    rows="7"
                     maxlength="5000"
-                  ></textarea>
+                  >${escapeHtml(
+                    buildServiceNotes(item)
+                  )}</textarea>
                 </label>
 
                 <button
@@ -609,6 +737,32 @@
             form.get("price") || ""
           ).trim();
 
+          const priceNumber = Number(price);
+
+          if (
+            price === "" ||
+            !Number.isFinite(priceNumber) ||
+            priceNumber < 0
+          ) {
+            showToast(
+              "Enter the confirmed service price.",
+              "error"
+            );
+            return;
+          }
+
+          let scheduledStart;
+
+          try {
+            scheduledStart = localDateTimeToIso(
+              form.get("scheduledDate"),
+              form.get("scheduledTime")
+            );
+          } catch (error) {
+            showToast(error.message, "error");
+            return;
+          }
+
           if (
             !window.confirm(
               "Create this scheduled service and mark the request converted?"
@@ -623,18 +777,13 @@
                 version: item.version,
                 serviceType:
                   form.get("serviceType"),
-                scheduledStart:
-                  form.get("scheduledStart"),
+                scheduledStart,
                 priceCents:
-                  price === ""
-                    ? null
-                    : Math.round(
-                        Number(price) * 100
-                      ),
+                  Math.round(priceNumber * 100),
                 notes:
                   form.get("notes") || null,
               }),
-            "Service created."
+            "Service created and request converted."
           );
         }
       );
