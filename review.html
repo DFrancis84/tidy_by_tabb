@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+  <meta
+    name="robots"
+    content="noindex,nofollow"
+  >
+  <title>Review Tidy by Tabb</title>
+  <link
+    rel="stylesheet"
+    href="styles.css"
+  >
+  <style>
+    .review-page {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px 18px;
+    }
+
+    .review-shell {
+      width: min(680px, 100%);
+      padding: clamp(24px, 5vw, 44px);
+      border: 1px solid
+        rgba(255,255,255,.78);
+      border-radius: 30px;
+      background: var(--glass);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+
+    .review-shell h1 {
+      margin-bottom: 12px;
+      font-size:
+        clamp(2.5rem, 8vw, 4.8rem);
+    }
+
+    .review-intro {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .review-public-form {
+      display: grid;
+      gap: 18px;
+      margin-top: 26px;
+    }
+
+    .review-public-form label {
+      display: grid;
+      gap: 7px;
+    }
+
+    .review-public-form label > span {
+      font-weight: 900;
+      color: var(--deep);
+    }
+
+    .review-public-form input,
+    .review-public-form textarea {
+      width: 100%;
+      border: 1px solid
+        rgba(32,50,74,.16);
+      border-radius: 14px;
+      padding: 13px 14px;
+      background:
+        rgba(255,255,255,.86);
+      color: var(--ink);
+      font: inherit;
+    }
+
+    .review-public-form textarea {
+      min-height: 180px;
+      resize: vertical;
+    }
+
+    .public-rating {
+      display: grid;
+      grid-template-columns:
+        repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .public-rating input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .public-rating label {
+      min-height: 58px;
+      display: grid;
+      place-items: center;
+      border: 1px solid
+        rgba(32,50,74,.13);
+      border-radius: 14px;
+      background:
+        rgba(255,255,255,.75);
+      color: #b6b7bc;
+      font-size: 1.55rem;
+      cursor: pointer;
+    }
+
+    .public-rating
+      input:checked + label {
+      color: #d79d16;
+      border-color: #e1b447;
+      background: #fff9e7;
+    }
+
+    .review-state {
+      padding: 20px;
+      border-radius: 16px;
+      background:
+        rgba(255,255,255,.72);
+      color: var(--deep);
+      line-height: 1.6;
+    }
+
+    .review-thank-you {
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="review-page">
+    <section class="review-shell">
+      <p class="eyebrow">
+        Tidy by Tabb
+      </p>
+
+      <h1>
+        How did we do?
+      </h1>
+
+      <p
+        id="reviewIntro"
+        class="review-intro"
+      >
+        Loading your review request…
+      </p>
+
+      <div
+        id="reviewState"
+        class="review-state"
+      >
+        Loading…
+      </div>
+
+      <form
+        id="publicReviewForm"
+        class="review-public-form"
+        hidden
+      >
+        <label>
+          <span>
+            Your name
+          </span>
+
+          <input
+            name="reviewerName"
+            maxlength="200"
+            required
+          >
+        </label>
+
+        <div>
+          <span
+            style="display:block;font-weight:900;margin-bottom:8px;"
+          >
+            Your rating
+          </span>
+
+          <div
+            class="public-rating"
+          >
+            <input
+              id="rating1"
+              name="rating"
+              type="radio"
+              value="1"
+            >
+            <label for="rating1">
+              1★
+            </label>
+
+            <input
+              id="rating2"
+              name="rating"
+              type="radio"
+              value="2"
+            >
+            <label for="rating2">
+              2★
+            </label>
+
+            <input
+              id="rating3"
+              name="rating"
+              type="radio"
+              value="3"
+            >
+            <label for="rating3">
+              3★
+            </label>
+
+            <input
+              id="rating4"
+              name="rating"
+              type="radio"
+              value="4"
+            >
+            <label for="rating4">
+              4★
+            </label>
+
+            <input
+              id="rating5"
+              name="rating"
+              type="radio"
+              value="5"
+              checked
+            >
+            <label for="rating5">
+              5★
+            </label>
+          </div>
+        </div>
+
+        <label>
+          <span>
+            Your review
+          </span>
+
+          <textarea
+            name="reviewText"
+            maxlength="10000"
+            placeholder="Tell us about your experience..."
+            required
+          ></textarea>
+        </label>
+
+        <button
+          id="publicReviewSubmit"
+          class="primary-btn"
+          type="submit"
+        >
+          Submit Review
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <script
+    src="public-review-form.js?v=20260812-1"
+  ></script>
+</body>
+</html>
