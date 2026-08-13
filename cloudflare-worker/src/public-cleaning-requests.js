@@ -119,6 +119,7 @@ export async function handlePublicCleaningRequest(
           bedrooms,
           bathrooms,
           square_footage,
+          square_footage_range,
           property_condition,
           pets,
           entry_instructions,
@@ -131,7 +132,7 @@ export async function handlePublicCleaningRequest(
           updated_by
         ) VALUES (
           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
       `
     ).bind(
@@ -157,6 +158,7 @@ export async function handlePublicCleaningRequest(
       input.bedrooms,
       input.bathrooms,
       input.squareFootage,
+      input.squareFootageRange,
       input.propertyCondition,
       input.pets,
       input.entryInstructions,
@@ -182,11 +184,7 @@ export async function handlePublicCleaningRequest(
         requestId,
         status: requestStatus,
       },
-      metadata: {
-        clientMatched: Boolean(match.client),
-        clientCreated: clientWasCreated,
-        requiresManualReview: match.conflict,
-      },
+      metadata: {},
       timestamp: new Date().toISOString(),
     },
     201,
@@ -214,6 +212,7 @@ function validateAllowedFields(body, HttpError) {
     "bedrooms",
     "bathrooms",
     "squareFootage",
+    "squareFootageRange",
     "propertyCondition",
     "pets",
     "entryInstructions",
@@ -357,6 +356,10 @@ function parseRequestInput(body, HttpError) {
       1000000,
       HttpError
     ),
+    squareFootageRange: normalizeSquareFootageRange(
+      body.squareFootageRange,
+      HttpError
+    ),
     propertyCondition: optionalText(
       body.propertyCondition,
       "propertyCondition",
@@ -412,7 +415,7 @@ async function matchClient(
               phone
             FROM clients
             WHERE deleted_at IS NULL
-              AND lower(trim(email)) = ?
+              AND lower(trim(email)) IN (?, ?)
             ORDER BY created_at ASC
             LIMIT 2
           `
@@ -452,7 +455,10 @@ async function matchClient(
             LIMIT 2
           `
         )
-          .bind(normalizedPhone)
+          .bind(
+            normalizedPhone,
+            `1${normalizedPhone}`
+          )
           .all()
       : Promise.resolve({ results: [] }),
   ]);
@@ -675,6 +681,44 @@ function normalizeOptionalEmail(value, HttpError) {
   return normalized;
 }
 
+
+
+function normalizeSquareFootageRange(
+  value,
+  HttpError
+) {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    throw new HttpError(
+      400,
+      "squareFootageRange must be text."
+    );
+  }
+
+  const normalized = value.trim();
+  const allowed = new Set([
+    "Under 1,500 sqft",
+    "1,500 - 2,500 sq ft",
+    "2,500 - 3,500 sq ft",
+    "3,500 + sq ft",
+  ]);
+
+  if (!allowed.has(normalized)) {
+    throw new HttpError(
+      400,
+      "squareFootageRange must be one of the available size ranges."
+    );
+  }
+
+  return normalized;
+}
 
 function normalizePreferredContactMethod(
   value,

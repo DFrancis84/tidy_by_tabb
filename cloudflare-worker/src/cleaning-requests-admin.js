@@ -379,6 +379,19 @@ async function updateRequest(
         )
       : existing.status;
 
+  if (
+    existing.status === "converted" &&
+    Object.prototype.hasOwnProperty.call(
+      body,
+      "status"
+    )
+  ) {
+    throw new HttpError(
+      409,
+      "A converted request's status is managed by its linked service."
+    );
+  }
+
   if (status === "converted") {
     throw new HttpError(
       400,
@@ -580,6 +593,14 @@ async function convertRequest(
     "priceCents",
     HttpError
   );
+
+  if (priceCents === null) {
+    throw new HttpError(
+      400,
+      "priceCents is required when accepting a cleaning request."
+    );
+  }
+
   const notes = optionalText(
     body.notes,
     "notes",
