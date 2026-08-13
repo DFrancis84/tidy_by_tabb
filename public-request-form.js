@@ -53,7 +53,7 @@
       propertyType: optionalText(formData, "propertyType"),
       bedrooms: optionalNumber(formData, "bedrooms"),
       bathrooms: optionalNumber(formData, "bathrooms"),
-      squareFootage: optionalNumber(formData, "squareFootage"),
+      squareFootageRange: optionalText(formData, "squareFootageRange"),
       propertyCondition: optionalText(formData, "propertyCondition"),
       pets: optionalText(formData, "pets"),
       entryInstructions: optionalText(formData, "entryInstructions"),

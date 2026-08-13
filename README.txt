@@ -1,61 +1,166 @@
-TIDY BY TABB CMS REQUESTS LINK
+TIDY BY TABB - REQUEST TO SERVICE FINALIZATION
 
-GOAL
+Suggested branch:
+cms-v2-request-to-service-finalize
 
-Add a Requests item to the existing CMS sidebar. Clicking it opens
-admin/requests.html. The Requests page already has a Back to CMS button.
+PURPOSE
 
-FILES IN THIS PACKAGE
+Finish the normal customer-request workflow before moving to Reviews:
 
-NAVIGATION-LINK.html
-STYLES-ADD.css
+Website Request -> CMS Review -> Accept -> Scheduled Service
 
-ADMIN INDEX CHANGE
+This package also changes the public square-footage field from free-entry
+numbers to the requested size-range dropdown.
 
-Open admin/index.html.
+FILES TO REPLACE
 
-Inside:
+index.html
+public-request-form.js
+cloudflare-worker/src/public-cleaning-requests.js
+cloudflare-worker/src/cleaning-requests-admin.js
+admin/js/requests-inbox.js
+admin/requests.html
 
-<nav class="sidebar-nav">
+NEW MIGRATION
 
-Paste NAVIGATION-LINK.html immediately after the Services button:
+cloudflare-worker/migrations/0006_add_square_footage_range.sql
 
-<button class="nav-item" data-view="services">Services</button>
+REMOVE AFTER THIS BRANCH IS VERIFIED
 
-The finished area should look like:
+admin/conflict-resolution-test.html
 
-<button class="nav-item" data-view="dashboard">Dashboard</button>
-<button class="nav-item" data-view="clients">Clients</button>
-<button class="nav-item" data-view="services">Services</button>
-<a class="nav-item nav-link" href="requests.html">
-  Requests
-</a>
-<button class="nav-item" data-view="gallery">Gallery</button>
+The conflict feature itself stays. Only the temporary test page can be deleted.
 
-ADMIN CSS CHANGE
+============================================================
+1. RUN THE D1 MIGRATION
+============================================================
 
-Open admin/css/styles.css and paste STYLES-ADD.css at the bottom.
+Run 0006_add_square_footage_range.sql against the production D1 database.
 
-REQUESTS PAGE
+This intentionally keeps the old integer square_footage column for legacy
+requests and adds square_footage_range for new requests.
 
-admin/requests.html already contains:
+New allowed values:
 
-Back to CMS
+Under 1,500 sqft
+1,500 - 2,500 sq ft
+2,500 - 3,500 sq ft
+3,500 + sq ft
 
-which links to index.html.
+Old requests continue displaying their numeric square footage.
 
-DEPLOY
+============================================================
+2. DEPLOY WORKER
+============================================================
 
-1. Update admin/index.html.
-2. Update admin/css/styles.css.
-3. Merge.
-4. Wait for GitHub Pages.
-5. Open /admin/.
-6. Click Requests.
-7. Confirm Back to CMS returns to /admin/index.html.
+Replace:
 
-This change does not touch the Worker, D1, or the public homepage.
+cloudflare-worker/src/public-cleaning-requests.js
+cloudflare-worker/src/cleaning-requests-admin.js
 
+Then deploy the Worker.
+
+WHAT CHANGED
+
+Public request API:
+- accepts squareFootageRange
+- still accepts legacy squareFootage during browser-cache transition
+- stores the new range in square_footage_range
+- stops returning internal client-match metadata to public callers
+- improves phone matching for stored US numbers with an optional leading 1
+
+Admin request conversion:
+- requires a confirmed price
+- preserves optimistic concurrency
+- prevents converted requests from having their status moved backward
+
+============================================================
+3. DEPLOY GITHUB PAGES FILES
+============================================================
+
+Replace:
+
+index.html
+public-request-form.js
+admin/js/requests-inbox.js
+admin/requests.html
+
+Public form:
+- Approximate Square Footage is now a dropdown.
+
+Admin Accept & Create Service:
+- service type remains prefilled
+- scheduled DATE is prefilled from the requested date when available
+- scheduled TIME is explicitly chosen by the admin
+- requested time window remains visible beside it
+- confirmed price is required
+- service notes are prefilled with useful request details
+- browser converts the chosen local date/time to an ISO timestamp before
+  sending it to the Worker, avoiding Cloudflare-runtime local-time ambiguity
+- successful conversion refreshes both the drawer and Requests list
+
+============================================================
+4. TEST THE MONEY PATH
+============================================================
+
+PUBLIC FORM
+
+1. Open tidybytabb.com.
+2. Submit a normal cleaning request.
+3. Confirm Square Footage is a dropdown with exactly four ranges.
+4. Pick one range and submit.
+5. Confirm success message appears and modal closes.
+
+CMS REQUEST
+
+6. Open CMS -> Requests.
+7. Find the new request.
+8. Open Review.
+9. Confirm the selected square-footage range displays correctly.
+10. Confirm Accept & Create Service is available.
+11. Confirm Scheduled Date defaults to the customer's preferred date if one
+    was submitted.
+12. Choose an exact Scheduled Time.
+13. Enter the confirmed price.
+14. Review/edit the prefilled service notes.
+15. Click Accept & Create Service.
+16. Confirm the request changes to Converted.
+
+SERVICES
+
+17. Go to Services.
+18. Confirm the new Service appears.
+19. Confirm:
+    - correct client
+    - correct service type
+    - correct local appointment date/time
+    - status = Scheduled
+    - correct price
+    - notes carried over
+
+REFRESH
+
+20. Refresh the CMS.
+21. Confirm the request remains Converted.
+22. Confirm the Service remains Scheduled.
+
+============================================================
+5. CLEANUP
+============================================================
+
+Delete:
+
+admin/conflict-resolution-test.html
+
+Keep:
+- request-conflict-resolution.js
+- cleaning-request-conflicts.js
+- the authenticated conflict route
+
+We are only removing the temporary test harness, not the conflict feature.
+
+============================================================
 COMMIT MESSAGE
+============================================================
 
-Add Requests link to CMS navigation
+Finalize cleaning request to service workflow
