@@ -32,6 +32,11 @@ import {
   isPublicGenericReviewRequestRoute,
 } from "./generic-review-requests.js";
 
+import {
+  handleAdminReviewEmailRoute,
+  isAdminReviewEmailRoute,
+} from "./review-email.js";
+
 const ALLOWED_ORIGIN = "https://www.tidybytabb.com";
 const ALLOWED_ACTIONS = new Set([
   "create",
@@ -142,6 +147,23 @@ export default {
         throw new HttpError(403, "Administrator access is denied.");
       }
 
+      if (
+        isAdminReviewEmailRoute(
+          request,
+          url
+        )
+      ) {
+        return await handleAdminReviewEmailRoute({
+          request,
+          url,
+          env,
+          actorEmail,
+          origin,
+          jsonResponse,
+          HttpError,
+        });
+      }
+      
       if (
         isAdminReviewRequestsRoute(
           request,
