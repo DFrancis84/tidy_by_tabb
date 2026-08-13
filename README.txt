@@ -1,166 +1,165 @@
-TIDY BY TABB - REQUEST TO SERVICE FINALIZATION
+TIDY BY TABB - PUBLIC REVIEWS + CMS DEVELOPER BUTTON CLEANUP
 
 Suggested branch:
-cms-v2-request-to-service-finalize
+cms-v2-public-reviews
 
-PURPOSE
+WHAT THIS DOES
 
-Finish the normal customer-request workflow before moving to Reviews:
+1. Published Reviews from the CMS automatically appear on the public website.
+2. Draft and Hidden reviews are NEVER returned by the public API.
+3. The public Reviews section shows:
+   - rating
+   - review text
+   - reviewer display name
+   - source
+   - review month/year
+   - published review count
+   - average published rating
+4. The Developer button and Developer panel are removed from the visible CMS UI.
 
-Website Request -> CMS Review -> Accept -> Scheduled Service
+NO D1 MIGRATION.
 
-This package also changes the public square-footage field from free-entry
-numbers to the requested size-range dropdown.
+============================================================
+FILES TO ADD
+============================================================
 
+public-reviews.js
+cloudflare-worker/src/public-reviews.js
+
+============================================================
 FILES TO REPLACE
+============================================================
 
 index.html
-public-request-form.js
-cloudflare-worker/src/public-cleaning-requests.js
-cloudflare-worker/src/cleaning-requests-admin.js
-admin/js/requests-inbox.js
-admin/requests.html
-
-NEW MIGRATION
-
-cloudflare-worker/migrations/0006_add_square_footage_range.sql
-
-REMOVE AFTER THIS BRANCH IS VERIFIED
-
-admin/conflict-resolution-test.html
-
-The conflict feature itself stays. Only the temporary test page can be deleted.
+admin/js/reviews-cms.js
 
 ============================================================
-1. RUN THE D1 MIGRATION
+WORKER index.js
 ============================================================
 
-Run 0006_add_square_footage_range.sql against the production D1 database.
+Add the import from:
 
-This intentionally keeps the old integer square_footage column for legacy
-requests and adds square_footage_range for new requests.
+INDEX-IMPORT.js.txt
 
-New allowed values:
+near the other imports at the top of:
 
-Under 1,500 sqft
-1,500 - 2,500 sq ft
-2,500 - 3,500 sq ft
-3,500 + sq ft
+cloudflare-worker/src/index.js
 
-Old requests continue displaying their numeric square footage.
+Then add the public route from:
 
-============================================================
-2. DEPLOY WORKER
-============================================================
+INDEX-PUBLIC-ROUTE.js.txt
 
-Replace:
+IMMEDIATELY AFTER:
 
-cloudflare-worker/src/public-cleaning-requests.js
-cloudflare-worker/src/cleaning-requests-admin.js
+const url = new URL(request.url);
+
+and before the Cloudflare Access JWT is required.
+
+A safe ordering is:
+
+const url = new URL(request.url);
+
+if (isPublicCleaningRequest(request, url)) {
+  ...
+}
+
+if (isPublicReviewsRequest(request, url)) {
+  ...
+}
+
+const jwt = request.headers.get("Cf-Access-Jwt-Assertion");
 
 Then deploy the Worker.
 
-WHAT CHANGED
-
-Public request API:
-- accepts squareFootageRange
-- still accepts legacy squareFootage during browser-cache transition
-- stores the new range in square_footage_range
-- stops returning internal client-match metadata to public callers
-- improves phone matching for stored US numbers with an optional leading 1
-
-Admin request conversion:
-- requires a confirmed price
-- preserves optimistic concurrency
-- prevents converted requests from having their status moved backward
-
 ============================================================
-3. DEPLOY GITHUB PAGES FILES
+CLOUDFLARE ACCESS
 ============================================================
 
-Replace:
+The new public endpoint is:
 
-index.html
-public-request-form.js
-admin/js/requests-inbox.js
-admin/requests.html
+/api/reviews
 
-Public form:
-- Approximate Square Footage is now a dropdown.
+It must be publicly reachable, just like the existing:
 
-Admin Accept & Create Service:
-- service type remains prefilled
-- scheduled DATE is prefilled from the requested date when available
-- scheduled TIME is explicitly chosen by the admin
-- requested time window remains visible beside it
-- confirmed price is required
-- service notes are prefilled with useful request details
-- browser converts the chosen local date/time to an ISO timestamp before
-  sending it to the Worker, avoiding Cloudflare-runtime local-time ambiguity
-- successful conversion refreshes both the drawer and Requests list
+/api/cleaning-requests
+
+Add the same exact public Bypass / Everyone treatment for:
+
+https://www.tidybytabb.com/api/reviews
+
+Do NOT make /admin/api/reviews public.
+
+Only /api/reviews is public.
 
 ============================================================
-4. TEST THE MONEY PATH
+PUBLIC API SECURITY
 ============================================================
 
-PUBLIC FORM
+The public endpoint intentionally returns ONLY:
 
-1. Open tidybytabb.com.
-2. Submit a normal cleaning request.
-3. Confirm Square Footage is a dropdown with exactly four ranges.
-4. Pick one range and submit.
-5. Confirm success message appears and modal closes.
+reviewerName
+rating
+reviewText
+source
+reviewDate
 
-CMS REQUEST
+It does NOT return:
 
-6. Open CMS -> Requests.
-7. Find the new request.
-8. Open Review.
-9. Confirm the selected square-footage range displays correctly.
-10. Confirm Accept & Create Service is available.
-11. Confirm Scheduled Date defaults to the customer's preferred date if one
-    was submitted.
-12. Choose an exact Scheduled Time.
-13. Enter the confirmed price.
-14. Review/edit the prefilled service notes.
-15. Click Accept & Create Service.
-16. Confirm the request changes to Converted.
-
-SERVICES
-
-17. Go to Services.
-18. Confirm the new Service appears.
-19. Confirm:
-    - correct client
-    - correct service type
-    - correct local appointment date/time
-    - status = Scheduled
-    - correct price
-    - notes carried over
-
-REFRESH
-
-20. Refresh the CMS.
-21. Confirm the request remains Converted.
-22. Confirm the Service remains Scheduled.
+review IDs
+client IDs
+service IDs
+client contact information
+internal audit fields
+draft reviews
+hidden reviews
 
 ============================================================
-5. CLEANUP
+CMS DEVELOPER BUTTON
 ============================================================
 
-Delete:
+admin/js/reviews-cms.js now hides:
 
-admin/conflict-resolution-test.html
+#developerToggle
+#developerPanel
 
-Keep:
-- request-conflict-resolution.js
-- cleaning-request-conflicts.js
-- the authenticated conflict route
+on every CMS load.
 
-We are only removing the temporary test harness, not the conflict feature.
+The old developer diagnostics code remains untouched in this slice so there is
+zero risk to Gallery / Client / Service API callbacks. The UI is completely
+removed from normal use.
+
+A later shell-cleanup refactor can delete the unused diagnostics module itself.
+
+============================================================
+TEST
+============================================================
+
+1. CMS -> Reviews.
+2. Create or edit one review:
+   - 5 stars
+   - status Published
+3. Open the public website.
+4. Click Reviews.
+5. Confirm the review appears.
+6. Confirm the average rating and published count appear.
+7. Change that review to Draft in the CMS.
+8. Refresh the public website.
+9. Confirm the review disappears.
+10. Change it back to Published.
+11. Confirm it returns.
+12. Set a review to Hidden.
+13. Confirm it does not appear publicly.
+14. Open the CMS and confirm the Developer button is gone.
+
+============================================================
+ROLLBACK
+============================================================
+
+Restore the previous index.html and reviews-cms.js, remove the public Reviews
+route from Worker index.js, and remove public-reviews.js files.
 
 ============================================================
 COMMIT MESSAGE
 ============================================================
 
-Finalize cleaning request to service workflow
+Publish CMS reviews to website

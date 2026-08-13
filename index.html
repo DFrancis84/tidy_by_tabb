@@ -517,39 +517,40 @@
       <section id="reviews" class="panel">
         <div class="section-head">
           <p class="eyebrow">Customer feedback</p>
-          <h2>Reviews Coming Soon</h2>
+          <h2>What Clients Are Saying</h2>
           <p>
-            We are currently awaiting Google Business verification.
-            Once approved, verified customer reviews will be displayed here.
+            Published customer reviews managed through the Tidy by Tabb CMS
+            appear here automatically.
           </p>
         </div>
 
-        <div class="review-grid">
+        <div id="publicReviewSummary" class="public-review-summary" hidden>
+          <div>
+            <strong id="publicReviewAverage">—</strong>
+            <span>Average Rating</span>
+          </div>
+          <div>
+            <strong id="publicReviewCount">0</strong>
+            <span>Published Reviews</span>
+          </div>
+        </div>
+
+        <div id="publicReviewsLoading" class="review-grid">
           <article class="review-card review-coming-soon">
             <div class="stars">★★★★★</div>
-            <h3>Verified Reviews On The Way</h3>
-            <p>
-              Tidy by Tabb is currently completing Google Business verification.
-              As soon as verification is approved, authentic customer reviews
-              will automatically begin appearing here.
-            </p>
+            <h3>Loading Reviews</h3>
+            <p>Fetching the latest published customer feedback.</p>
           </article>
+        </div>
 
+        <div id="publicReviewsGrid" class="review-grid" hidden></div>
+
+        <div id="publicReviewsEmpty" class="review-grid" hidden>
           <article class="review-card review-coming-soon">
             <div class="bubble-icon">🫧</div>
-            <h3>Building Trust One Home At A Time</h3>
+            <h3>Reviews Coming Soon</h3>
             <p>
-              Every home is cleaned with attention to detail, professionalism,
-              and care. We look forward to earning your review after your service.
-            </p>
-          </article>
-
-          <article class="review-card review-coming-soon">
-            <div class="bubble-icon">🏡</div>
-            <h3>Book With Confidence</h3>
-            <p>
-              Fully transparent pricing, personalized service, and direct
-              communication throughout the scheduling process.
+              New customer feedback will appear here as reviews are published.
             </p>
           </article>
         </div>
@@ -1089,5 +1090,6 @@
 
   <script src="script.js?v=5"></script>
   <script src="public-request-form.js?v=20260810-3"></script>
+  <script src="public-reviews.js?v=20260812-1"></script>
 </body>
 </html>
