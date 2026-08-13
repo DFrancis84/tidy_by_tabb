@@ -333,26 +333,26 @@
           <div class="coverflow-stage">
             <article class="price-card coverflow-card">
               <h3>Standard Cleaning</h3>
-              <p class="price">$150+</p>
+              <p class="price">$120+</p>
               <p>Routine refresh for kitchens, bathrooms, living areas, bedrooms, dusting, floors, and surfaces.</p>
             </article>
 
             <article class="price-card coverflow-card featured">
               <span class="tag">Popular</span>
               <h3>Deep Cleaning</h3>
-              <p class="price">$250+</p>
+              <p class="price">$200+</p>
               <p>Extra attention for buildup, baseboards, cabinets, heavier bathroom/kitchen cleaning, and detail work.</p>
             </article>
 
             <article class="price-card coverflow-card">
               <h3>Move-In / Move-Out</h3>
-              <p class="price">$300+</p>
+              <p class="price">$250+</p>
               <p>Empty-home reset for moving days, rental turnovers, and fresh-start cleaning.</p>
             </article>
 
             <article class="price-card coverflow-card">
               <h3>Custom Cleaning</h3>
-              <p class="price">$50/hr</p>
+              <p class="price">$40/hr</p>
               <p>Custom cleaning based on your needs, with a 2-hour minimum.</p>
             </article>
           </div>
@@ -896,7 +896,13 @@
 
           <label>
             <span>Approximate square footage</span>
-            <input name="squareFootage" type="number" min="0" max="1000000" step="1">
+            <select name="squareFootageRange">
+              <option value="">Select square footage</option>
+              <option>Under 1,500 sqft</option>
+              <option>1,500 - 2,500 sq ft</option>
+              <option>2,500 - 3,500 sq ft</option>
+              <option>3,500 + sq ft</option>
+            </select>
           </label>
 
           <label>
@@ -1082,6 +1088,6 @@
   </dialog>
 
   <script src="script.js?v=5"></script>
-  <script src="public-request-form.js?v=20260805-2"></script>
+  <script src="public-request-form.js?v=20260810-3"></script>
 </body>
 </html>
