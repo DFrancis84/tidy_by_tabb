@@ -415,7 +415,7 @@ async function matchClient(
               phone
             FROM clients
             WHERE deleted_at IS NULL
-              AND lower(trim(email)) IN (?, ?)
+              AND lower(trim(email)) = ?
             ORDER BY created_at ASC
             LIMIT 2
           `
@@ -450,7 +450,7 @@ async function matchClient(
                   ' ', ''
                 ),
                 '.', ''
-              ) = ?
+              ) IN (?, ?)
             ORDER BY created_at ASC
             LIMIT 2
           `
