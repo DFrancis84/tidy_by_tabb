@@ -240,6 +240,18 @@
         response.metadata?.total || 0
       );
 
+      if (
+        requests.length === 0 &&
+        state.offset > 0 &&
+        state.total > 0
+      ) {
+        state.offset = Math.max(
+          0,
+          state.offset - PAGE_SIZE
+        );
+        return loadRequests();
+      }
+
       renderRows(requests);
       renderPagination(requests.length);
 
@@ -784,7 +796,11 @@
                 notes:
                   form.get("notes") || null,
               }),
-            "Service created and request converted."
+            "Service created and request converted.",
+            {
+              closeOnSuccess: true,
+              resetToFirstPage: true,
+            }
           );
         }
       );
@@ -792,8 +808,14 @@
 
   async function runDrawerAction(
     action,
-    successMessage
+    successMessage,
+    options = {}
   ) {
+    const {
+      closeOnSuccess = false,
+      resetToFirstPage = false,
+    } = options;
+
     const buttons =
       elements.drawerBody.querySelectorAll(
         "button"
@@ -805,19 +827,48 @@
 
     try {
       const response = await action();
-      state.selected = response.data.request;
-      renderDrawer(state.selected);
-      showToast(successMessage, "success");
+
+      showToast(
+        successMessage,
+        "success"
+      );
+
+      if (resetToFirstPage) {
+        state.offset = 0;
+      }
+
+      if (closeOnSuccess) {
+        closeDrawer();
+        await loadRequests();
+        return;
+      }
+
+      state.selected =
+        response.data.request;
+
+      renderDrawer(
+        state.selected
+      );
+
       await loadRequests();
     } catch (error) {
-      showToast(error.message, "error");
+      showToast(
+        error.message,
+        "error"
+      );
 
-      if (error.status === 409) {
-        await openRequest(state.selected.id);
+      if (
+        error.status === 409 &&
+        state.selected?.id
+      ) {
+        await openRequest(
+          state.selected.id
+        );
       }
     } finally {
       buttons.forEach(
-        (button) => (button.disabled = false)
+        (button) =>
+          (button.disabled = false)
       );
     }
   }
