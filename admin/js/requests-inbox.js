@@ -174,18 +174,19 @@
       lines.push(`Customer notes: ${item.customer_notes}`);
     }
 
-    return lines.join("\\n");
+    return lines.join("\n");
   };
 
-  const localDateTimeToIso = (
-    dateValue,
-    timeValue
-  ) => {
+    const localDateTimeToIso = (
+      dateValue,
+      timeValue
+    ) => {
     const dateMatch = String(dateValue || "").match(
-      /^(\\d{4})-(\\d{2})-(\\d{2})$/
+      /^(\d{4})-(\d{2})-(\d{2})$/
     );
+
     const timeMatch = String(timeValue || "").match(
-      /^(\\d{2}):(\\d{2})$/
+      /^(\d{2}):(\d{2})$/
     );
 
     if (!dateMatch || !timeMatch) {
