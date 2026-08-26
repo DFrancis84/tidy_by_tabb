@@ -147,7 +147,9 @@ async function listRequests(
     conditions.push("r.status = ?");
     parameters.push(status);
   } else {
-    conditions.push("r.status <> 'archived'");
+    conditions.push(
+      "r.status NOT IN ('converted', 'archived')"
+    );
   }
 
   if (search) {
