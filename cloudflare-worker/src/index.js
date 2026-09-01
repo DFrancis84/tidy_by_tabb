@@ -4207,15 +4207,23 @@ function escapeLikePattern(value) {
 
 function corsHeaders(origin) {
   const headers = new Headers({
-    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods":
+      "GET, POST, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers":
+      "Content-Type",
     "Access-Control-Max-Age": "600",
     "X-Content-Type-Options": "nosniff",
     Vary: "Origin",
   });
 
-  if (origin === ALLOWED_ORIGIN) {
-    headers.set("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  if (
+    origin &&
+    ALLOWED_ORIGINS.has(origin)
+  ) {
+    headers.set(
+      "Access-Control-Allow-Origin",
+      origin
+    );
   }
 
   return headers;
