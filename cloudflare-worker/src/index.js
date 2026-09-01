@@ -37,7 +37,10 @@ import {
   isAdminReviewEmailRoute,
 } from "./review-email.js";
 
-const ALLOWED_ORIGIN = "https://www.tidybytabb.com";
+const ALLOWED_ORIGINS = new Set([
+  "https://www.tidybytabb.com",
+  "https://tidybytabb.com",
+]);
 const ALLOWED_ACTIONS = new Set([
   "create",
   "update",
@@ -57,33 +60,125 @@ let jwksCache = {
 
 export default {
   async fetch(request, env) {
-    const origin = request.headers.get("Origin") || "";
+    const origin =
+      request.headers.get("Origin") || "";
+
+    const url =
+      new URL(request.url);
+
+    console.log(
+      "Incoming request",
+      {
+        method: request.method,
+        path: url.pathname,
+        origin:
+          origin || "(none)",
+        referer:
+          request.headers.get(
+            "Referer"
+          ) || "(none)",
+        userAgent:
+          request.headers.get(
+            "User-Agent"
+          ) || "(none)",
+      }
+    );
 
     try {
       validateConfiguration(env);
 
-      if (request.method === "OPTIONS") {
-        if (origin !== ALLOWED_ORIGIN) {
-          throw new HttpError(403, "Origin is not allowed.");
+      if (
+        request.method ===
+        "OPTIONS"
+      ) {
+        const isAllowedPreflightOrigin =
+          ALLOWED_ORIGINS.has(
+            origin
+          );
+
+        if (
+          !isAllowedPreflightOrigin
+        ) {
+          console.warn(
+            "Blocked CORS preflight",
+            {
+              origin:
+                origin ||
+                "(none)",
+              path:
+                url.pathname,
+              method:
+                request.method,
+              referer:
+                request.headers.get(
+                  "Referer"
+                ) ||
+                "(none)",
+            }
+          );
+
+          throw new HttpError(
+            403,
+            "Origin is not allowed."
+          );
         }
 
-        return new Response(null, {
-          status: 204,
-          headers: corsHeaders(origin),
-        });
+        return new Response(
+          null,
+          {
+            status: 204,
+            headers:
+              corsHeaders(
+                origin
+              ),
+          }
+        );
       }
 
       const isAllowedOrigin =
         origin === "" ||
-        origin === ALLOWED_ORIGIN;
+        ALLOWED_ORIGINS.has(
+          origin
+        );
 
-      if (!isAllowedOrigin) {
-        throw new HttpError(403, "Origin is not allowed.");
+      if (
+        !isAllowedOrigin
+      ) {
+        console.warn(
+          "Blocked request origin",
+          {
+            origin:
+              origin ||
+              "(none)",
+            path:
+              url.pathname,
+            method:
+              request.method,
+            referer:
+              request.headers.get(
+                "Referer"
+              ) ||
+              "(none)",
+            userAgent:
+              request.headers.get(
+                "User-Agent"
+              ) ||
+              "(none)",
+          }
+        );
+
+        throw new HttpError(
+          403,
+          "Origin is not allowed."
+        );
       }
 
-      const url = new URL(request.url);
-
-      if (isPublicCleaningRequest(request, url)) {
+      if (
+        isPublicCleaningRequest(
+          request,
+          url
+        )
+      ) {
         return await handlePublicCleaningRequest(
           request,
           env,
