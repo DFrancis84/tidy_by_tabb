@@ -71,6 +71,8 @@ export default {
       {
         method: request.method,
         path: url.pathname,
+        protocol: url.protocol,
+        host: url.host,
         origin:
           origin || "(none)",
         referer:
@@ -81,6 +83,19 @@ export default {
           request.headers.get(
             "User-Agent"
           ) || "(none)",
+        cfRay:
+          request.headers.get(
+            "CF-Ray"
+          ) || "(none)",
+        country:
+          request.cf?.country ||
+          "(unknown)",
+        colo:
+          request.cf?.colo ||
+          "(unknown)",
+        httpProtocol:
+          request.cf?.httpProtocol ||
+          "(unknown)",
       }
     );
 
@@ -528,10 +543,62 @@ export default {
           ? error.message
           : "The admin gateway could not process this request.";
 
-      if (!(error instanceof HttpError)) {
+      if (error instanceof HttpError) {
+        console.warn(
+          "Request rejected",
+          {
+            method: request.method,
+            path: url.pathname,
+            protocol: url.protocol,
+            host: url.host,
+            origin:
+              origin || "(none)",
+            status,
+            message,
+            cfRay:
+              request.headers.get(
+                "CF-Ray"
+              ) || "(none)",
+            referer:
+              request.headers.get(
+                "Referer"
+              ) || "(none)",
+            userAgent:
+              request.headers.get(
+                "User-Agent"
+              ) || "(none)",
+          }
+        );
+      } else {
         console.error(
-          "Admin gateway failure:",
-          error?.message || "Unknown error"
+          "Worker request failure",
+          {
+            method: request.method,
+            path: url.pathname,
+            protocol: url.protocol,
+            host: url.host,
+            origin:
+              origin || "(none)",
+            status,
+            errorName:
+              error?.name ||
+              "UnknownError",
+            errorMessage:
+              error?.message ||
+              "Unknown error",
+            cfRay:
+              request.headers.get(
+                "CF-Ray"
+              ) || "(none)",
+            referer:
+              request.headers.get(
+                "Referer"
+              ) || "(none)",
+            userAgent:
+              request.headers.get(
+                "User-Agent"
+              ) || "(none)",
+          }
         );
       }
 
