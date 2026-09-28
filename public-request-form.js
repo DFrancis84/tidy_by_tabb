@@ -49,14 +49,26 @@
       serviceType: String(formData.get("serviceType") || "").trim(),
       addOns: formData.getAll("addOns").map(String),
       preferredDate: optionalText(formData, "preferredDate"),
-      preferredTimeWindow: optionalText(formData, "preferredTimeWindow"),
+      preferredTimeWindow: optionalText(
+        formData,
+        "preferredTimeWindow"
+      ),
       propertyType: optionalText(formData, "propertyType"),
       bedrooms: optionalNumber(formData, "bedrooms"),
       bathrooms: optionalNumber(formData, "bathrooms"),
-      squareFootageRange: optionalText(formData, "squareFootageRange"),
-      propertyCondition: optionalText(formData, "propertyCondition"),
+      squareFootageRange: optionalText(
+        formData,
+        "squareFootageRange"
+      ),
+      propertyCondition: optionalText(
+        formData,
+        "propertyCondition"
+      ),
       pets: optionalText(formData, "pets"),
-      entryInstructions: optionalText(formData, "entryInstructions"),
+      entryInstructions: optionalText(
+        formData,
+        "entryInstructions"
+      ),
       notes: optionalText(formData, "notes"),
       referredBy: optionalText(formData, "referredBy"),
       mailingListOptIn:
@@ -121,16 +133,26 @@
       try {
         body = await response.json();
       } catch {
-        throw new Error(
-          "The request service returned an unreadable response."
+        console.error(
+          "Cleaning request API returned an unreadable response.",
+          {
+            status: response.status,
+          }
         );
+
+        throw new Error("SUBMISSION_FAILED");
       }
 
       if (!response.ok || body?.success !== true) {
-        throw new Error(
-          body?.message ||
-            `The request could not be submitted (${response.status}).`
+        console.error(
+          "Cleaning request API rejected submission.",
+          {
+            status: response.status,
+            message: body?.message || "Unknown API error",
+          }
         );
+
+        throw new Error("SUBMISSION_FAILED");
       }
 
       setStatus(
@@ -142,6 +164,7 @@
       form.reset();
 
       const stateInput = form.elements.namedItem("state");
+
       if (stateInput) {
         stateInput.value = "KY";
       }
@@ -157,11 +180,35 @@
         }
       }, 3000);
     } catch (error) {
-      setStatus(
-        error?.message ||
-          "Your request could not be submitted. Please try again.",
-        "error"
+      console.error(
+        "Cleaning request submission failed.",
+        {
+          message:
+            error?.message || "Unknown error",
+          pageUrl:
+            window.location.href,
+          userAgent:
+            navigator.userAgent,
+        }
       );
+
+      const isValidationError =
+        error?.message &&
+        error.message !== "SUBMISSION_FAILED";
+
+      if (isValidationError) {
+        setStatus(
+          error.message,
+          "error"
+        );
+      } else {
+        setStatus(
+          "We couldn’t submit your request online right now. " +
+            "Please try again, or call/text us at 502-483-1280 " +
+            "or email tidy.by.tabb@gmail.com and we’ll be happy to help.",
+          "error"
+        );
+      }
 
       status.scrollIntoView({
         behavior: "smooth",
